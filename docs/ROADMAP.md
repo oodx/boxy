@@ -44,8 +44,8 @@ Remove box decoration while preserving content formatting.
 - Output: Pure ASCII text only
 - Use case: Script processing, grep/awk pipelines
 
-## Phase 3: Width Control & Content Management
-### 3.1 Fixed Width Feature (`--width`/`-w`) ✅ COMPLETED
+## ✅ Phase 3: Width Control & Content Management (COMPLETED)
+### ✅ 3.1 Fixed Width Feature (`--width`/`-w`) 
 Control box dimensions with intelligent content handling.
 
 **Specifications:**
@@ -55,36 +55,56 @@ Control box dimensions with intelligent content handling.
 - Seamless integration with title, footer, and icon features
 - Preserved content alignment and padding
 
-### 3.2 Content Overflow Enhancements
+### ✅ 3.2 Theme System (`--theme`)
+Predefined visual styling with unified icon/color combinations.
+
+**Specifications:**
+- Pre-built themes: `error`, `success`, `warn`, `info`, `debug`, etc.
+- Unified icon handling approach for consistent spacing
+- Theme inheritance with explicit flag overrides
+- Expandable theme system for future customization
+
+### ✅ 3.3 Text Color Control (`--text`)
+Independent text color control with smart auto-matching.
+
+**Specifications:**
+- Support for all existing color palette: `--text red`, `--text blue2`
+- Auto-mode for box color matching: `--text auto`
+- Default terminal color preservation when omitted
+- Seamless integration with themes and manual icons
+- Unified icon rendering approach for consistent behavior
+
+## Phase 4: Content Enhancement (Future)
+### 4.1 Content Overflow Enhancements
 - Smart word-wrapping within fixed width
 - Multi-line content balancing
 - Overflow indicators beyond ellipsis
 
-### 3.3 Responsive Width
+### 4.2 Responsive Width
 - Terminal-aware width adjustment
 - Percentage-based widths (`--width=50%`)
 - Auto-fit content with max width limits
 
-## Phase 4: Advanced Features (Future)
-### 4.1 Multi-column Support
+## Phase 5: Advanced Features (Future)
+### 5.1 Multi-column Support
 - Side-by-side boxes with `--columns=2`
 - Column separator styles
 
-### 4.2 Interactive Mode
+### 5.2 Interactive Mode
 - Box resizing based on terminal width
 - Dynamic color themes
 
-### 4.3 Configuration File
+### 5.3 Configuration File
 - `.boxyrc` for default styles
 - Custom color palettes
 - Preset box templates
 
-## Phase 5: Ecosystem Integration
-### 5.1 Shell Completions
+## Phase 6: Ecosystem Integration
+### 6.1 Shell Completions
 - Bash, Zsh, Fish autocomplete
 - Dynamic color/style suggestions
 
-### 5.2 Package Distribution
+### 6.2 Package Distribution
 - Homebrew formula
 - AUR package
 - Cargo install optimization
