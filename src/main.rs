@@ -207,7 +207,7 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>) {
+fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>) {
     let lines: Vec<&str> = text.lines().collect();
     
     let content_max_width = lines.iter()
@@ -220,6 +220,14 @@ fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Op
         None => content_max_width + 2 * padding,
     };
     let color_code = get_color_code(color);
+    
+    // Determine text color: "auto" means match box color, "none" means default
+    let text_color_code = match text_color {
+        "auto" => get_color_code(color), // Use same color as box
+        "none" => "",                    // Default terminal color
+        _ => get_color_code(text_color), // Explicit color
+    };
+    
     let pad = " ".repeat(padding);
     
     // Top border with optional title
@@ -272,18 +280,32 @@ fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Op
                 display_line
             };
             
+            // Apply text color to the text part only (not icon)
+            let colored_final_line = if text_color_code.is_empty() {
+                final_line.to_string()
+            } else {
+                format!("{}{}{}", text_color_code, final_line, RESET)
+            };
+            
             let final_width = get_display_width(&final_line);
             let final_spaces = " ".repeat(max_content_width.saturating_sub(final_width + icon_width));
             
             println!("{}{} {}{}{}{}{}{}{}",
                 color_code, style.vertical, RESET,
                 icon_expanded, " ",
-                final_line, final_spaces, pad,
+                colored_final_line, final_spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         } else {
+            // Apply text color to the display line
+            let colored_display_line = if text_color_code.is_empty() {
+                display_line.to_string()
+            } else {
+                format!("{}{}{}", text_color_code, display_line, RESET)
+            };
+            
             println!("{}{}{}{}{}{}{}{}",
                 color_code, style.vertical, RESET,
-                pad, display_line, spaces, pad,
+                pad, colored_display_line, spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         }
     }
@@ -306,6 +328,7 @@ fn main() {
     
     let mut style = &NORMAL;
     let mut color = "none";
+    let mut text_color = "none";
     let mut title: Option<String> = None;
     let mut footer: Option<String> = None;
     let mut icon: Option<String> = None;
@@ -332,6 +355,7 @@ fn main() {
                 println!("    -c, --color <COLOR>      Box color [red, red2, green, green2, blue, blue2,");
                 println!("                             cyan, orange, yellow, purple, purple2, magenta,");
                 println!("                             deep, deep_green, white, white2, grey, grey2, grey3]");
+                println!("    --text <COLOR>           Text color [same colors as above] or 'auto' to match box color");
                 println!("    -w, --width <WIDTH>      Fixed box width (content truncated with … if needed)");
                 println!("    --theme <THEME>          Apply predefined theme (sets icon, color, width)");
                 println!("    --title <TEXT>           Add title to top border (supports $VAR expansion)");
@@ -373,6 +397,12 @@ fn main() {
             "--color" | "-c" => {
                 if i + 1 < args.len() {
                     color = &args[i + 1];
+                    skip_next = true;
+                }
+            }
+            "--text" => {
+                if i + 1 < args.len() {
+                    text_color = &args[i + 1];
                     skip_next = true;
                 }
             }
@@ -462,10 +492,36 @@ fn main() {
         std::process::exit(1);
     }
     
+    // ⚠️  CRITICAL: DO NOT CHANGE THIS ICON LOGIC! ⚠️
+    //
+    // 🚨 WARNING: The icon positioning was a NIGHTMARE to get right! 🚨
+    //
+    // HISTORY: Originally had complex icon positioning logic in draw_box() that
+    // calculated spacing, handled truncation, managed padding, etc. It was buggy,
+    // spacing was inconsistent, and adding text colors broke everything.
+    //
+    // SOLUTION: Use the SAME unified approach as themes:
+    // 1. Prepend icon to content string early: "✅ Success!"
+    // 2. Clear icon variable so draw_box() uses normal (non-icon) path
+    // 3. Everything flows through consistent spacing calculations
+    //
+    // RESULT: Perfect spacing, consistent with themes, text colors work flawlessly
+    //
+    // 🔥 IF YOU TOUCH THIS, YOU WILL BREAK SPACING AND HATE YOURSELF 🔥
+    // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
+    //
+    // Apply manual icon using the same unified approach as themes
+    if let Some(manual_icon) = &icon {
+        let icon_expanded = expand_variables(manual_icon);
+        text = format!("{} {}", icon_expanded, text);
+        // Clear icon so it doesn't get used in positioning system
+        icon = None;
+    }
+    
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(&text, 1, style, color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width);
+        draw_box(&text, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width);
     }
 }
