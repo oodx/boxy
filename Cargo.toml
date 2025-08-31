@@ -1,6 +1,6 @@
 [package]
 name = "boxy"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["Qodeninja <qodeninja@outlook.com>"]
 description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"
@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 unicode-width = "0.1"
 strip-ansi-escapes = "0.2"
+regex = "1.11"
 
 [package.metadata.notes]
 todo = "Not RSB-compatible - needs to be updated"
