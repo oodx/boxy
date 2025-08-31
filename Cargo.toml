@@ -1,0 +1,28 @@
+[package]
+name = "boxy"
+version = "0.2.0"
+edition = "2024"
+authors = ["Qodeninja <qodeninja@outlook.com>"]
+description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"
+license = "MIT"
+publish = false  
+
+[dependencies]
+unicode-width = "0.1"
+strip-ansi-escapes = "0.2"
+
+[package.metadata.notes]
+todo = "Not RSB-compatible - needs to be updated"
+
+
+[profile.release]
+# Optimize for small binary size
+opt-level = "z"     # Optimize for size
+lto = true          # Link-time optimization
+codegen-units = 1   # Single codegen unit for better optimization
+strip = true        # Strip symbols from binary
+panic = "abort"     # Smaller panic handler
+
+[[bin]]
+name = "boxy"
+path = "src/main.rs"
