@@ -52,3 +52,17 @@ echo "Custom theme" | $BOXY --theme error --color blue --icon "🚀"
 
 # Complex combinations
 echo "Deploy complete" | $BOXY --theme success --title "🚀 Status" --footer "v0.3.0" --width 30
+
+echo "Success!" | $BOXY --color green --text auto --icon "✅"
+echo "Success!" | $BOXY --color red --text white --icon "🚀"
+
+# Theme with overrides
+echo "Custom theme" | $BOXY --theme error --color auto --icon "🚀"
+
+# Theme with overrides
+echo "Custom theme" | $BOXY --color blue --icon "✅"
+
+
+# Colored boxes
+echo "Hello World" | $BOXY --color red --icon "🚀"
+echo "Hello World" | $BOXY -c orange --icon "🚀"
