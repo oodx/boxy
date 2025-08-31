@@ -363,7 +363,7 @@ fn main() {
                 println!("    --icon <ICON>            Add icon/emoji to first content line");
                 println!("    --no-boxy[=strict]       Strip box decoration (strict: remove all formatting)");
                 println!("    -h, --help               Show this help message");
-                println!("    -V, --version            Show version");
+                println!("    -v, -V, --version        Show version");
                 println!("\nEXAMPLES:");
                 println!("    echo \"Hello\" | {}", NAME);
                 println!("    echo \"Hello\" | {} --style rounded --color blue", NAME);
@@ -374,7 +374,7 @@ fn main() {
                 println!("    echo \"Test\" | {} | {} --no-boxy", NAME, NAME);
                 return;
             }
-            "--version" | "-V" => {
+            "--version" | "-v" | "-V" => {
                 println!("{} {}", NAME, VERSION);
                 return;
             }
