@@ -1,27 +1,54 @@
+#!/bin/bash
+
+BOXY="./target/release/boxy"
+
+# Build release version if it doesn't exist
+if [ ! -f "$BOXY" ]; then
+    echo "Building release version..."
+    cargo build --release
+fi
+
 # Mixed content
-echo -e "Wide emojis (2 cols): 🚀🌟🔥\nNarrow symbols (1 col): ✨❤️\nMixed: Orange text 🚀 and ✨" | boxy
+echo -e "Wide emojis (2 cols): 🚀🌟🔥\nNarrow symbols (1 col): ✨❤️\nMixed: Orange text 🚀 and ✨" | $BOXY
 
 # Your test case
-echo -e "Red text\nGreen text\nBlue text with emoji 🚀\nNormal text\nMixed red and green 🌟" | boxy
+echo -e "Red text\nGreen text\nBlue text with emoji 🚀\nNormal text\nMixed red and green 🌟" | $BOXY
 
 # Fun example
-echo -e "📦 boxy v0.1.0\n🎯 Perfect alignment\n🦀 Written in Rust\n⚡ Lightning fast" | boxy
+echo -e "📦 boxy v0.3.0\n🎯 Perfect alignment\n🦀 Written in Rust\n⚡ Lightning fast" | $BOXY
 
 # Emoji overload
-echo -e "🍕🍔🌮🌯🥙\n🍎🍊🍋🍌🍉\n🚗🚕🚙🚌🚎" | boxy
+echo -e "🍕🍔🌮🌯🥙\n🍎🍊🍋🍌🍉\n🚗🚕🚙🚌🚎" | $BOXY
 
 # Colored boxes
-echo "Hello World" | boxy --color red
-echo "Hello World" | boxy -c orange
+echo "Hello World" | $BOXY --color red
+echo "Hello World" | $BOXY -c orange
 
 # Combine style and color
-echo "Hello World" | boxy --style rounded --color blue
-echo "Hello World" | boxy -s double -c purple
+echo "Hello World" | $BOXY --style rounded --color blue
+echo "Hello World" | $BOXY -s double -c purple
 
 # Your special colors
-echo "Deep color" | boxy -c deep
-echo "Deep green" | boxy -c deep_green
-echo "Grey shades" | boxy -c grey2
+echo "Deep color" | $BOXY -c deep
+echo "Deep green" | $BOXY -c deep_green
+echo "Grey shades" | $BOXY -c grey2
 
 # With emojis and colors
-echo -e "🎉 Party\n🚀 Time" | boxy -s rounded -c cyan
+echo -e "🎉 Party\n🚀 Time" | $BOXY -s rounded -c cyan
+
+# New width feature
+echo "This is a long message that will be truncated" | $BOXY --width 20
+
+# Theme examples
+echo "Build failed!" | $BOXY --theme error
+echo "Success!" | $BOXY --theme success
+echo "Warning message" | $BOXY --theme warn
+echo "System crash" | $BOXY --theme fatal
+echo "Debug info" | $BOXY --theme debug
+echo "Magic happening" | $BOXY --theme magic
+
+# Theme with overrides
+echo "Custom theme" | $BOXY --theme error --color blue --icon "🚀"
+
+# Complex combinations
+echo "Deploy complete" | $BOXY --theme success --title "🚀 Status" --footer "v0.3.0" --width 30

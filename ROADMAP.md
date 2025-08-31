@@ -1,17 +1,17 @@
 # Boxy Roadmap
 
-## Phase 1: Enhanced Visual Components
-### 1.1 Title Feature (`--title`)
+## ✅ Phase 1: Enhanced Visual Components (COMPLETED)
+### ✅ 1.1 Title Feature (`--title`)
 Add a title that renders in the top border of the box.
 
 **Specifications:**
 - Center-aligned within the top border
 - Support for emojis, colors, and environment variables
 - Format: `--title="🚀 $PROJECT_NAME [blue]v1.0[/blue]"`
-- Truncation with `...` when exceeding box width
+- Truncation with `…` when exceeding box width
 - Preserve box corner characters
 
-### 1.2 Footer Feature (`--footer`)
+### ✅ 1.2 Footer Feature (`--footer`)
 Mirror of title functionality for the bottom border.
 
 **Specifications:**
@@ -20,7 +20,7 @@ Mirror of title functionality for the bottom border.
 - No dedicated icon (manual emoji inclusion)
 - Truncation logic identical to title
 
-### 1.3 Icon Feature (`--icon`)
+### ✅ 1.3 Icon Feature (`--icon`)
 Decorative element for visual enhancement.
 
 **Specifications:**
@@ -29,8 +29,8 @@ Decorative element for visual enhancement.
 - Format: `--icon="🔥"` or `--icon="[red]★[/red]"`
 - Optional position flag: `--icon-pos=left|right`
 
-## Phase 2: Pipeline Integration
-### 2.1 Box Stripping (`--no-boxy`)
+## ✅ Phase 2: Pipeline Integration (COMPLETED)
+### ✅ 2.1 Box Stripping (`--no-boxy`)
 Remove box decoration while preserving content formatting.
 
 **Default Mode:**
@@ -44,26 +44,47 @@ Remove box decoration while preserving content formatting.
 - Output: Pure ASCII text only
 - Use case: Script processing, grep/awk pipelines
 
-## Phase 3: Advanced Features (Future)
-### 3.1 Multi-column Support
+## Phase 3: Width Control & Content Management
+### 3.1 Fixed Width Feature (`--width`/`-w`) ✅ COMPLETED
+Control box dimensions with intelligent content handling.
+
+**Specifications:**
+- Set exact box width: `--width=30` or `-w 30`
+- Content truncation with Unicode ellipsis (`…`) when overflowing
+- Minimum width validation (≥4 for basic box structure)
+- Seamless integration with title, footer, and icon features
+- Preserved content alignment and padding
+
+### 3.2 Content Overflow Enhancements
+- Smart word-wrapping within fixed width
+- Multi-line content balancing
+- Overflow indicators beyond ellipsis
+
+### 3.3 Responsive Width
+- Terminal-aware width adjustment
+- Percentage-based widths (`--width=50%`)
+- Auto-fit content with max width limits
+
+## Phase 4: Advanced Features (Future)
+### 4.1 Multi-column Support
 - Side-by-side boxes with `--columns=2`
 - Column separator styles
 
-### 3.2 Interactive Mode
+### 4.2 Interactive Mode
 - Box resizing based on terminal width
 - Dynamic color themes
 
-### 3.3 Configuration File
+### 4.3 Configuration File
 - `.boxyrc` for default styles
 - Custom color palettes
 - Preset box templates
 
-## Phase 4: Ecosystem Integration
-### 4.1 Shell Completions
+## Phase 5: Ecosystem Integration
+### 5.1 Shell Completions
 - Bash, Zsh, Fish autocomplete
 - Dynamic color/style suggestions
 
-### 4.2 Package Distribution
+### 5.2 Package Distribution
 - Homebrew formula
 - AUR package
 - Cargo install optimization

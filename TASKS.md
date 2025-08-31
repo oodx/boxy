@@ -9,99 +9,86 @@
 
 ---
 
-## Sprint 1: Core Visual Features (Total: 16 points)
+## ✅ COMPLETED SPRINTS
 
-### Task 1.1: Implement `--title` flag [5 points]
-- [ ] Add title argument parsing
-- [ ] Calculate title placement in top border
-- [ ] Implement truncation with `...`
-- [ ] Support color codes in title text
-- [ ] Handle environment variable expansion
-- [ ] Test with various box styles and widths
+### ✅ Sprint 1: Core Visual Features (16/16 points) - COMPLETED
+- ✅ `--title` flag with truncation and variable expansion
+- ✅ `--footer` flag with same capabilities as title  
+- ✅ `--icon` flag with emoji and color support
+- ✅ `--icon-pos` option for left/right positioning
+- ✅ Modular draw_box refactoring
 
-### Task 1.2: Implement `--footer` flag [3 points]
-- [ ] Reuse title rendering logic for bottom border
-- [ ] Add footer argument parsing
-- [ ] Test truncation and positioning
-- [ ] Ensure compatibility with all box styles
+### ✅ Sprint 2: Pipeline Features (13/13 points) - COMPLETED
+- ✅ `--no-boxy` default mode for content extraction
+- ✅ `--no-boxy=strict` mode for pure ASCII output
+- ✅ Input detection and error handling
 
-### Task 1.3: Implement `--icon` flag [3 points]
-- [ ] Add icon argument parsing
-- [ ] Calculate icon placement (default: top-left)
-- [ ] Support color wrapping for characters
-- [ ] Handle emoji width calculations
-
-### Task 1.4: Add `--icon-pos` option [2 points]
-- [ ] Parse position argument (left|right)
-- [ ] Adjust icon rendering based on position
-- [ ] Update help documentation
-
-### Task 1.5: Refactor draw_box for modularity [3 points]
-- [ ] Extract border rendering functions
-- [ ] Create shared title/footer rendering logic
-- [ ] Improve code reusability
+### ✅ Sprint 3: Width Control (8/8 points) - COMPLETED
+- ✅ `--width`/`-w` flag implementation
+- ✅ Content truncation with Unicode ellipsis (`…`)
+- ✅ Title/footer ellipsis upgrade from `...` to `…`
 
 ---
 
-## Sprint 2: Pipeline Features (Total: 13 points)
+## Sprint 4: Advanced Width Features (Total: 12 points)
 
-### Task 2.1: Implement `--no-boxy` default mode [5 points]
-- [ ] Parse box-stripping flag
-- [ ] Extract content from boxed input
-- [ ] Remove box characters and padding
-- [ ] Preserve internal formatting and colors
-- [ ] Handle multi-line boxed content
+### Task 4.1: Smart word wrapping within fixed width [5 points]
+- [ ] Implement word-boundary wrapping logic
+- [ ] Handle long words that exceed line width
+- [ ] Preserve ANSI color codes across line breaks
+- [ ] Test with various content types (code, prose, mixed)
+- [ ] Maintain consistent padding and alignment
 
-### Task 2.2: Implement `--no-boxy=strict` mode [5 points]
-- [ ] Add strict mode parsing
-- [ ] Strip all ANSI escape codes
-- [ ] Remove emoji and Unicode decorations
-- [ ] Trim whitespace aggressively
-- [ ] Output pure ASCII text
+### Task 4.2: Content overflow enhancements [3 points]
+- [ ] Add overflow indicators beyond ellipsis
+- [ ] Implement multi-line balancing algorithms
+- [ ] Handle edge cases (empty lines, whitespace-only lines)
 
-### Task 2.3: Add input detection logic [3 points]
-- [ ] Detect if input is already boxed
-- [ ] Handle edge cases (partial boxes, nested boxes)
-- [ ] Provide appropriate error messages
-
----
-
-## Sprint 3: Testing & Documentation (Total: 8 points)
-
-### Task 3.1: Create comprehensive test suite [5 points]
-- [ ] Unit tests for each new flag
-- [ ] Integration tests for flag combinations
-- [ ] Pipeline tests (box -> no-boxy -> box)
-- [ ] Edge case testing (long titles, special chars)
-- [ ] Performance benchmarks
-
-### Task 3.2: Update documentation [2 points]
-- [ ] Update --help text with new options
-- [ ] Add examples for each feature
-- [ ] Create man page if needed
-
-### Task 3.3: Add CI/CD validation [1 point]
-- [ ] Ensure tests pass in GitHub Actions
-- [ ] Add new feature examples to test.sh
+### Task 4.3: Responsive width features [4 points]
+- [ ] Terminal width detection (`tput cols`)
+- [ ] Percentage-based width calculations (`--width=50%`)
+- [ ] Auto-fit content with max width limits
+- [ ] Fallback behavior for non-interactive terminals
 
 ---
 
-## Sprint 4: Polish & Optimization (Total: 7 points)
+## Sprint 5: Content Enhancement (Total: 10 points)
 
-### Task 4.1: Optimize Unicode width calculations [3 points]
+### Task 5.1: Advanced content handling [3 points]
+- [ ] Better Unicode character width calculations
+- [ ] Support for zero-width characters
+- [ ] Emoji variant handling (text vs graphical presentation)
+
+### Task 5.2: Layout improvements [3 points]
+- [ ] Vertical alignment options (top, center, bottom)
+- [ ] Horizontal content justification (left, center, right, justify)
+- [ ] Configurable padding per side
+
+### Task 5.3: Content filtering and processing [4 points]
+- [ ] Tab expansion with configurable width
+- [ ] Whitespace normalization options
+- [ ] Content preprocessing hooks
+
+---
+
+## Sprint 6: Polish & Optimization (Total: 8 points)
+
+### Task 6.1: Performance optimization [3 points]
 - [ ] Cache width calculations where possible
 - [ ] Optimize for common ASCII case
-- [ ] Profile and reduce allocations
+- [ ] Profile and reduce memory allocations
+- [ ] Benchmark against large inputs
 
-### Task 4.2: Add color palette expansion [2 points]
-- [ ] Add more color options
-- [ ] Support hex color codes (stretch goal)
-- [ ] Add color aliases (e.g., "error" -> "red")
+### Task 6.2: Enhanced color palette [3 points]
+- [ ] Add 256-color palette support
+- [ ] Support hex color codes (`#FF5733`)
+- [ ] Add semantic color aliases (`error`, `success`, `warning`)
+- [ ] Theme preset system
 
-### Task 4.3: Improve error handling [2 points]
+### Task 6.3: Error handling & validation [2 points]
 - [ ] Better error messages for invalid inputs
 - [ ] Graceful degradation for terminal limitations
-- [ ] Add --validate flag for testing
+- [ ] Input validation with helpful suggestions
 
 ---
 

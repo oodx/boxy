@@ -3,6 +3,9 @@ use std::io::{self, Read};
 use std::env;
 use regex::Regex;
 
+mod themes;
+use themes::*;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const NAME: &str = env!("CARGO_PKG_NAME");
 const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
@@ -46,6 +49,7 @@ const ASCII: BoxStyle = BoxStyle {
     horizontal: "-", vertical: "|",
 };
 
+
 fn get_color_code(color: &str) -> &'static str {
     match color {
         "red" => "\x1B[38;5;9m",
@@ -79,24 +83,47 @@ fn get_display_width(text: &str) -> usize {
     UnicodeWidthStr::width(clean_str.as_ref())
 }
 
+fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
+    if max_width == 0 {
+        return String::new();
+    }
+    
+    let text_width = get_display_width(text);
+    if text_width <= max_width {
+        return text.to_string();
+    }
+    
+    // Unicode ellipsis character
+    const ELLIPSIS: &str = "…";
+    const ELLIPSIS_WIDTH: usize = 1;
+    
+    if max_width <= ELLIPSIS_WIDTH {
+        return ELLIPSIS.to_string();
+    }
+    
+    let target_width = max_width - ELLIPSIS_WIDTH;
+    let mut result = String::new();
+    let mut current_width = 0;
+    
+    for ch in text.chars() {
+        let ch_width = UnicodeWidthStr::width(ch.to_string().as_str());
+        if current_width + ch_width > target_width {
+            break;
+        }
+        result.push(ch);
+        current_width += ch_width;
+    }
+    
+    result.push_str(ELLIPSIS);
+    result
+}
+
 fn render_title_or_footer(text: &str, total_width: usize, style_char: &str) -> String {
     let text_width = get_display_width(text);
     let available_width = total_width.saturating_sub(2); // Space for " text "
     
     let final_text = if text_width > available_width {
-        // Truncate with ellipsis
-        let mut truncated = String::new();
-        let mut current_width = 0;
-        for ch in text.chars() {
-            let ch_width = UnicodeWidthStr::width(ch.to_string().as_str());
-            if current_width + ch_width + 3 > available_width {
-                truncated.push_str("...");
-                break;
-            }
-            truncated.push(ch);
-            current_width += ch_width;
-        }
-        truncated
+        truncate_with_ellipsis(text, available_width)
     } else {
         text.to_string()
     };
@@ -180,15 +207,18 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>) {
+fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>) {
     let lines: Vec<&str> = text.lines().collect();
     
-    let max_width = lines.iter()
+    let content_max_width = lines.iter()
         .map(|line| get_display_width(line))
         .max()
         .unwrap_or(0);
     
-    let inner_width = max_width + 2 * padding;
+    let inner_width = match fixed_width {
+        Some(w) => w.saturating_sub(2), // Account for left and right borders
+        None => content_max_width + 2 * padding,
+    };
     let color_code = get_color_code(color);
     let pad = " ".repeat(padding);
     
@@ -206,22 +236,54 @@ fn draw_box(text: &str, padding: usize, style: &BoxStyle, color: &str, title: Op
     
     // Content lines with optional icon on first line
     for (i, line) in lines.iter().enumerate() {
-        let width = get_display_width(line);
-        let spaces = " ".repeat(max_width - width);
+        let available_content_width = inner_width - 2 * padding;
+        
+        // Truncate line if it exceeds available width
+        let display_line = if fixed_width.is_some() {
+            let line_width = get_display_width(line);
+            if line_width > available_content_width {
+                truncate_with_ellipsis(line, available_content_width)
+            } else {
+                line.to_string()
+            }
+        } else {
+            line.to_string()
+        };
+        
+        let width = get_display_width(&display_line);
+        let max_content_width = if fixed_width.is_some() { 
+            available_content_width 
+        } else { 
+            content_max_width 
+        };
+        let spaces = " ".repeat(max_content_width - width);
         
         if i == 0 && icon.is_some() {
             // First line with icon
             let icon_str = icon.unwrap();
             let icon_expanded = expand_variables(icon_str);
+            
+            // Account for icon when truncating
+            let icon_width = get_display_width(&icon_expanded) + 1; // +1 for space
+            let line_width = get_display_width(line);
+            let final_line = if fixed_width.is_some() && line_width > available_content_width - icon_width {
+                truncate_with_ellipsis(line, available_content_width - icon_width)
+            } else {
+                display_line
+            };
+            
+            let final_width = get_display_width(&final_line);
+            let final_spaces = " ".repeat(max_content_width.saturating_sub(final_width + icon_width));
+            
             println!("{}{} {}{}{}{}{}{}{}",
                 color_code, style.vertical, RESET,
                 icon_expanded, " ",
-                line, spaces, pad,
+                final_line, final_spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         } else {
             println!("{}{}{}{}{}{}{}{}",
                 color_code, style.vertical, RESET,
-                pad, line, spaces, pad,
+                pad, display_line, spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         }
     }
@@ -249,6 +311,8 @@ fn main() {
     let mut icon: Option<String> = None;
     let mut no_boxy = false;
     let mut strict_mode = false;
+    let mut fixed_width: Option<usize> = None;
+    let mut theme_name: Option<String> = None;
     let mut skip_next = false;
     
     for (i, arg) in args.iter().enumerate().skip(1) {
@@ -268,6 +332,8 @@ fn main() {
                 println!("    -c, --color <COLOR>      Box color [red, red2, green, green2, blue, blue2,");
                 println!("                             cyan, orange, yellow, purple, purple2, magenta,");
                 println!("                             deep, deep_green, white, white2, grey, grey2, grey3]");
+                println!("    -w, --width <WIDTH>      Fixed box width (content truncated with … if needed)");
+                println!("    --theme <THEME>          Apply predefined theme (sets icon, color, width)");
                 println!("    --title <TEXT>           Add title to top border (supports $VAR expansion)");
                 println!("    --footer <TEXT>          Add footer to bottom border");
                 println!("    --icon <ICON>            Add icon/emoji to first content line");
@@ -278,6 +344,9 @@ fn main() {
                 println!("    echo \"Hello\" | {}", NAME);
                 println!("    echo \"Hello\" | {} --style rounded --color blue", NAME);
                 println!("    echo \"Hello\" | {} --title \"🚀 My App\" --footer \"v1.0\"", NAME);
+                println!("    echo \"Long text here\" | {} --width 20", NAME);
+                println!("    echo \"Something went wrong\" | {} --theme error", NAME);
+                println!("    echo \"Build successful\" | {} --theme success", NAME);
                 println!("    echo \"Test\" | {} | {} --no-boxy", NAME, NAME);
                 return;
             }
@@ -304,6 +373,26 @@ fn main() {
             "--color" | "-c" => {
                 if i + 1 < args.len() {
                     color = &args[i + 1];
+                    skip_next = true;
+                }
+            }
+            "--width" | "-w" => {
+                if i + 1 < args.len() {
+                    match args[i + 1].parse::<usize>() {
+                        Ok(w) if w >= 4 => {
+                            fixed_width = Some(w);
+                            skip_next = true;
+                        }
+                        _ => {
+                            eprintln!("Error: Width must be a number >= 4 (minimum for box borders)");
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
+            "--theme" => {
+                if i + 1 < args.len() {
+                    theme_name = Some(args[i + 1].clone());
                     skip_next = true;
                 }
             }
@@ -342,12 +431,41 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).expect("Failed to read input");
     
-    let text = input.trim_end_matches('\n');
+    let mut text = input.trim_end_matches('\n').to_string();
+    
+    // Apply theme if specified
+    let themes = get_themes();
+    if let Some(theme) = theme_name.as_ref().and_then(|name| themes.get(name.as_str())) {
+        // Theme overrides defaults but explicit flags override theme
+        if color == "none" {
+            color = theme.color;
+        }
+        // When using themes, always prepend emoji to content (no icon positioning)
+        let theme_emoji = if let Some(override_icon) = &icon {
+            // If explicit icon provided, use that instead of theme's emoji
+            override_icon
+        } else {
+            // Use theme's emoji
+            theme.icon
+        };
+        text = format!("{} {}", theme_emoji, text);
+        // Clear icon so it doesn't get used in positioning system
+        icon = None;
+        if fixed_width.is_none() {
+            fixed_width = theme.width;
+        }
+    } else if let Some(name) = &theme_name {
+        eprintln!("Unknown theme: {}. Available themes:", name);
+        let mut theme_names: Vec<_> = themes.keys().cloned().collect();
+        theme_names.sort();
+        eprintln!("  {}", theme_names.join(", "));
+        std::process::exit(1);
+    }
     
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(&text, 1, style, color, title.as_deref(), footer.as_deref(), icon.as_deref());
+        draw_box(&text, 1, style, color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width);
     }
 }
