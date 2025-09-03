@@ -1,0 +1,53 @@
+version: 0.6.0
+created: 2025-09-03
+context: boxy v0.6 update – UAT and docs alignment
+
+summary:
+  implemented:
+    - header_title_split: true  # --header external, --title in-border with icon spacing
+    - status_alignment: true    # sl:/sc:/sr: prefixes rendered below box
+    - theme_engine: partial     # YAML load + built-in fallback; list/create/import/export/edit
+    - color_system: extended    # 90+ colors with validation and --colors preview
+    - migration_assistant: present  # migrate-commands with examples/guide/check
+    - pipeline_utility: present # --no-boxy and --no-boxy=strict
+    - jynx_integration: present # detected and used to enhance help/list
+
+  gaps:
+    - theme_show_subcommand: missing  # documented, not implemented
+    - theme_validate_subcommand: missing  # documented, not implemented
+    - text_styling_render: not_applied  # yaml text_style present, no --text-style flag, not rendered
+    - header_footer_alignment: not_applied  # header_align/footer_align ignored in render
+    - caching_lazy_loading: not_implemented  # docs claim caching; engine loads on demand only
+
+  uat_findings:
+    - ux_script_lacks_phase_ceremony  # sections exist but not aligned to M1–M4 ceremonies
+    - theme_show_demo_errors          # causes Unknown action; confuses UAT flow
+    - status_usage_not_visually_called_out  # needs explicit ceremony to be obvious
+
+alignment_with_feedback:
+  header_position:
+    current: external_header_above_box
+    feedback_expected: internal_top_border_like_footer
+    impact: visual_mismatch_in_UAT
+    action: defer_code_change; highlight behavior in UAT and note spec difference
+  status_visibility:
+    current: rendered_below_box_with_alignment_prefixes
+    action: add_explicit_status_ceremony_in_ux
+  theme_management:
+    current: list/create/import/export/edit
+    missing: show/validate
+    action: avoid_show_in_UAT; optionally preview via export
+  text_styling:
+    current: yaml_field_only
+    missing: CLI_flag_and_rendering
+    action: defer
+  pipeline_utility:
+    current: --no-boxy and strict present
+    action: add_explicit_pipeline_ceremony_in_ux
+
+recommendations:
+  - restructure_ux_into_M1_M2_M3_M4_with_numbered_steps
+  - remove_or_guard_theme_show_from_UAT_until_implemented
+  - add clear status and pipeline ceremonies
+  - adjust help copy to only advertise implemented theme actions
+

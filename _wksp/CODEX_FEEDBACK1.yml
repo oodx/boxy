@@ -1,0 +1,11 @@
+
+- ux.sh is our primary UAT testing setup for this, overall the UAT is invalid because test should have proper "ceremony" for each phase, indicating the step number and explict items being tested. The current setup fails to communicate visually.
+
+- the --header option is supposed to work the same as --footer, inside the top and bottom lines respectively, not outside. 
+- I have to see a visual UAT of status, i cannot tell when it has been used.
+- theme seems ok if it works but probably needs refactoring due to my notion of "embedded/builtin theme" vs what was implemented.  (defered)
+- Color system is great, i have yet to see a demo 
+- Migration assistant seems like over engineering as a feature that was not asked for but (defered)
+- Pipeline utility is not properly ceremonied in the ux.sh test
+
+
