@@ -1,0 +1,249 @@
+# Boxy v0.6+ Theme File Schema
+# Complete specification for YAML theme configuration
+# Inherits jynx proven architecture patterns
+
+# Theme metadata (required)
+metadata:
+  name: "theme_name"           # Theme identifier (used for --theme=name)
+  version: "1.0.0"            # Semantic version
+  description: "Theme description for users"
+  author: "Theme Author"       # Optional: theme creator
+  created: "2024-01-01"       # Optional: creation date
+  updated: "2024-01-01"       # Optional: last update
+  compatibility: "boxy>=0.6.0" # Optional: version requirements
+
+# Color definitions (optional - inherits from colors.rs if not specified)
+colors:
+  # Custom color definitions can override or extend base palette
+  # Format: "color_name": "ANSI_escape_sequence"
+  custom_red: "\x1B[38;5;196m"
+  brand_blue: "\x1B[38;5;27m"
+
+# Theme definitions (required)
+themes:
+  # Theme name as key, configuration as value
+  theme_name:
+    # === VISUAL PROPERTIES ===
+    color: "crimson"              # Box border color (required)
+    text_color: "auto"            # Text color: color_name, "auto" (match box), "none" (default)
+    style: "heavy"                # Border style: normal, rounded, double, heavy, ascii
+    
+    # === TEXT STYLING (v0.6+ feature) ===
+    text_style: "bold"            # Text formatting (optional)
+    # Available styles: normal, bold, italic, underline, dim, strikethrough
+    # Combined: bold_italic, bold_underline, strikethrough_dim, etc.
+    
+    # === BOX CONTENT ===
+    title: "❌ Error"             # Internal title with icon (optional)
+    header: "External Header"     # External header above box (optional) 
+    footer: "Footer Text"         # Footer below box (optional)
+    icon: "❌"                    # Leading icon for content (optional)
+    
+    # === LAYOUT PROPERTIES ===
+    width: 60                     # Fixed width in characters (optional)
+    padding: 1                    # Internal padding (optional, default: 1)
+    
+    # === LAYOUT ALIGNMENT ===
+    title_align: "center"         # Title alignment: left, center, right
+    header_align: "center"        # Header alignment: left, center, right  
+    footer_align: "center"        # Footer alignment: left, center, right
+    
+    # === ADVANCED FEATURES ===
+    status_bar: "Status text"     # Status bar below box (optional)
+    status_align: "left"          # Status alignment: left, center, right
+    
+    # === INHERITANCE (v0.6+ advanced feature) ===
+    inherits: "base_theme"        # Inherit from another theme (optional)
+    
+    # === CONDITIONAL LOGIC (v0.6+ future) ===
+    conditions:                   # Optional conditional styling
+      terminal_width:
+        min: 80                   # Minimum terminal width
+        max: 120                  # Maximum terminal width
+      content_match:              # Apply when content matches pattern
+        pattern: "error|ERROR"
+        style_override:
+          color: "crimson"
+          text_style: "bold"
+
+# Built-in theme presets for quick access
+presets:
+  error_box: "error"              # Shortcut: --preset=error_box maps to error theme
+  success_box: "success"
+  warn_box: "warning"
+  info_box: "info"
+  code_box: "code_block"
+
+# Text style definitions (shared across themes)
+text_styles:
+  normal: ""
+  bold: "\x1B[1m"
+  italic: "\x1B[3m"
+  underline: "\x1B[4m"
+  dim: "\x1B[2m"
+  strikethrough: "\x1B[9m"
+  
+  # Combined styles (automatically generated)
+  bold_italic: "\x1B[1;3m"
+  bold_underline: "\x1B[1;4m"
+  italic_dim: "\x1B[3;2m"
+  strikethrough_dim: "\x1B[9;2m"
+
+# Template definitions for theme generation
+templates:
+  semantic_theme:               # Template for creating semantic themes
+    color: "{{ base_color }}"
+    text_color: "auto"
+    style: "heavy"
+    text_style: "bold"
+    title: "{{ icon }} {{ title_text }}"
+    width: 50
+  
+  minimal_theme:                # Template for minimal themes
+    color: "slate"
+    text_color: "none"
+    style: "normal"
+    text_style: "normal"
+    
+  rich_theme:                   # Template for feature-rich themes
+    color: "{{ primary_color }}"
+    text_color: "{{ accent_color }}"
+    style: "double"
+    text_style: "bold_italic"
+    header: "{{ header_text }}"
+    footer: "{{ footer_text }}"
+    width: 80
+
+# Configuration settings
+settings:
+  default_theme: "info"         # Default theme when none specified
+  fallback_color: "slate"       # Fallback when color unavailable
+  max_width: 120                # Maximum box width
+  min_width: 10                 # Minimum box width
+  
+  # Performance settings
+  cache_themes: true            # Cache parsed themes for speed
+  validate_colors: true         # Validate colors at load time
+  
+  # Compatibility settings
+  legacy_mode: false            # Enable v0.5.0 compatibility mode
+  strict_validation: true       # Strict YAML validation
+
+# Example theme configurations
+examples:
+  # === SEMANTIC THEMES ===
+  error:
+    color: "crimson"
+    text_color: "white"
+    style: "heavy"
+    text_style: "bold"
+    title: "❌ Error"
+    width: 60
+    
+  warning:
+    color: "amber"
+    text_color: "auto"
+    style: "heavy"
+    text_style: "italic"
+    title: "⚠️ Warning"
+    
+  success:
+    color: "emerald"
+    text_color: "auto"
+    style: "rounded"
+    text_style: "bold"
+    title: "✅ Success"
+    
+  info:
+    color: "azure"
+    text_color: "auto"
+    style: "normal"
+    text_style: "normal"
+    title: "ℹ️ Info"
+    
+  # === PRIORITY THEMES ===
+  critical:
+    color: "crimson"
+    text_color: "white"
+    style: "double"
+    text_style: "bold_underline"
+    title: "🚨 Critical"
+    width: 70
+    
+  urgent:
+    color: "tangerine"
+    text_color: "auto"
+    style: "heavy"
+    text_style: "bold"
+    title: "⚡ Urgent"
+    
+  # === DOMAIN THEMES ===
+  code_block:
+    color: "steel"
+    text_color: "auto"
+    style: "ascii"
+    text_style: "normal"
+    title: "💻 Code"
+    width: 80
+    
+  documentation:
+    color: "azure"
+    text_color: "auto"
+    style: "rounded"
+    text_style: "normal"
+    title: "📚 Documentation"
+    width: 70
+    
+  # === VISUAL THEMES ===
+  minimal:
+    color: "slate"
+    text_color: "auto"
+    style: "normal"
+    text_style: "normal"
+    
+  retro:
+    color: "amber"
+    text_color: "auto"
+    style: "ascii"
+    text_style: "bold"
+    title: "▓▓▓"
+    
+  # === ACCESSIBILITY THEMES ===
+  high_contrast:
+    color: "white"
+    text_color: "black"
+    style: "heavy"
+    text_style: "bold"
+    
+  colorblind_safe:
+    color: "azure"  # Blue-based, universally accessible
+    text_color: "auto"
+    style: "heavy"
+    text_style: "bold"
+
+# Theme validation rules
+validation:
+  required_fields: ["color"]     # Minimum required fields
+  allowed_colors: "from_colors_rs" # Reference to colors.rs palette
+  allowed_styles: ["normal", "rounded", "double", "heavy", "ascii"]
+  allowed_text_styles: ["normal", "bold", "italic", "underline", "dim", "strikethrough"]
+  max_title_length: 50          # Maximum title length
+  max_width: 200                 # Maximum box width
+
+# Migration helpers for v0.5.0 → v0.6.0
+migration:
+  # Map old theme names to new theme names
+  theme_mapping:
+    "fatal": "critical"
+    "warn": "warning" 
+    "dev": "info"
+  
+  # Handle deprecated fields
+  deprecated_fields:
+    "emoji": "icon"              # Old "emoji" field maps to "icon"
+    "border_color": "color"      # Old naming convention
+    
+  # Automatic field generation
+  auto_generate:
+    title_from_icon: true        # Generate title from icon if missing
+    style_from_theme: true       # Infer style from theme type

@@ -11,7 +11,6 @@ use crate::colors::*;
 pub struct ThemeEngine {
     themes: HashMap<String, BoxyTheme>,
     theme_files: Vec<PathBuf>,
-    default_theme: String,
     xdg_base_dir: PathBuf,
 }
 
@@ -93,7 +92,7 @@ pub struct ThemeMetadata {
 }
 
 /// Theme file settings
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeSettings {
     #[serde(default = "default_theme_name")]
     pub default_theme: String,
@@ -107,6 +106,19 @@ pub struct ThemeSettings {
     pub cache_themes: bool,
     #[serde(default = "default_true")]
     pub validate_colors: bool,
+}
+
+impl Default for ThemeSettings {
+    fn default() -> Self {
+        ThemeSettings {
+            default_theme: default_theme_name(),
+            fallback_color: default_fallback_color(),
+            max_width: default_max_width(),
+            min_width: default_min_width(),
+            cache_themes: default_true(),
+            validate_colors: default_true(),
+        }
+    }
 }
 
 // Default value functions for serde
@@ -130,7 +142,6 @@ impl ThemeEngine {
         let mut engine = ThemeEngine {
             themes: HashMap::new(),
             theme_files: Vec::new(),
-            default_theme: "info".to_string(),
             xdg_base_dir,
         };
         
@@ -433,5 +444,299 @@ mod tests {
         
         // Should fallback gracefully for unknown themes
         assert!(engine.get_theme("unknown_theme").is_none());
+    }
+
+    #[test]
+    fn test_theme_properties() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Test error theme properties
+        let error_theme = engine.get_theme("error").unwrap();
+        assert_eq!(error_theme.color, "crimson");
+        assert_eq!(error_theme.text_color, "white");
+        assert_eq!(error_theme.style, "heavy");
+        assert_eq!(error_theme.text_style, "bold");
+        assert!(error_theme.title.is_some());
+        // Note: icon might be None if it's embedded in title instead
+        assert!(error_theme.icon.is_some() || error_theme.title.is_some());
+        
+        // Test success theme properties
+        let success_theme = engine.get_theme("success").unwrap();
+        assert_eq!(success_theme.color, "emerald");
+        assert_eq!(success_theme.text_color, "auto");
+        assert_eq!(success_theme.style, "rounded");
+        assert_eq!(success_theme.text_style, "bold");
+    }
+
+    #[test]
+    fn test_theme_validation_comprehensive() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Test invalid style
+        let invalid_style_theme = BoxyTheme {
+            color: "azure".to_string(),
+            style: "invalid_style".to_string(),
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&invalid_style_theme).is_err());
+        
+        // Test invalid text color
+        let invalid_text_color_theme = BoxyTheme {
+            color: "azure".to_string(),
+            text_color: "invalid_color".to_string(),
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&invalid_text_color_theme).is_err());
+        
+        // Test invalid width constraints
+        let invalid_width_theme = BoxyTheme {
+            color: "azure".to_string(),
+            width: Some(5), // Too small
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&invalid_width_theme).is_err());
+        
+        let invalid_width_large_theme = BoxyTheme {
+            color: "azure".to_string(),
+            width: Some(300), // Too large
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&invalid_width_large_theme).is_err());
+    }
+
+    #[test]
+    fn test_theme_list() {
+        let engine = ThemeEngine::new().unwrap();
+        let themes = engine.list_themes();
+        
+        // Should have at least the built-in themes
+        assert!(themes.len() >= 4);
+        
+        // Check that themes are returned as (name, description) pairs
+        let theme_names: Vec<String> = themes.iter().map(|(name, _)| name.clone()).collect();
+        assert!(theme_names.contains(&"error".to_string()));
+        assert!(theme_names.contains(&"success".to_string()));
+        assert!(theme_names.contains(&"warning".to_string()));
+        assert!(theme_names.contains(&"info".to_string()));
+    }
+
+    #[test]
+    fn test_theme_inheritance() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Create a theme with inheritance (simulated)
+        let parent_theme = BoxyTheme {
+            color: "azure".to_string(),
+            text_color: "auto".to_string(),
+            style: "normal".to_string(),
+            padding: 2,
+            ..Default::default()
+        };
+        
+        let child_theme = BoxyTheme {
+            color: "crimson".to_string(), // Override parent color
+            text_style: "bold".to_string(),
+            inherits: Some("parent".to_string()),
+            ..Default::default()
+        };
+        
+        let merged = engine.merge_themes(parent_theme, child_theme);
+        
+        // Child should override parent properties
+        assert_eq!(merged.color, "crimson");
+        assert_eq!(merged.text_style, "bold");
+        // Parent properties should be preserved where child doesn't override
+        assert_eq!(merged.text_color, "auto");
+        assert_eq!(merged.padding, 2);
+    }
+
+    #[test]
+    fn test_yaml_theme_file_parsing() {
+        // Test YAML theme file structure
+        let test_yaml = r#"
+metadata:
+  name: "test-theme"
+  version: "1.0.0"
+  description: "Test theme for unit testing"
+
+colors:
+  custom_red: "\x1B[38;5;196m"
+
+themes:
+  test_theme:
+    color: "azure"
+    text_color: "auto"
+    style: "rounded"
+    title: "Test Theme"
+    width: 50
+
+presets:
+  test_preset: "test_theme"
+
+settings:
+  default_theme: "test_theme"
+"#;
+
+        // Parse YAML
+        let result: Result<ThemeFile, _> = serde_yaml::from_str(test_yaml);
+        assert!(result.is_ok());
+        
+        let theme_file = result.unwrap();
+        assert_eq!(theme_file.metadata.name, "test-theme");
+        assert_eq!(theme_file.metadata.version, "1.0.0");
+        assert!(theme_file.themes.contains_key("test_theme"));
+        
+        let theme = &theme_file.themes["test_theme"];
+        assert_eq!(theme.color, "azure");
+        assert_eq!(theme.style, "rounded");
+        assert_eq!(theme.width, Some(50));
+    }
+
+    #[test]
+    fn test_theme_default_values() {
+        // Test that theme defaults work correctly
+        let default_theme = BoxyTheme::default();
+        
+        assert_eq!(default_theme.color, "azure");
+        assert_eq!(default_theme.text_color, "auto");
+        assert_eq!(default_theme.style, "normal");
+        assert_eq!(default_theme.text_style, "normal");
+        assert_eq!(default_theme.padding, 1);
+        assert_eq!(default_theme.title_align, "center");
+        assert_eq!(default_theme.status_align, "left");
+        assert!(default_theme.width.is_none());
+        assert!(default_theme.inherits.is_none());
+    }
+
+    #[test]
+    fn test_xdg_directory_path() {
+        let engine = ThemeEngine::new().unwrap();
+        let themes_dir = engine.get_themes_directory();
+        
+        // Should end with the correct path structure
+        assert!(themes_dir.to_string_lossy().contains(".local/etc/rsb/boxy/themes"));
+    }
+
+    #[test]
+    fn test_theme_file_validation() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Valid theme
+        let valid_theme = BoxyTheme {
+            color: "emerald".to_string(),
+            text_color: "none".to_string(),
+            style: "rounded".to_string(),
+            width: Some(60),
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&valid_theme).is_ok());
+        
+        // Test edge case width values
+        let min_width_theme = BoxyTheme {
+            color: "azure".to_string(),
+            width: Some(10), // Minimum valid
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&min_width_theme).is_ok());
+        
+        let max_width_theme = BoxyTheme {
+            color: "azure".to_string(),
+            width: Some(200), // Maximum valid
+            ..Default::default()
+        };
+        assert!(engine.validate_theme(&max_width_theme).is_ok());
+    }
+
+    #[test]
+    fn test_theme_metadata_handling() {
+        let metadata = ThemeMetadata {
+            name: "Test Theme".to_string(),
+            version: "1.2.3".to_string(),
+            description: "A test theme".to_string(),
+            author: "test_author".to_string(),
+            created: "2024-09-03".to_string(),
+            updated: "2024-09-03".to_string(),
+            compatibility: "boxy v0.6+".to_string(),
+        };
+        
+        let theme = BoxyTheme {
+            color: "violet".to_string(),
+            metadata: Some(metadata.clone()),
+            ..Default::default()
+        };
+        
+        assert!(theme.metadata.is_some());
+        let theme_meta = theme.metadata.unwrap();
+        assert_eq!(theme_meta.name, "Test Theme");
+        assert_eq!(theme_meta.version, "1.2.3");
+        assert_eq!(theme_meta.compatibility, "boxy v0.6+");
+    }
+
+    #[test]
+    fn test_theme_settings_defaults() {
+        let settings = ThemeSettings::default();
+        
+        // Debug what we actually get
+        println!("Actual default_theme: '{}'", settings.default_theme);
+        
+        assert_eq!(settings.default_theme, "info");
+        assert_eq!(settings.fallback_color, "slate");
+        assert_eq!(settings.max_width, 120);
+        assert_eq!(settings.min_width, 10);
+        assert!(settings.cache_themes);
+        assert!(settings.validate_colors);
+    }
+
+    #[test]
+    fn test_theme_resolution_variations() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Direct theme resolution should work
+        assert!(engine.get_theme("error").is_some());
+        assert!(engine.get_theme("success").is_some());
+        
+        // Non-existent themes should return None
+        assert!(engine.get_theme("nonexistent").is_none());
+        assert!(engine.get_theme("").is_none());
+        
+        // Case sensitivity test
+        assert!(engine.get_theme("ERROR").is_none()); // Should be case sensitive
+    }
+
+    #[test]
+    fn test_color_validation_in_themes() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Test all built-in theme colors are valid
+        for (theme_name, _) in engine.list_themes() {
+            let theme = engine.get_theme(&theme_name).unwrap();
+            assert!(engine.validate_theme(&theme).is_ok(), "Theme {} should be valid", theme_name);
+        }
+    }
+
+    #[test]
+    fn test_comprehensive_theme_structure() {
+        let engine = ThemeEngine::new().unwrap();
+        
+        // Test that all built-in themes have required properties
+        let required_themes = vec!["error", "success", "warning", "info"];
+        
+        for theme_name in required_themes {
+            let theme = engine.get_theme(theme_name)
+                .expect(&format!("Theme {} should exist", theme_name));
+            
+            // All themes should have valid colors
+            assert!(!theme.color.is_empty(), "Theme {} should have a color", theme_name);
+            
+            // Text color should be valid
+            assert!(theme.text_color == "auto" || theme.text_color == "none" || 
+                   validate_color(&theme.text_color).is_ok(), 
+                   "Theme {} should have valid text color", theme_name);
+            
+            // Style should be valid
+            let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];
+            assert!(valid_styles.contains(&theme.style.as_str()), 
+                   "Theme {} should have valid style", theme_name);
+        }
     }
 }

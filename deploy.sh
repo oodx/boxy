@@ -7,7 +7,20 @@ BINARY_NAME="boxy"
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEPLOYABLE="${BINARY_NAME}"
 
-echo "🔨 Building boxy..."
+# Extract version from Cargo.toml
+VERSION=$(grep '^version' "$PROJECT_DIR/Cargo.toml" | head -1 | cut -d'"' -f2)
+
+# Display deployment ceremony
+echo "╔════════════════════════════════════════════════╗"
+echo "║            🎁 BOXY DEPLOYMENT CEREMONY 🎁       ║"
+echo "╠════════════════════════════════════════════════╣"
+echo "║  Package: $BINARY_NAME                          ║"
+echo "║  Version: v$VERSION (Theme System + 90+ Colors) ║"
+echo "║  Target:  $INSTALL_DIR/$BINARY_NAME             ║"
+echo "╚════════════════════════════════════════════════╝"
+echo ""
+
+echo "🔨 Building boxy v$VERSION..."
 cd "$PROJECT_DIR"
 if ! cargo build --release; then
     echo "❌ Build failed!"
@@ -46,14 +59,24 @@ if ! echo "Test" | "$INSTALL_DIR/$BINARY_NAME" > /dev/null 2>&1; then
     exit 1
 fi
 
-echo "✅ Deployed successfully!"
 echo ""
-echo "📍 Binary location: $INSTALL_DIR/$BINARY_NAME"
+echo "╔════════════════════════════════════════════════╗"
+echo "║         ✅ DEPLOYMENT SUCCESSFUL! ✅            ║"
+echo "╠════════════════════════════════════════════════╣"
+echo "║  Deployed: boxy v$VERSION                       ║"
+echo "║  Location: $INSTALL_DIR/$BINARY_NAME            ║"
+echo "║  Features: Theme System, 90+ Colors, Headers   ║"
+echo "╚════════════════════════════════════════════════╝"
 echo ""
 echo "💡 To use in your bash scripts:"
 echo "   box() {"
 echo "       echo \"\$1\" | \"$INSTALL_DIR/$BINARY_NAME\""
 echo "   }"
 echo ""
-echo "🧪 Quick test:"
-echo "Hello World" | "$INSTALL_DIR/$BINARY_NAME"
+echo "🎨 Quick test of boxy v$VERSION theme system:"
+echo "Deploy successful!" | "$INSTALL_DIR/$BINARY_NAME" --theme success --header "🚀 Boxy v$VERSION"
+echo ""
+echo "📖 Explore features:"
+echo "   $INSTALL_DIR/$BINARY_NAME --colors    # View 90+ color palette"
+echo "   $INSTALL_DIR/$BINARY_NAME theme list  # Theme management"
+echo "   ./ux.sh                               # Feature demonstration"
