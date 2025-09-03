@@ -4,11 +4,12 @@ set -e
 # Configuration
 INSTALL_DIR="$HOME/.local/bin/odx"
 BINARY_NAME="boxy"
-PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve repository root from bin/
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOYABLE="${BINARY_NAME}"
 
-# Extract version from Cargo.toml
-VERSION=$(grep '^version' "$PROJECT_DIR/Cargo.toml" | head -1 | cut -d'"' -f2)
+# Extract version from Cargo.toml at repo root
+VERSION=$(grep '^version' "$ROOT_DIR/Cargo.toml" | head -1 | cut -d'"' -f2)
 
 # Display deployment ceremony
 echo "╔════════════════════════════════════════════════╗"
@@ -21,14 +22,14 @@ echo "╚═══════════════════════�
 echo ""
 
 echo "🔨 Building boxy v$VERSION..."
-cd "$PROJECT_DIR"
+cd "$ROOT_DIR"
 if ! cargo build --release; then
     echo "❌ Build failed!"
     exit 1
 fi
 
-# Check if binary was created
-if [ ! -f "target/release/${DEPLOYABLE}" ]; then
+# Check if binary was created (at repo root)
+if [ ! -f "$ROOT_DIR/target/release/${DEPLOYABLE}" ]; then
     echo "❌ Binary not found at target/release/${DEPLOYABLE}"
     exit 1
 fi
@@ -36,7 +37,7 @@ fi
 echo "📦 Deploying to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
 
-if ! cp "target/release/${DEPLOYABLE}" "$INSTALL_DIR/$BINARY_NAME"; then
+if ! cp "$ROOT_DIR/target/release/${DEPLOYABLE}" "$INSTALL_DIR/$BINARY_NAME"; then
     echo "❌ Failed to copy binary to $INSTALL_DIR"
     exit 1
 fi
@@ -79,4 +80,4 @@ echo ""
 echo "📖 Explore features:"
 echo "   $INSTALL_DIR/$BINARY_NAME --colors    # View 90+ color palette"
 echo "   $INSTALL_DIR/$BINARY_NAME theme list  # Theme management"
-echo "   ./ux.sh                               # Feature demonstration"
+echo "   $ROOT_DIR/bin/ux.sh                   # Feature demonstration"

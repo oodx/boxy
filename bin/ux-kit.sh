@@ -67,13 +67,10 @@ test_phase_super() {
     local theme="${4:-info}"
     
     if has_boxy; then
-        # Outer container box
+        # Render directly with boxy (full width), no ASCII frame
         {
-            echo "╔══════════════════════════════════════════════════════════════╗"
-            echo "║                    PHASE $phase_num: $phase_name                    ║"
-            echo "╚══════════════════════════════════════════════════════════════╝"
-            [[ -n "$description" ]] && echo "$description"
-        } | boxy --theme "$theme" --title "🧪 TEST PHASE" --footer "Divine Testing Protocol v1.0"
+            echo "$description"
+        } | boxy --theme "$theme" --title "🧪 TEST PHASE $phase_num: $phase_name" --status "sc:Divine Testing Protocol v1.0" --width max --layout dt
     else
         echo "═══════════════════════════════════════════════════════════════════════════════"
         echo "                         PHASE $phase_num: $phase_name"
@@ -209,15 +206,18 @@ section_divider() {
     local title="$1"
     local char="${2:--}"
     local width="${3:-70}"
-    
-    local padding=$(( (width - ${#title} - 2) / 2 ))
-    local left=$(printf '%*s' "$padding" | tr ' ' "$char")
-    local right=$(printf '%*s' "$padding" | tr ' ' "$char")
-    
-    if has_color; then
-        echo "${COLOR_CYAN}${left} ${COLOR_BOLD}$title${COLOR_RESET}${COLOR_CYAN} ${right}${COLOR_RESET}"
+    if has_boxy; then
+        # Render a full-width titled separator with no body
+        echo "" | boxy --style ascii --title "$title" --width max
     else
-        echo "${left} $title ${right}"
+        local padding=$(( (width - ${#title} - 2) / 2 ))
+        local left=$(printf '%*s' "$padding" | tr ' ' "$char")
+        local right=$(printf '%*s' "$padding" | tr ' ' "$char")
+        if has_color; then
+            echo "${COLOR_CYAN}${left} ${COLOR_BOLD}$title${COLOR_RESET}${COLOR_CYAN} ${right}${COLOR_RESET}"
+        else
+            echo "${left} $title ${right}"
+        fi
     fi
 }
 

@@ -210,23 +210,46 @@ pub fn get_color_categories() -> Vec<(&'static str, Vec<&'static str>)> {
 }
 
 /// Generate colored help text for CLI display
+fn pad_cell(s: &str, width: usize) -> String {
+    // Visible width approximation: count plain chars (ANSI not included here)
+    let len = s.chars().count();
+    if len >= width { return s.to_string(); }
+    let pad = " ".repeat(width - len);
+    format!("{}{}", s, pad)
+}
+
 pub fn generate_color_help() -> String {
     let mut help = String::new();
-    help.push_str("COLORS:\n");
-    
+    help.push_str("COLORS:\n\n");
+
+    let cols = 3usize;
+    let cell_w = 22usize; // fits name nicely in most terminals
+
     for (category, colors) in get_color_categories() {
-        help.push_str(&format!("  {}:\n", category));
-        for color in colors {
-            let color_code = get_color_code(color);
-            if !color_code.is_empty() {
-                help.push_str(&format!("    {}{}■ {}\x1B[0m\n", color_code, color_code, color));
-            } else {
-                help.push_str(&format!("    {} (no color)\n", color));
+        help.push_str(&format!("{}:\n", category));
+
+        let mut i = 0usize;
+        while i < colors.len() {
+            let mut row = String::new();
+            for j in 0..cols {
+                if i + j >= colors.len() { break; }
+                let name = colors[i + j];
+                let code = get_color_code(name);
+                let cell = if !code.is_empty() {
+                    format!("{}■ {}\x1B[0m", code, name)
+                } else {
+                    format!("  {}", name)
+                };
+                row.push_str(&pad_cell(&cell, cell_w));
             }
+            row.push('\n');
+            help.push_str("    ");
+            help.push_str(&row);
+            i += cols;
         }
         help.push('\n');
     }
-    
+
     help
 }
 

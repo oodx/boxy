@@ -51,6 +51,10 @@ echo "Build successful" | boxy --theme success --text auto
 # Fixed width boxes
 echo "This is a long message that will be truncated" | boxy --width 20
 
+# Full width or auto width
+echo "Use full terminal width" | boxy --width max
+echo "Use content-based width (default)" | boxy --width auto
+
 # Variable expansion in titles
 export VERSION="v1.2.3"
 echo "Build complete" | boxy --title "🏗️ Build $VERSION" --color green

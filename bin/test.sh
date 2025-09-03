@@ -1,11 +1,13 @@
 #!/bin/bash
 
-BOXY="./target/release/boxy"
+# Resolve repo root and binary path
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BOXY="$ROOT_DIR/target/release/boxy"
 
 # Build release version if it doesn't exist
 if [ ! -f "$BOXY" ]; then
     echo "Building release version..."
-    cargo build --release
+    (cd "$ROOT_DIR" && cargo build --release)
 fi
 
 # Mixed content

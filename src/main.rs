@@ -1,10 +1,11 @@
 use unicode_width::UnicodeWidthStr;
 use std::io::{self, Read, Write};
 use std::env;
-use std::process::Command;
-use std::fs;
+use std::process::{Command, Stdio};
+use std::fs::{self, File};
 use std::path::PathBuf;
 use regex::Regex;
+use std::collections::HashMap;
 
 mod colors;
 mod theme_engine;
@@ -22,36 +23,45 @@ struct BoxStyle {
     bottom_right: &'static str,
     horizontal: &'static str,
     vertical: &'static str,
+    tee_left: &'static str,
+    tee_right: &'static str,
+    #[allow(dead_code)]
+    cross: &'static str,
 }
 
 const NORMAL: BoxStyle = BoxStyle {
     top_left: "┌", top_right: "┐",
     bottom_left: "└", bottom_right: "┘",
     horizontal: "─", vertical: "│",
+    tee_left: "├", tee_right: "┤", cross: "┼",
 };
 
 const ROUNDED: BoxStyle = BoxStyle {
     top_left: "╭", top_right: "╮",
     bottom_left: "╰", bottom_right: "╯",
     horizontal: "─", vertical: "│",
+    tee_left: "├", tee_right: "┤", cross: "┼",
 };
 
 const DOUBLE: BoxStyle = BoxStyle {
     top_left: "╔", top_right: "╗",
     bottom_left: "╚", bottom_right: "╝",
     horizontal: "═", vertical: "║",
+    tee_left: "╠", tee_right: "╣", cross: "╬",
 };
 
 const HEAVY: BoxStyle = BoxStyle {
     top_left: "┏", top_right: "┓",
     bottom_left: "┗", bottom_right: "┛",
     horizontal: "━", vertical: "┃",
+    tee_left: "┣", tee_right: "┫", cross: "╋",
 };
 
 const ASCII: BoxStyle = BoxStyle {
     top_left: "+", top_right: "+",
     bottom_left: "+", bottom_right: "+",
     horizontal: "-", vertical: "|",
+    tee_left: "+", tee_right: "+", cross: "+",
 };
 
 
@@ -200,25 +210,138 @@ fn jynx_println(content: &str, template: &str, jynx: &JynxIntegration) {
     print!("{}", enhanced_content);
 }
 
+#[derive(Default, Debug)]
+struct ParsedContent {
+    header: Option<String>,
+    footer: Option<String>,
+    status: Option<String>,
+    title: Option<String>,
+    body: Option<String>,
+    icon: Option<String>,
+    title_color: Option<String>,
+    status_color: Option<String>,
+}
+
+fn unescape_stream_value(s: &str) -> String {
+    let mut out = String::new();
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            match chars.next() {
+                Some('n') => out.push('\n'),
+                Some('t') => out.push('\t'),
+                Some(other) => { out.push(other); },
+                None => break,
+            }
+        } else if c == '/' {
+            if let Some('n') = chars.peek().copied() { chars.next(); out.push('\n'); } else { out.push(c); }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+fn parse_content_stream(input: &str) -> Option<ParsedContent> {
+    // Matches k='v' with single quotes; non-greedy across newlines; optional trailing semicolon
+    let re = Regex::new(r"(?s)([A-Za-z]{2})\s*=\s*'(.+?)'\s*;?").ok()?;
+    let mut map: HashMap<String, String> = HashMap::new();
+    for cap in re.captures_iter(input) {
+        let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let v_raw = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+        let v = unescape_stream_value(v_raw);
+        map.insert(k, v);
+    }
+    if map.is_empty() {
+        return None;
+    }
+    let mut pc = ParsedContent::default();
+    if let Some(v) = map.remove("hd") { pc.header = Some(v); }
+    if let Some(v) = map.remove("ft") { pc.footer = Some(v); }
+    if let Some(v) = map.remove("st") { pc.status = Some(v); }
+    if let Some(v) = map.remove("tl") { pc.title = Some(v); }
+    // Body (bd) intentionally ignored; body should come from piped stdin
+    if let Some(v) = map.remove("ic") { pc.icon = Some(v); }
+    if let Some(v) = map.remove("tc") { pc.title_color = Some(v); }
+    if let Some(v) = map.remove("sc") { pc.status_color = Some(v); }
+    // If nothing recognized, return None to avoid hijacking arbitrary input
+    if pc.header.is_none() && pc.footer.is_none() && pc.status.is_none() && pc.title.is_none() && pc.body.is_none() && pc.icon.is_none() {
+        None
+    } else {
+        Some(pc)
+    }
+}
+
+/// Width diagnostics subcommand
+fn handle_width_command() {
+    // Helper to run command with /dev/tty as stdin when available
+    fn run_with_tty(mut cmd: Command) -> Option<String> {
+        if let Ok(tty) = File::open("/dev/tty") {
+            let _ = cmd.stdin(Stdio::from(tty));
+        }
+        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
+    }
+
+    // Gather tput cols (tty)
+    let tput_cols_tty = {
+        let mut c = Command::new("tput");
+        c.arg("cols");
+        run_with_tty(c).and_then(|s| s.trim().parse::<usize>().ok())
+    };
+
+    // Gather stty size (rows cols) via tty
+    let stty_cols_tty = {
+        let mut c = Command::new("stty");
+        c.arg("size");
+        run_with_tty(c).and_then(|s| {
+            let parts: Vec<&str> = s.split_whitespace().collect();
+            if parts.len() == 2 { parts[1].parse::<usize>().ok() } else { None }
+        })
+    };
+
+    let effective = get_terminal_width();
+    
+    println!("Width diagnostics:");
+    println!("  effective (get_terminal_width): {}", effective);
+    println!("  tput cols (tty): {}", tput_cols_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
+    println!("  stty size cols (tty): {}", stty_cols_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
+}
+
 /// Get terminal width with fallback to 80 columns
 fn get_terminal_width() -> usize {
-    // Try tput cols first
-    if let Ok(output) = Command::new("tput").arg("cols").output() {
-        if let Ok(width_str) = String::from_utf8(output.stdout) {
-            if let Ok(width) = width_str.trim().parse::<usize>() {
-                return width;
+    // Helper to run with /dev/tty
+    fn run_with_tty(mut cmd: Command) -> Option<String> {
+        if let Ok(tty) = File::open("/dev/tty") {
+            let _ = cmd.stdin(Stdio::from(tty));
+        }
+        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
+    }
+
+    // Try tput cols with tty (preferred)
+    {
+        let mut c = Command::new("tput");
+        c.arg("cols");
+        if let Some(out) = run_with_tty(c) {
+        if let Ok(width) = out.trim().parse::<usize>() {
+            if width >= 10 { return width; }
+        }
+        }
+    }
+
+    // Try stty size with tty
+    {
+        let mut c = Command::new("stty");
+        c.arg("size");
+        if let Some(out) = run_with_tty(c) {
+        let parts: Vec<&str> = out.split_whitespace().collect();
+        if parts.len() == 2 {
+            if let Ok(width) = parts[1].trim().parse::<usize>() {
+                if width >= 10 { return width; }
             }
         }
-    }
-    
-    // Try COLUMNS environment variable
-    if let Ok(cols) = env::var("COLUMNS") {
-        if let Ok(width) = cols.parse::<usize>() {
-            return width;
         }
     }
-    
-    // Fallback to 80 columns
+
     80
 }
 
@@ -263,7 +386,7 @@ fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
     result
 }
 
-fn render_title_or_footer(text: &str, total_width: usize, style_char: &str) -> String {
+fn render_title_or_footer(text: &str, total_width: usize, style_char: &str, align: &str) -> String {
     if total_width < 4 {
         // Minimum viable box: just return style chars
         return style_char.repeat(total_width);
@@ -302,8 +425,14 @@ fn render_title_or_footer(text: &str, total_width: usize, style_char: &str) -> S
     let final_text_width = get_display_width(&final_text);
     // CRITICAL FIX: Use saturating_sub to prevent underflow
     let remaining_width = total_width.saturating_sub(final_text_width + 2); // -2 for spaces around text
-    let left_pad = remaining_width / 2;
-    let right_pad = remaining_width.saturating_sub(left_pad);
+    let (left_pad, right_pad) = match align {
+        "left" => (0, remaining_width),
+        "right" => (remaining_width, 0),
+        _ => {
+            let lp = remaining_width / 2;
+            (lp, remaining_width.saturating_sub(lp))
+        }
+    };
     
     format!("{} {} {}", 
         style_char.repeat(left_pad), 
@@ -379,7 +508,7 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>, status_bar: Option<&str>, header: Option<&str>) {
+fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>, status_bar: Option<&str>, header: Option<&str>, header_align: &str, footer_align: &str, status_align_override: Option<&str>, divider_after_title: bool, divider_before_status: bool, pad_after_title_divider: bool, pad_before_status_divider: bool, pad_before_title: bool, pad_after_status: bool, pad_after_title: bool, pad_before_status: bool, title_color_name: Option<&str>, status_color_name: Option<&str>) {
     let terminal_width = get_terminal_width();
     
     // Calculate effective box width - respect terminal constraints
@@ -424,44 +553,50 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
     };
     
     let pad = " ".repeat(h_padding);
+    let title_color_code = title_color_name.map(|n| get_color_code(n)).unwrap_or("");
+    let status_color_code = status_color_name.map(|n| get_color_code(n)).unwrap_or("");
     
-    // External header (appears above the box)
+    // Top border with optional HEADER inside the border
     if let Some(header_text) = header {
         let expanded_header = expand_variables(header_text);
-        let header_width = get_display_width(&expanded_header);
-        
-        // LIPSIFY header more aggressively - use 90% of terminal width as threshold
-        let header_threshold = (terminal_width * 9) / 10; // 90% of terminal width
-        let final_header = if header_width > header_threshold {
-            truncate_with_ellipsis(&expanded_header, header_threshold)
-        } else {
-            expanded_header
-        };
-        
-        // Print external header with subtle styling
-        println!("{}{}{}", get_color_code("grey7"), final_header, RESET);
-    }
-    
-    // Top border with optional title - LIPSIFIED for terminal width
-    if let Some(title_text) = title {
-        let expanded_title = expand_variables(title_text);
-        let title_line = render_title_or_footer(&expanded_title, inner_width, style.horizontal);
-        println!("{}{}{}{}{}", 
-            color_code, style.top_left, title_line, style.top_right, RESET);
+        let header_line = render_title_or_footer(&expanded_header, inner_width, style.horizontal, header_align);
+        println!("{}{}{}{}{}", color_code, style.top_left, header_line, style.top_right, RESET);
     } else {
         let border = style.horizontal.repeat(inner_width);
-        println!("{}{}{}{}{}", 
-            color_code, style.top_left, border, style.top_right, RESET);
+        println!("{}{}{}{}{}", color_code, style.top_left, border, style.top_right, RESET);
     }
     
     // Content lines - LIPSIFIED for all cases
-    for (i, line) in lines.iter().enumerate() {
+    // Compose content lines; if title is provided, insert it as the first line
+    let mut composed_lines: Vec<String> = Vec::new();
+    if let Some(title_text) = title {
+        composed_lines.push(expand_variables(title_text));
+    }
+    composed_lines.extend(lines.iter().map(|l| (*l).to_string()));
+
+    // Optional padding blank line before title
+    if pad_before_title && title.is_some() {
+        let available_content_width = inner_width.saturating_sub(2 * h_padding);
+        println!(
+            "{}{}{}{}{}{}{}{}",
+            color_code,
+            style.vertical,
+            RESET,
+            pad,
+            " ".repeat(available_content_width),
+            pad,
+            format!("{}{}{}", color_code, style.vertical, RESET),
+            ""
+        );
+    }
+
+    for (i, line) in composed_lines.iter().enumerate() {
         let available_content_width = inner_width.saturating_sub(2 * h_padding);
         
         // LIPSIFY: Always truncate if line exceeds available width
-        let line_width = get_display_width(line);
+        let line_width = get_display_width(&line);
         let display_line = if line_width > available_content_width {
-            truncate_with_ellipsis(line, available_content_width)
+            truncate_with_ellipsis(&line, available_content_width)
         } else {
             line.to_string()
         };
@@ -470,6 +605,19 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
         let spaces = " ".repeat(available_content_width.saturating_sub(width));
         
         if i == 0 && icon.is_some() {
+            // Avoid duplicate icon if the title line already starts with an emoji/non-ASCII
+            let starts_with_emoji = line.chars().next().map(|c| !c.is_ascii()).unwrap_or(false);
+            if starts_with_emoji {
+                // Fall through to normal rendering without icon injection
+                let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
+                let colored_display_line = if line_code.is_empty() { display_line.to_string() } else { format!("{}{}{}", line_code, display_line, RESET) };
+                println!("{}{}{}{}{}{}{}{}",
+                    color_code, style.vertical, RESET,
+                    pad, colored_display_line, spaces, pad,
+                    format!("{}{}{}", color_code, style.vertical, RESET));
+                // Continue to next line
+                continue;
+            }
             // First line with icon - LIPSIFIED
             let icon_str = icon.unwrap();
             let icon_expanded = expand_variables(icon_str);
@@ -484,10 +632,11 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
             };
             
             // Apply text color to the text part only (not icon)
-            let colored_final_line = if text_color_code.is_empty() {
+            let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
+            let colored_final_line = if line_code.is_empty() {
                 final_line.to_string()
             } else {
-                format!("{}{}{}", text_color_code, final_line, RESET)
+                format!("{}{}{}", line_code, final_line, RESET)
             };
             
             let final_width = get_display_width(&final_line);
@@ -499,11 +648,12 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
                 colored_final_line, final_spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         } else {
-            // Apply text color to the display line
-            let colored_display_line = if text_color_code.is_empty() {
+            // Apply text/status/title color to the display line
+            let line_code = if i == 0 && !title_color_code.is_empty() { title_color_code } else { text_color_code };
+            let colored_display_line = if line_code.is_empty() {
                 display_line.to_string()
             } else {
-                format!("{}{}{}", text_color_code, display_line, RESET)
+                format!("{}{}{}", line_code, display_line, RESET)
             };
             
             println!("{}{}{}{}{}{}{}{}",
@@ -511,75 +661,153 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
                 pad, colored_display_line, spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         }
+
+        if divider_after_title && i == 0 {
+            println!(
+                "{}{}{}{}{}",
+                color_code,
+                style.tee_left,
+                style.horizontal.repeat(inner_width),
+                style.tee_right,
+                RESET
+            );
+            if pad_after_title_divider {
+                let available_content_width = inner_width.saturating_sub(2 * h_padding);
+                println!(
+                    "{}{}{}{}{}{}{}{}",
+                    color_code,
+                    style.vertical,
+                    RESET,
+                    pad,
+                    " ".repeat(available_content_width),
+                    pad,
+                    format!("{}{}{}", color_code, style.vertical, RESET),
+                    ""
+                );
+            }
+        } else if pad_after_title && i == 0 {
+            // Optional padding blank line after title when no divider requested
+            let available_content_width = inner_width.saturating_sub(2 * h_padding);
+            println!(
+                "{}{}{}{}{}{}{}{}",
+                color_code,
+                style.vertical,
+                RESET,
+                pad,
+                " ".repeat(available_content_width),
+                pad,
+                format!("{}{}{}", color_code, style.vertical, RESET),
+                ""
+            );
+        }
     }
     
-    // Bottom border with optional footer - LIPSIFIED for terminal width
-    if let Some(footer_text) = footer {
-        let expanded_footer = expand_variables(footer_text);
-        let footer_line = render_title_or_footer(&expanded_footer, inner_width, style.horizontal);
-        println!("{}{}{}{}{}", 
-            color_code, style.bottom_left, footer_line, style.bottom_right, RESET);
-    } else {
-        let border = style.horizontal.repeat(inner_width);
-        println!("{}{}{}{}{}", 
-            color_code, style.bottom_left, border, style.bottom_right, RESET);
-    }
-    
-    // Optional status bar with alignment support - LIPSIFIED for terminal width
+    // Optional STATUS line rendered inside the box (before footer)
     if let Some(status_text) = status_bar {
+        if pad_before_status {
+            let available_content_width = inner_width.saturating_sub(2 * h_padding);
+            println!(
+                "{}{}{}{}{}{}{}{}",
+                color_code,
+                style.vertical,
+                RESET,
+                pad,
+                " ".repeat(available_content_width),
+                pad,
+                format!("{}{}{}", color_code, style.vertical, RESET),
+                ""
+            );
+        }
+        if divider_before_status {
+            if pad_before_status_divider {
+                let available_content_width = inner_width.saturating_sub(2 * h_padding);
+                println!(
+                    "{}{}{}{}{}{}{}{}",
+                    color_code,
+                    style.vertical,
+                    RESET,
+                    pad,
+                    " ".repeat(available_content_width),
+                    pad,
+                    format!("{}{}{}", color_code, style.vertical, RESET),
+                    ""
+                );
+            }
+            println!(
+                "{}{}{}{}{}",
+                color_code,
+                style.tee_left,
+                style.horizontal.repeat(inner_width),
+                style.tee_right,
+                RESET
+            );
+        }
         let expanded_status = expand_variables(status_text);
-        
-        // Check for alignment codes: sl, sc, sr (status), hl, hr, hc (header), fl, fr, fc (footer)
-        let (alignment, clean_status) = if expanded_status.starts_with("sl:") {
+        let (alignment, clean_status) = if let Some(ov) = status_align_override { (ov, expanded_status) } else if expanded_status.starts_with("sl:") {
             ("left", expanded_status.strip_prefix("sl:").unwrap_or(&expanded_status).to_string())
         } else if expanded_status.starts_with("sc:") {
             ("center", expanded_status.strip_prefix("sc:").unwrap_or(&expanded_status).to_string())
         } else if expanded_status.starts_with("sr:") {
             ("right", expanded_status.strip_prefix("sr:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("hl:") {
-            ("left", expanded_status.strip_prefix("hl:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("hc:") {
-            ("center", expanded_status.strip_prefix("hc:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("hr:") {
-            ("right", expanded_status.strip_prefix("hr:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("fl:") {
-            ("left", expanded_status.strip_prefix("fl:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("fc:") {
-            ("center", expanded_status.strip_prefix("fc:").unwrap_or(&expanded_status).to_string())
-        } else if expanded_status.starts_with("fr:") {
-            ("right", expanded_status.strip_prefix("fr:").unwrap_or(&expanded_status).to_string())
         } else {
-            ("left", expanded_status) // default alignment
+            ("left", expanded_status)
         };
-        
-        let status_width = get_display_width(&clean_status);
-        
-        // LIPSIFY status bar more aggressively - use 70% of terminal width as threshold  
-        let status_threshold = (terminal_width * 7) / 10; // 70% of terminal width
-        let final_status = if status_width > status_threshold {
-            truncate_with_ellipsis(&clean_status, status_threshold)
+
+        let available_content_width = inner_width.saturating_sub(2 * h_padding);
+        let status_display = if get_display_width(&clean_status) > available_content_width {
+            truncate_with_ellipsis(&clean_status, available_content_width)
         } else {
             clean_status
         };
-        
-        // Apply alignment
-        let aligned_status = match alignment {
+
+        let final_width = get_display_width(&status_display);
+        let (left_pad_inner, right_pad_inner) = match alignment {
             "center" => {
-                let final_width = get_display_width(&final_status);
-                let padding_total = terminal_width.saturating_sub(final_width);
-                let left_padding = padding_total / 2;
-                format!("{}{}", " ".repeat(left_padding), final_status)
+                let space = available_content_width.saturating_sub(final_width);
+                let lp = space / 2; (lp, space.saturating_sub(lp))
             }
             "right" => {
-                let final_width = get_display_width(&final_status);
-                let padding_total = terminal_width.saturating_sub(final_width);
-                format!("{}{}", " ".repeat(padding_total), final_status)
+                let space = available_content_width.saturating_sub(final_width);
+                (space, 0)
             }
-            _ => final_status, // left alignment (default)
+            _ => (0, available_content_width.saturating_sub(final_width)),
         };
-        
-        // Status bar with subtle styling
-        println!("{}{}{}", get_color_code("grey3"), aligned_status, RESET);
+
+        let status_line = format!("{}{}{}", " ".repeat(left_pad_inner), status_display, " ".repeat(right_pad_inner));
+        let status_code = if !status_color_code.is_empty() { status_color_code } else { text_color_code };
+        let colored_status = if status_code.is_empty() { status_line } else { format!("{}{}{}", status_code, status_line, RESET) };
+
+        println!("{}{}{}{}{}{}{}{}",
+            color_code, style.vertical, RESET,
+            pad, colored_status, pad,
+            format!("{}{}{}", color_code, style.vertical, RESET),
+            "");
+
+        // Optional padding blank line after status
+        if pad_after_status {
+            let available_content_width = inner_width.saturating_sub(2 * h_padding);
+            println!(
+                "{}{}{}{}{}{}{}{}",
+                color_code,
+                style.vertical,
+                RESET,
+                pad,
+                " ".repeat(available_content_width),
+                pad,
+                format!("{}{}{}", color_code, style.vertical, RESET),
+                ""
+            );
+        }
+    }
+
+    // Bottom border with optional FOOTER inside the border
+    if let Some(footer_text) = footer {
+        let expanded_footer = expand_variables(footer_text);
+        let footer_line = render_title_or_footer(&expanded_footer, inner_width, style.horizontal, footer_align);
+        println!("{}{}{}{}{}", color_code, style.bottom_left, footer_line, style.bottom_right, RESET);
+    } else {
+        let border = style.horizontal.repeat(inner_width);
+        println!("{}{}{}{}{}", color_code, style.bottom_left, border, style.bottom_right, RESET);
     }
 }
 
@@ -1643,7 +1871,7 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    -s, --style <STYLE>        Border style: normal, rounded, double, heavy, ascii");
     println!("    -c, --color <COLOR>        Border color from 90+ palette (see --colors)");
     println!("    --text <COLOR>             Text color: 'auto' matches border, 'none' default");
-    println!("    -w, --width <WIDTH>        Fixed width in characters (auto-truncated)");
+    println!("    -w, --width <WIDTH|max|auto>  Set width: number, 'max' (terminal), or 'auto'");
     println!();
     
     println!("  {}Content & Layout:{}", get_color_code("cyan"), RESET);
@@ -1651,7 +1879,8 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    --title <TEXT>             Internal title in border with icon support");
     println!("    --footer <TEXT>            Footer text in bottom border");
     println!("    --icon <ICON>              Add icon to content (deprecated - use --title)");
-    println!("    --status <TEXT>            Status bar below box with alignment (sl:|sc:|sr:)");
+    println!("    --status <TEXT>            Status line inside box (use sl:|sc:|sr: prefixes)");
+    println!("    --layout <spec>            Align and divide: 'hc,fr,sc,dt,ds,dtn,dsn' (hl|hc|hr, fl|fc|fr, sl|sc|sr, dt/dtn, ds/dsn)");
     println!();
     
     println!("  {}Theme System:{}", get_color_code("cyan"), RESET);
@@ -1661,6 +1890,8 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("  {}Utility:{}", get_color_code("cyan"), RESET);
     println!("    --no-boxy[=strict]         Strip box decoration (strict removes all formatting)");
     println!("    --no-color                 Disable jynx integration and color output");
+    println!("    width                      Show terminal width diagnostics");
+    println!("    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin");
     println!("    -h, --help                 Show this help message");
     println!("    --colors                   Preview all 90+ available colors");
     println!("    -v, --version              Show version information");
@@ -1920,6 +2151,10 @@ fn main() {
     
     // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
     // Subcommands should always execute regardless of piped input
+    if args.len() >= 2 && args[1] == "width" {
+        handle_width_command();
+        return;
+    }
     if args.len() >= 2 && args[1] == "theme" {
         // Initialize jynx for theme commands
         let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
@@ -1939,7 +2174,7 @@ fn main() {
     
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme" | "migrate-commands");
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "migrate-commands");
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return;
@@ -1957,7 +2192,21 @@ fn main() {
     let mut fixed_width: Option<usize> = None;
     let mut theme_name: Option<String> = None;
     let mut status_bar: Option<String> = None;
+    let mut title_color: Option<String> = None;
+    let mut status_color: Option<String> = None;
+    let mut header_align: &str = "center";
+    let mut footer_align: &str = "center";
+    let mut status_align_override: Option<String> = None;
+    let mut divider_after_title = false;
+    let mut divider_before_status = false;
+    let mut pad_after_title_divider = false;
+    let mut pad_before_status_divider = false;
+    let mut pad_before_title = false;
+    let mut pad_after_status = false;
+    let mut pad_after_title = false;
+    let mut pad_before_status = false;
     let mut skip_next = false;
+    let mut params_flag: Option<String> = None;
     let mut deprecation_warnings: Vec<String> = Vec::new();
     let mut no_color_requested = false;
     
@@ -2012,6 +2261,12 @@ fn main() {
                     skip_next = true;
                 }
             }
+            "--params" => {
+                if i + 1 < args.len() {
+                    params_flag = Some(args[i + 1].clone());
+                    skip_next = true;
+                }
+            }
             "--color" | "-c" => {
                 if i + 1 < args.len() {
                     let requested_color = &args[i + 1];
@@ -2048,14 +2303,23 @@ fn main() {
             }
             "--width" | "-w" => {
                 if i + 1 < args.len() {
-                    match args[i + 1].parse::<usize>() {
-                        Ok(w) if w >= 4 => {
-                            fixed_width = Some(w);
-                            skip_next = true;
-                        }
-                        _ => {
-                            eprintln!("Error: Width must be a number >= 4 (minimum for box borders)");
-                            std::process::exit(1);
+                    let warg = &args[i + 1];
+                    if warg.eq_ignore_ascii_case("max") {
+                        fixed_width = Some(get_terminal_width());
+                        skip_next = true;
+                    } else if warg.eq_ignore_ascii_case("auto") {
+                        fixed_width = None; // let auto-sizing decide
+                        skip_next = true;
+                    } else {
+                        match warg.parse::<usize>() {
+                            Ok(w) if w >= 4 => {
+                                fixed_width = Some(w);
+                                skip_next = true;
+                            }
+                            _ => {
+                                eprintln!("Error: Width must be <number>=4, or 'max'/'auto'");
+                                std::process::exit(1);
+                            }
                         }
                     }
                 }
@@ -2105,6 +2369,48 @@ fn main() {
                         ));
                     }
                     
+                    skip_next = true;
+                }
+            }
+            "--title-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { title_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--status-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { status_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--layout" => {
+                if i + 1 < args.len() {
+                    let spec = &args[i + 1];
+                    for token in spec.split(',') {
+                        match token.trim() {
+                            "hl" => header_align = "left",
+                            "hc" => header_align = "center",
+                            "hr" => header_align = "right",
+                            "fl" => footer_align = "left",
+                            "fc" => footer_align = "center",
+                            "fr" => footer_align = "right",
+                            "sl" => status_align_override = Some("left".to_string()),
+                            "sc" => status_align_override = Some("center".to_string()),
+                            "sr" => status_align_override = Some("right".to_string()),
+                            "dt" => divider_after_title = true,
+                            "ds" => divider_before_status = true,
+                            "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
+                            "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
+                            "stn" => { pad_before_title = true; },
+                            "ssn" => { pad_after_status = true; },
+                            "ptn" => { pad_after_title = true; },
+                            "psn" => { pad_before_status = true; },
+                            _ => { /* ignore unknown tokens */ }
+                        }
+                    }
                     skip_next = true;
                 }
             }
@@ -2173,7 +2479,21 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).expect("Failed to read input");
     
-    let mut text = input.trim_end_matches('\n').to_string();
+    let text = input.trim_end_matches('\n').to_string();
+
+    // Params stream parsing: ONLY via --params flag. Piped stdin remains the body.
+    if let Some(ref blob) = params_flag {
+        if let Some(pc) = parse_content_stream(blob) {
+            if header.is_none() { header = pc.header; }
+            if footer.is_none() { footer = pc.footer; }
+            if status_bar.is_none() { status_bar = pc.status; }
+            if title.is_none() { title = pc.title; }
+            if let Some(ic) = pc.icon { icon = Some(ic); }
+            if title_color.is_none() { title_color = pc.title_color; }
+            if status_color.is_none() { status_color = pc.status_color; }
+            // Body remains the piped stdin text
+        }
+    }
     
     // Apply theme if specified - using new theme engine
     if let Some(theme_name_str) = &theme_name {
@@ -2184,25 +2504,15 @@ fn main() {
                     if color == "none" {
                         color = Box::leak(boxy_theme.color.clone().into_boxed_str());
                     }
-                    // When using themes, theme icons get their own line
-                    let theme_emoji = if let Some(override_icon) = &icon {
-                        // If explicit icon provided, use that instead of theme's emoji
-                        override_icon.clone()
-                    } else {
-                        // Extract icon from either icon field or title field (YAML themes use title)
+                    // Prefer to use theme icon as icon decoration (first content line), not a separate line
+                    if icon.is_none() {
                         if let Some(icon_str) = &boxy_theme.icon {
-                            icon_str.clone()
+                            icon = Some(icon_str.clone());
                         } else if let Some(title_str) = &boxy_theme.title {
-                            // Extract just the emoji from title like "❌ Error" -> "❌"
                             let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
-                            emoji_part.trim().to_string()
-                        } else {
-                            "📦".to_string()
+                            if !emoji_part.trim().is_empty() { icon = Some(emoji_part.trim().to_string()); }
                         }
-                    };
-                    text = format!("{}\n{}", theme_emoji, text);
-                    // Clear icon so it doesn't get used in positioning system
-                    icon = None;
+                    }
                     if fixed_width.is_none() {
                         fixed_width = boxy_theme.width;
                     }
@@ -2239,18 +2549,12 @@ fn main() {
     // 🔥 IF YOU TOUCH THIS, YOU WILL BREAK SPACING AND HATE YOURSELF 🔥
     // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
     //
-    // Apply manual icon using the same unified approach as themes
-    if let Some(manual_icon) = &icon {
-        let icon_expanded = expand_variables(manual_icon);
-        text = format!("{} {}", icon_expanded, text);
-        // Clear icon so it doesn't get used in positioning system
-        icon = None;
-    }
+    // No longer prepend icon to the raw text; icon is injected on first line in draw_box
     
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref());
+        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status);
     }
 }
