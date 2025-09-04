@@ -383,7 +383,7 @@ fn strip_box(text: &str, strict: bool) -> String {
 
 
 
-  draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
+  // draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
 
 
 fn draw_box(
