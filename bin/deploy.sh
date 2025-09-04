@@ -13,11 +13,11 @@ VERSION=$(grep '^version' "$ROOT_DIR/Cargo.toml" | head -1 | cut -d'"' -f2)
 
 # Display deployment ceremony
 echo "╔════════════════════════════════════════════════╗"
-echo "║            🎁 BOXY DEPLOYMENT CEREMONY 🎁       ║"
+echo "║             BOXY DEPLOYMENT CEREMONY           ║"
 echo "╠════════════════════════════════════════════════╣"
-echo "║  Package: $BINARY_NAME                          ║"
-echo "║  Version: v$VERSION (Theme System + 90+ Colors) ║"
-echo "║  Target:  $INSTALL_DIR/$BINARY_NAME             ║"
+echo "║ Package: $BINARY_NAME                          ║"
+echo "║ Version: v$VERSION (Theme System + 90+ Colors) ║"
+echo "║ Target:  $INSTALL_DIR/$BINARY_NAME             ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
 
@@ -62,10 +62,10 @@ fi
 
 echo ""
 echo "╔════════════════════════════════════════════════╗"
-echo "║         ✅ DEPLOYMENT SUCCESSFUL! ✅            ║"
+echo "║          DEPLOYMENT SUCCESSFUL!                ║"
 echo "╠════════════════════════════════════════════════╣"
-echo "║  Deployed: boxy v$VERSION                       ║"
-echo "║  Location: $INSTALL_DIR/$BINARY_NAME            ║"
+echo "║  Deployed: boxy v$VERSION                      ║"
+echo "║  Location: $INSTALL_DIR/$BINARY_NAME           ║"
 echo "║  Features: Theme System, 90+ Colors, Headers   ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
