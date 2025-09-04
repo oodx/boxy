@@ -9,10 +9,14 @@ A fast command-line utility that draws Unicode boxes around text with proper emo
 - 🌈 Colored borders and text with predefined color schemes
 - 🎨 Text color control with auto-matching and explicit colors
 - 🎭 Theme system with predefined visual styles
-- 📋 Title and footer support with emoji/variable expansion
+- 📋 Title and footer support with emoji/variable expansion (inside borders)
 - 🎯 Icon decorations for content
 - 📏 Fixed width boxes with smart content truncation
 - 🔄 Pipeline integration with box stripping modes
+- 🧩 Advanced layout control (align/dividers/padding for header/title/body/status/footer)
+- 🛠️ Param stream (--params) to set header/title/status/footer/layout/colors alongside piped body
+- 🎛️ Title/status color overrides (--title-color/--status-color)
+- 🧪 BOXY_THEME default theme (env)
 - 🚀 Written in Rust for speed
 - 📝 Handles multi-line text and ANSI color codes
 
@@ -38,7 +42,7 @@ echo "Hello World" | boxy -s double -c red
 
 # With title and footer
 echo "Hello World" | boxy --title "🚀 My App" --footer "v1.0"
-echo "Content" | boxy --title "Header" --footer "✅ Done"
+echo "Content" | boxy --header "Header" --footer "✅ Done"
 
 # With icon decoration and text colors
 echo "Important message" | boxy --icon "⚠️" --color yellow --text red
@@ -55,6 +59,17 @@ echo "This is a long message that will be truncated" | boxy --width 20
 echo "Use full terminal width" | boxy --width max
 echo "Use content-based width (default)" | boxy --width auto
 
+# Status inside the box (with alignment)
+echo "Body" | boxy --status "sc:centered status" --width 40
+
+# Layout control (align/dividers/padding)
+# hl|hc|hr (header align), fl|fc|fr (footer), sl|sc|sr (status)
+# dt|dtn (divider after title), ds|dsn (divider before status)
+# stn (space before title), ptn (space after title), psn (space before status), ssn (space after status)
+# bl|bc|br (body align), bp (pad body to match title emoji/icon)
+echo "Body" | boxy --header H --title "😀 Title" --status Status --footer F \
+    --layout "bp,bc,stn,ptn,psn,ssn" --width 50
+
 # Variable expansion in titles
 export VERSION="v1.2.3"
 echo "Build complete" | boxy --title "🏗️ Build $VERSION" --color green
@@ -68,6 +83,12 @@ echo "Content" | boxy | boxy --no-boxy=strict   # Pure ASCII output
 
 # With emojis (handles width correctly!)
 echo -e "🎉 Party Time\n🚀 Launch\n🔥 Fire" | boxy -s rounded -c orange
+
+# Param stream (metadata alongside piped body)
+echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; ly='bl,bp,stn,ptn,psn,ssn'" --width max
+
+# Title/Status color overrides
+echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
 ```
 
 ## Box Styles
@@ -150,11 +171,19 @@ box "Error occurred" --theme error --width 30
 ### Icon Decoration
 - Adds visual flair to first content line
 - Supports emoji and colored characters
+- Suppresses theme icon automatically when title begins with an emoji
 
 ### Pipeline Integration
 - `--no-boxy`: Strip box while preserving colors/formatting
 - `--no-boxy=strict`: Pure ASCII output for script processing
 - Perfect for command chains and text processing
+
+### Param Stream (--params)
+- Keys: `hd` (header), `tl` (title), `st` (status), `ft` (footer), `ic` (icon), `tc` (title color), `sc` (status color), `ly` (layout tokens)
+- Body is always taken from stdin; params only set metadata
+
+### Default Theme
+- Set `BOXY_THEME` to a valid theme name to apply by default (overridden by `--theme`)
 
 ## Why boxy?
 

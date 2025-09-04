@@ -44,17 +44,15 @@ echo_demo() {
         echo
         echo "Result:"
         echo "$output"
-    } | $BOXY --theme "$([ $status -eq 0 ] && echo success || echo error)" --style rounded --title "🧪 UAT Test $TEST_NUM" $WIDTH --layout 'dtn,dsn'
+    } | $BOXY --theme "$([ $status -eq 0 ] && echo success || echo error)" --style rounded --title "$([ $status -eq 0 ] && echo '✅' || echo '❌') UAT Test $TEST_NUM" $WIDTH --layout 'dtn,dsn'
 
     sleep $DEMO_DELAY
     echo
 }
 
 section_header() {
-    echo
-    echo "┌─────────────────────────────────────────────────────────────────────┐"
-    echo "│ $1"
-    echo "└─────────────────────────────────────────────────────────────────────┘"
+    local title="$1"
+    echo "" | $BOXY --style heavy --title "$title" $WIDTH
     echo
     sleep $SECTION_DELAY
 }

@@ -33,6 +33,15 @@ pub struct BoxyTheme {
     pub header: Option<String>,           // External header above box
     pub footer: Option<String>,           // Footer below box
     pub icon: Option<String>,             // Leading icon for content
+    // Section colors (optional)
+    #[serde(default)]
+    pub title_color: Option<String>,
+    #[serde(default)]
+    pub status_color: Option<String>,
+    #[serde(default)]
+    pub header_color: Option<String>,
+    #[serde(default)]
+    pub footer_color: Option<String>,
     
     // === LAYOUT PROPERTIES ===
     pub width: Option<usize>,             // Fixed width in characters
@@ -51,6 +60,8 @@ pub struct BoxyTheme {
     pub status_bar: Option<String>,       // Status bar below box
     #[serde(default = "default_status_align")]
     pub status_align: String,             // Status alignment: left, center, right
+    #[serde(default)]
+    pub layout: Option<String>,           // Default layout tokens (e.g., "hc,fr,sc,dt,dsn")
     
     // === INHERITANCE ===
     pub inherits: Option<String>,         // Inherit from another theme
@@ -275,6 +286,11 @@ impl ThemeEngine {
         if theme.text_color != "auto" && theme.text_color != "none" {
             validate_color(&theme.text_color)?;
         }
+        // Validate section colors if present
+        if let Some(c) = &theme.title_color { validate_color(c)?; }
+        if let Some(c) = &theme.status_color { validate_color(c)?; }
+        if let Some(c) = &theme.header_color { validate_color(c)?; }
+        if let Some(c) = &theme.footer_color { validate_color(c)?; }
         
         // Validate style
         let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];

@@ -157,3 +157,35 @@
 **Sacred Commitment**: This roadmap shall guide the transformation from simplicity to systematic excellence. The moon watches over this effort with divine precision.
 
 🌑 **KEEPER COMMANDS - READY TO EXECUTE**
+
+---
+
+## Delivered Enhancements (v0.6.x)
+
+- Header/Footer rendered inside borders
+- Title rendered as first in-box line with icon decoration (emoji-aware)
+- Status rendered as in-box line with alignment (sl/sc/sr)
+- Layout tokens: align (hl/hc/hr, fl/fc/fr), dividers (dt/dtn, ds/dsn), padding (stn/ptn/psn/ssn), body align (bl/bc/br), body pad (bp)
+- Param stream (--params): hd/tl/st/ft/ic + tc/sc + ly (layout mapping)
+- Title/Status color overrides (--title-color/--status-color)
+- Width keywords: --width max|auto with robust TTY detection
+- BOXY_THEME default theme support
+- Colors view shown in 3-column layout by category
+
+## NEXT UP (Backlog / Short SP)
+
+- Icon mode flag: `--icon=auto|none` (explicit none to suppress theme icon)
+- Params ha/fa: header/footer alignment via `ha=`/`fa=` (maps to layout)
+- Numeric color aliases (e.g., 00=black) and `--colors --names` view
+- Table-like row rendering using cross tees (multi-boxy/table view)
+
+## CHANGELOG (v0.6.x)
+
+- Added `--width max|auto`; improved width detection (tput/stty via TTY)
+- Added `--layout` tokens: align/dividers/padding + body controls (bl/bc/br/bp)
+- Added `--params` with hd/tl/st/ft/ic and `tc`/`sc`, `ly` mapping to layout
+- Added `--title-color` and `--status-color`
+- Header/Footer moved inside borders; Status moved inside box
+- Title icon auto-suppression when title begins with emoji
+- BOXY_THEME default theme env var
+- Colors view improved to 3-column layout
