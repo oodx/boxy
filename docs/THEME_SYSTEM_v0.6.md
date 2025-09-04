@@ -1,4 +1,8 @@
-# Boxy Theme System v0.6 - Complete Documentation
+# Boxy Theme System (v0.6+ → v0.8)
+
+Note: While originally introduced in v0.6, this theme system is the
+current API in v0.8. Migration tooling has been removed; use the options
+documented here.
 
 ## Overview
 
@@ -291,55 +295,10 @@ app_error:
   text_style: "bold"          # Add text styling
 ```
 
-## Migration from v0.5 to v0.6
+## Version Notes
 
-### Breaking Changes Summary
-
-1. **Header vs Title Distinction**
-   - `--title` for application names → use `--header`
-   - New `--title` for status with icon integration
-
-2. **Icon Integration**  
-   - Separate `--icon` + `--title` → unified `--title "icon text"`
-
-3. **Status Alignment**
-   - Long status text → use alignment prefixes (`sl:`, `sc:`, `sr:`)
-
-4. **Theme System**
-   - Manual styling → semantic themes
-
-### Migration Tools
-
-```bash
-# Interactive migration guide
-boxy migrate-commands --interactive
-
-# Analyze existing command
-boxy migrate-commands --check "echo 'test' | boxy --icon ✅ --color green"
-
-# View migration examples
-boxy migrate-commands --examples
-
-# Comprehensive migration guide  
-boxy migrate-commands --guide
-
-# Show v0.6 breaking changes
-boxy migrate-commands --v6-changes
-```
-
-### Migration Examples
-
-**Before (v0.5):**
-```bash
-echo "Database error" | boxy --icon ❌ --color red --title "Error"
-echo "Success" | boxy --icon ✅ --color green --title "MyApp Status"
-```
-
-**After (v0.6):**  
-```bash
-echo "Database error" | boxy --theme error
-echo "Success" | boxy --header "MyApp" --title "✅ Status" --theme success
-```
+The theme system described here was introduced in v0.6 and continues in v0.8.
+All migration tooling has been removed; use the current CLI options shown above.
 
 ## Performance and Optimization
 
@@ -510,10 +469,7 @@ theme edit <name>           # Edit theme
 theme help                  # Theme system help
 
 # Migration assistance
-migrate-commands --interactive     # Interactive migration guide
-migrate-commands --check <cmd>     # Analyze command
-migrate-commands --examples        # Migration examples
-migrate-commands --guide           # Comprehensive guide
+# (Removed in v0.8 — use current CLI options above)
 ```
 
 ### Theme File Format

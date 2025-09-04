@@ -150,25 +150,7 @@ echo "⏱️  Total time: ${help_duration}ms"
 echo "📊 Average per command: ${help_avg}ms"
 echo ""
 
-# Test 7: Migration commands performance
-echo "🧪 Test 7: Migration Commands Performance"  
-echo "------------------------------------------"
-echo "Testing migration command performance..."
-
-start_time=$(date +%s%3N)
-
-for i in {1..25}; do
-    $BOXY_BIN migrate-commands --examples > /dev/null 2>&1
-    $BOXY_BIN migrate-commands --help > /dev/null 2>&1
-done
-
-end_time=$(date +%s%3N)
-migration_duration=$((end_time - start_time))
-migration_avg=$(echo "scale=3; $migration_duration / 50" | bc -l)
-
-echo "⏱️  Total time: ${migration_duration}ms"
-echo "📊 Average per command: ${migration_avg}ms"
-echo ""
+## Test 7 removed: Migration commands no longer exist in v0.8
 
 # Memory usage test
 echo "🧪 Test 8: Memory Usage Analysis"

@@ -174,27 +174,6 @@ fn test_theme_export_functionality() {
     // Note: If export fails, that's also acceptable as the feature might not be fully implemented
 }
 
-#[test]  
-fn test_migration_commands_integration() {
-    // Test that migration commands work with theme system
-    
-    let migration_commands = [
-        vec!["migrate-commands"],
-        vec!["migrate-commands", "--examples"],
-        vec!["migrate-commands", "--help"],
-    ];
-    
-    for cmd_args in migration_commands {
-        let output = run_boxy_command(&cmd_args, None)
-            .expect(&format!("Should run migration command: {:?}", cmd_args));
-        
-        assert!(output.status.success(), "Migration command should succeed: {:?}", cmd_args);
-        
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        // Should mention themes in migration content
-        assert!(stdout.contains("theme") || stdout.contains("--theme") || stdout.contains("Migration"));
-    }
-}
 
 #[test]
 fn test_help_system_mentions_themes() {

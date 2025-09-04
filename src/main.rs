@@ -1,65 +1,4 @@
-        println!("{} {} - Migration Assistant", NAME, VERSION);
-        println!();
-        println!("USAGE:");
-        println!("    {} migrate-commands [OPTIONS]", NAME);
-        println!();
-        println!("OPTIONS:");
-        println!("    --check <command>    Check a command for migration suggestions");
-        println!("    --interactive        Interactive migration guide");
-        println!("    --examples           Show migration examples");
-        println!("    --guide              Comprehensive migration guide");
-        println!("    --v6-changes         Show v0.6.0 breaking changes");
-        println!("    --help               Show this help message");
-        println!();
-        println!("EXAMPLES:");
-        println!("    {} migrate-commands --check 'echo test | boxy --icon \u{1f4e6} --title Status'", NAME);
-        println!("    {} migrate-commands --interactive", NAME);
-        println!("    {} migrate-commands --examples", NAME);
-        println!("    {} migrate-commands --guide", NAME);
-        return;
-    }
-    
-    match args[0].as_str() {
-        "--check" => {
-            if args.len() < 2 {
-                eprintln!("Error: --check requires a command. Usage: {} migrate-commands --check <command>", NAME);
-                std::process::exit(1);
-            }
-            analyze_command_for_migration(&args[1]);
-        }
-        "--interactive" => {
-            run_interactive_migration_guide();
-        }
-        "--examples" => {
-            show_migration_examples(jynx);
-        }
-        "--guide" => {
-            show_comprehensive_migration_guide();
-        }
-        "--v6-changes" => {
-            show_v6_breaking_changes();
-        }
-        "--help" => {
-            println!("{} {} - Migration Assistant", NAME, VERSION);
-            println!();
-            println!("The migration assistant helps you update commands to use new boxy features:");
-            println!();
-            println!("  • --header vs --title distinction");
-            println!("  • Enhanced --title with icon support");
-            println!("  • Status alignment prefixes");
-            println!("  • Improved theme integration");
-            println!();
-            println!("Run with --examples to see before/after examples.");
-            println!("Run with --guide for the comprehensive migration guide.");
-        }
-        _ => {
-            eprintln!("Unknown migrate-commands option: {}", args[0]);
-            eprintln!("Use '{} migrate-commands --help' for available options", NAME);
-            eprintln!("Available options: --check, --interactive, --examples, --guide, --v6-changes, --help");
-            std::process::exit(1);
-        }
-    }
-}
+// Removed stray migration assistant block (v0.8)
 
 /// Analyze a command string for migration opportunities
 fn analyze_command_for_migration(command: &str) {
@@ -1059,7 +998,7 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!();
     
     println!("  {}Content & Layout:{}", get_color_code("cyan"), RESET);
-    println!("    --header <TEXT>            Header text (inside top border)");
+    println!("    --header <TEXT>            External header (above the box)");
     println!("    --title <TEXT>             Title line (first in-box line; emoji-aware icon)");
     println!("    --footer <TEXT>            Footer text (inside bottom border)");
     println!("    --status <TEXT>            Status line inside box (use sl:|sc:|sr: prefixes)");
@@ -1078,10 +1017,7 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("  {}Utility:{}", get_color_code("cyan"), RESET);
     println!("    --no-boxy[=strict]         Strip box decoration (strict removes all formatting)");
     println!("    --no-color                 Disable jynx integration and color output");
-    println!("    width                      Show terminal width diagnostics");
     println!("    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin");
-    println!("    --title-color <COLOR>      Color for title line (overrides --text)");
-    println!("    --status-color <COLOR>     Color for status line (overrides --text)");
     println!("    -h, --help                 Show this help message");
     println!("    --colors                   Preview all 90+ available colors");
     println!("    -v, --version              Show version information");
@@ -1104,31 +1040,10 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    {} theme import <file>       Import theme from YAML", NAME);
     println!("    {} theme export <name>       Export theme to YAML", NAME);
     println!("    {} theme edit <name>         Edit existing theme", NAME);
+    println!("    Env: BOXY_THEME=<name>      Set default theme (overridden by --theme)");
     println!();
     
-    // =============== NEW IN V0.6 ===============
-    println!("{}NEW IN v0.6:{}", get_color_code("orchid"), RESET);
-    println!("  {}Header vs Title Distinction:{}", get_color_code("cyan"), RESET);
-    println!("    --header     External headers (app names, system labels)");
-    println!("    --title      Internal titles (status, with icon integration)");
-    println!();
-    
-    println!("  {}Enhanced Icon Integration:{}", get_color_code("cyan"), RESET);
-    println!("    --title \"📦 Status\"       Icon automatically spaced and aligned");
-    println!("    Instead of: --icon 📦 --title \"Status\"");
-    println!();
-    
-    println!("  {}Status Bar Alignment:{}", get_color_code("cyan"), RESET);
-    println!("    --status \"sl:Left\"        Left-aligned status");
-    println!("    --status \"sc:Center\"      Center-aligned status");
-    println!("    --status \"sr:Right\"       Right-aligned status");
-    println!();
-    
-    println!("  {}Rich Color Palette:{}", get_color_code("cyan"), RESET);
-    println!("    90+ colors including: crimson, emerald, azure, amber, violet");
-    println!("    Semantic colors: error, success, warning, info, critical");
-    println!("    Use --colors to preview all available colors");
-    println!();
+    // Alignment and color palette are covered above; no migration section in v0.8
     
     // =============== EXAMPLES ===============
     println!("{}EXAMPLES:{}", get_color_code("gold"), RESET);
@@ -1163,19 +1078,7 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    echo \"Content\" | {} | {} --no-boxy=strict  # Remove all ANSI", NAME, NAME);
     println!();
     
-    // =============== MIGRATION ===============
-    println!("{}MIGRATION (v0.5 → v0.6):{}", get_color_code("rust"), RESET);
-    println!("  {} migrate-commands --interactive    Interactive migration guide", NAME);
-    println!("  {} migrate-commands --check \"cmd\"     Analyze existing command", NAME);
-    println!("  {} migrate-commands --examples       Before/after examples", NAME);
-    println!("  {} migrate-commands --guide          Comprehensive migration guide", NAME);
-    println!();
-    
-    println!("  {}Common Migrations:{}", get_color_code("cyan"), RESET);
-    println!("    OLD: --icon ✅ --title \"Status\"     → NEW: --title \"✅ Status\"");
-    println!("    OLD: --color red --style heavy      → NEW: --theme error");
-    println!("    OLD: --title \"MyApp\"               → NEW: --header \"MyApp\" --title \"🟢 Ready\"");
-    println!();
+    // Migration content removed in v0.8 help
     
     // =============== TIPS ===============
     println!("{}TIPS & BEST PRACTICES:{}", get_color_code("sage"), RESET);
@@ -1191,7 +1094,6 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("{}MORE INFORMATION:{}", get_color_code("steel"), RESET);
     println!("  {} --colors                 Preview color palette", NAME);
     println!("  {} theme list               Show available themes", NAME);
-    println!("  {} migrate-commands --help   Migration assistance", NAME);
     println!("  GitHub: https://github.com/qodeninja/boxy");
     println!("  Documentation: See THEME_SYSTEM_v0.6.md");
     println!();
@@ -1341,10 +1243,6 @@ fn main() {
     
     // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
     // Subcommands should always execute regardless of piped input
-    if args.len() >= 2 && args[1] == "width" {
-        handle_width_command();
-        return;
-    }
     if args.len() >= 2 && args[1] == "theme" {
         // Initialize jynx for theme commands
         let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
@@ -1353,18 +1251,11 @@ fn main() {
         return;
     }
     
-    // Handle migrate-commands subcommand
-    if args.len() >= 2 && args[1] == "migrate-commands" {
-        // Initialize jynx for migration commands
-        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
-        let migrate_jynx = JynxIntegration::new(no_color);
-        handle_migrate_command(&args[2..], &migrate_jynx);
-        return;
-    }
+    // Migration subcommand removed in v0.8
     
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "migrate-commands");
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme");
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return;

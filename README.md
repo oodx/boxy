@@ -117,7 +117,7 @@ Predefined combinations of icon, color, and styling:
 ```bash
 --theme error      # ❌ with red styling
 --theme success    # ✅ with green styling  
---theme warn       # ⚠️ with orange styling
+--theme warning    # ⚠️ with orange styling
 --theme info       # ℹ️ with blue styling
 --theme debug      # 🐛 with dark green styling
 # ... and many more
@@ -136,7 +136,7 @@ echo "File not found: config.json" | boxy --theme error --text auto --title "�
 echo -e "✅ Tests passing\n🔧 Build complete\n📦 Ready to deploy" | boxy --title "🎯 CI/CD Status" --footer "✅ All systems go" -c green --text white
 
 # Mixed styling approach
-echo "Deploy to production?" | boxy --theme warn --text auto --width 25
+echo "Deploy to production?" | boxy --theme warning --text auto --width 25
 
 # Interactive menu
 echo -e "1. Deploy to staging\n2. Deploy to production\n3. Rollback\n4. Exit" | boxy --title "🚀 Deployment Menu" -s rounded

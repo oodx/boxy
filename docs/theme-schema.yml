@@ -230,20 +230,4 @@ validation:
   max_title_length: 50          # Maximum title length
   max_width: 200                 # Maximum box width
 
-# Migration helpers for v0.5.0 → v0.6.0
-migration:
-  # Map old theme names to new theme names
-  theme_mapping:
-    "fatal": "critical"
-    "warn": "warning" 
-    "dev": "info"
-  
-  # Handle deprecated fields
-  deprecated_fields:
-    "emoji": "icon"              # Old "emoji" field maps to "icon"
-    "border_color": "color"      # Old naming convention
-    
-  # Automatic field generation
-  auto_generate:
-    title_from_icon: true        # Generate title from icon if missing
-    style_from_theme: true       # Infer style from theme type
+## Migration helpers removed in v0.8

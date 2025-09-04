@@ -519,27 +519,10 @@ boxy theme benchmark  # Test rendering performance
 
 ---
 
-## Migration & Compatibility
+## Compatibility
 
-### **Backward Compatibility** 
-All existing boxy commands work unchanged:
-```bash
-# v0.5 (still works)
-echo "content" | boxy --color blue --style rounded
-
-# v0.6 (enhanced)
-echo "content" | boxy --theme info  # Equivalent but semantic
-```
-
-### **Migration Helper**
-```bash
-# Convert old commands to new themes
-boxy migrate-commands < old_script.sh > new_script.sh
-
-# Example conversion:
-# OLD: boxy --color red --style heavy  
-# NEW: boxy --theme error
-```
+The theme system introduced in v0.6 is the current, stable approach in v0.8.
+Use the documented options and semantic themes; legacy migration helpers have been removed.
 
 ---
 

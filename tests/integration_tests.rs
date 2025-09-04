@@ -167,25 +167,6 @@ fn test_theme_list_command() {
     assert!(stdout.contains("info"));
 }
 
-#[test]
-fn test_migration_commands() {
-    let migration_commands = [
-        "migrate-commands",
-        "migrate-commands --examples",
-        "migrate-commands --help",
-    ];
-    
-    for cmd_args in migration_commands {
-        let args: Vec<&str> = cmd_args.split_whitespace().collect();
-        let output = run_boxy(&args, None)
-            .expect(&format!("Failed to run {}", cmd_args));
-        
-        assert!(output.status.success(), "Migration command should work: {}", cmd_args);
-        
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(!stdout.is_empty(), "Migration command should produce output: {}", cmd_args);
-    }
-}
 
 #[test]
 fn test_help_system() {
