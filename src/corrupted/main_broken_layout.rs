@@ -1,3 +1,5 @@
+//
+//vBROKEN
 use unicode_width::UnicodeWidthStr;
 use std::io::{self, Read, Write};
 use std::env;
@@ -379,7 +381,24 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>, status_bar: Option<&str>, header: Option<&str>) {
+fn draw_box(
+    text: &str,
+    h_padding: usize,
+    _v_padding: usize,
+    style: &BoxStyle,
+    color: &str,
+    text_color: &str,
+    title: Option<&str>,
+    footer: Option<&str>,
+    icon: Option<&str>,
+    fixed_width: Option<usize>,
+    status_bar: Option<&str>,
+    header: Option<&str>,
+    divider_after_title: bool,
+    divider_before_status: bool,
+    pad_after_title_divider: bool,
+    pad_before_status_divider: bool,
+) {
     let terminal_width = get_terminal_width();
     
     // Calculate effective box width - respect terminal constraints
@@ -585,7 +604,7 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
 
 /// Handle migrate-commands subcommand for helping users transition
 fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
-    if args.is_empty() {
+    if args.is_empty() {        
         println!("{} {} - Migration Assistant", NAME, VERSION);
         println!();
         println!("USAGE:");
@@ -1643,15 +1662,20 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    -s, --style <STYLE>        Border style: normal, rounded, double, heavy, ascii");
     println!("    -c, --color <COLOR>        Border color from 90+ palette (see --colors)");
     println!("    --text <COLOR>             Text color: 'auto' matches border, 'none' default");
-    println!("    -w, --width <WIDTH>        Fixed width in characters (auto-truncated)");
+    println!("    -w, --width <WIDTH|max|auto>  Set width: number, 'max' (terminal), or 'auto'");
     println!();
     
     println!("  {}Content & Layout:{}", get_color_code("cyan"), RESET);
-    println!("    --header <TEXT>            External header above box (app names, labels)");
-    println!("    --title <TEXT>             Internal title in border with icon support");
-    println!("    --footer <TEXT>            Footer text in bottom border");
-    println!("    --icon <ICON>              Add icon to content (deprecated - use --title)");
-    println!("    --status <TEXT>            Status bar below box with alignment (sl:|sc:|sr:)");
+    println!("    --header <TEXT>            Header text (inside top border)");
+    println!("    --title <TEXT>             Title line (first in-box line; emoji-aware icon)");
+    println!("    --footer <TEXT>            Footer text (inside bottom border)");
+    println!("    --status <TEXT>            Status line inside box (use sl:|sc:|sr: prefixes)");
+    println!("    --layout <spec>            Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp");
+    println!("    --pad <a|b>               Blank line above (a) and/or below (b) the body");
+    println!("    --title-color <COLOR>      Color for title line (overrides --text)");
+    println!("    --status-color <COLOR>     Color for status line (overrides --text)");
+    println!("    --header-color <COLOR>     Color for header line");
+    println!("    --footer-color <COLOR>     Color for footer line");
     println!();
     
     println!("  {}Theme System:{}", get_color_code("cyan"), RESET);
@@ -1661,6 +1685,10 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("  {}Utility:{}", get_color_code("cyan"), RESET);
     println!("    --no-boxy[=strict]         Strip box decoration (strict removes all formatting)");
     println!("    --no-color                 Disable jynx integration and color output");
+    println!("    width                      Show terminal width diagnostics");
+    println!("    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin");
+    println!("    --title-color <COLOR>      Color for title line (overrides --text)");
+    println!("    --status-color <COLOR>     Color for status line (overrides --text)");
     println!("    -h, --help                 Show this help message");
     println!("    --colors                   Preview all 90+ available colors");
     println!("    -v, --version              Show version information");
@@ -1920,6 +1948,10 @@ fn main() {
     
     // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
     // Subcommands should always execute regardless of piped input
+    if args.len() >= 2 && args[1] == "width" {
+        handle_width_command();
+        return;
+    }
     if args.len() >= 2 && args[1] == "theme" {
         // Initialize jynx for theme commands
         let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
@@ -1939,7 +1971,7 @@ fn main() {
     
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme" | "migrate-commands");
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "migrate-commands");
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return;
@@ -1957,8 +1989,28 @@ fn main() {
     let mut fixed_width: Option<usize> = None;
     let mut theme_name: Option<String> = None;
     let mut status_bar: Option<String> = None;
+    let mut title_color: Option<String> = None;
+    let mut status_color: Option<String> = None;
+    let mut header_color: Option<String> = None;
+    let mut footer_color: Option<String> = None;
+    let mut header_align: &str = "center";
+    let mut footer_align: &str = "center";
+    let mut status_align_override: Option<String> = None;
+    let mut body_align: &str = "left";
+    let mut body_pad_emoji = false;
+    let mut pad_body_above = false;
+    let mut pad_body_below = false;
+    let mut divider_after_title = false;
+    let mut divider_before_status = false;
+    let mut pad_after_title_divider = false;
+    let mut pad_before_status_divider = false;
+    let mut pad_before_title = false;
+    let mut pad_after_status = false;
+    let mut pad_after_title = false;
+    let mut pad_before_status = false;
     let mut skip_next = false;
-    let mut deprecation_warnings: Vec<String> = Vec::new();
+    let mut params_flag: Option<String> = None;
+    // Deprecated suggestions removed in v0.6.x -> simplified migration help view only
     let mut no_color_requested = false;
     
     // Pre-scan for --no-color to initialize jynx properly
@@ -2012,6 +2064,12 @@ fn main() {
                     skip_next = true;
                 }
             }
+            "--params" => {
+                if i + 1 < args.len() {
+                    params_flag = Some(args[i + 1].clone());
+                    skip_next = true;
+                }
+            }
             "--color" | "-c" => {
                 if i + 1 < args.len() {
                     let requested_color = &args[i + 1];
@@ -2048,14 +2106,23 @@ fn main() {
             }
             "--width" | "-w" => {
                 if i + 1 < args.len() {
-                    match args[i + 1].parse::<usize>() {
-                        Ok(w) if w >= 4 => {
-                            fixed_width = Some(w);
-                            skip_next = true;
-                        }
-                        _ => {
-                            eprintln!("Error: Width must be a number >= 4 (minimum for box borders)");
-                            std::process::exit(1);
+                    let warg = &args[i + 1];
+                    if warg.eq_ignore_ascii_case("max") {
+                        fixed_width = Some(get_terminal_width());
+                        skip_next = true;
+                    } else if warg.eq_ignore_ascii_case("auto") {
+                        fixed_width = None; // let auto-sizing decide
+                        skip_next = true;
+                    } else {
+                        match warg.parse::<usize>() {
+                            Ok(w) if w >= 4 => {
+                                fixed_width = Some(w);
+                                skip_next = true;
+                            }
+                            _ => {
+                                eprintln!("Error: Width must be <number>=4, or 'max'/'auto'");
+                                std::process::exit(1);
+                            }
                         }
                     }
                 }
@@ -2094,17 +2161,78 @@ fn main() {
                 if i + 1 < args.len() {
                     let status_text = &args[i + 1];
                     status_bar = Some(status_text.clone());
-                    
-                    // Check for deprecation patterns
-                    if !status_text.starts_with("sl:") && !status_text.starts_with("sc:") && !status_text.starts_with("sr:") &&
-                       !status_text.starts_with("hl:") && !status_text.starts_with("hc:") && !status_text.starts_with("hr:") &&
-                       !status_text.starts_with("fl:") && !status_text.starts_with("fc:") && !status_text.starts_with("fr:") &&
-                       get_display_width(status_text) > 50 {
-                        deprecation_warnings.push(format!(
-                            "Long status text without alignment prefix. Consider using sl:, sc:, or sr: prefixes for better control."
-                        ));
+                    skip_next = true;
+                }
+            }
+            "--title-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { title_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--status-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { status_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--header-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { header_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--footer-color" => {
+                if i + 1 < args.len() {
+                    let c = &args[i + 1];
+                    if validate_color(c).is_ok() { footer_color = Some(c.clone()); }
+                    skip_next = true;
+                }
+            }
+            "--layout" => {
+                if i + 1 < args.len() {
+                    let spec = &args[i + 1];
+                    for token in spec.split(',') {
+                        match token.trim() {
+                            "hl" => header_align = "left",
+                            "hc" => header_align = "center",
+                            "hr" => header_align = "right",
+                            "fl" => footer_align = "left",
+                            "fc" => footer_align = "center",
+                            "fr" => footer_align = "right",
+                            "sl" => status_align_override = Some("left".to_string()),
+                            "sc" => status_align_override = Some("center".to_string()),
+                            "sr" => status_align_override = Some("right".to_string()),
+                            "bl" => body_align = "left",
+                            "bc" => body_align = "center",
+                            "br" => body_align = "right",
+                            "bp" => body_pad_emoji = true,
+                            "dt" => divider_after_title = true,
+                            "ds" => divider_before_status = true,
+                            "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
+                            "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
+                            "stn" => { pad_before_title = true; },
+                            "ssn" => { pad_after_status = true; },
+                            "ptn" => { pad_after_title = true; },
+                            "psn" => { pad_before_status = true; },
+                            _ => { /* ignore unknown tokens */ }
+                        }
                     }
-                    
+                    skip_next = true;
+                }
+            }
+            "--pad" => {
+                if i + 1 < args.len() {
+                    for t in args[i+1].split(',') {
+                        match t.trim() {
+                            "a"|"above" => pad_body_above = true,
+                            "b"|"below" => pad_body_below = true,
+                            _ => {}
+                        }
+                    }
                     skip_next = true;
                 }
             }
@@ -2173,7 +2301,52 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).expect("Failed to read input");
     
-    let mut text = input.trim_end_matches('\n').to_string();
+    let text = input.trim_end_matches('\n').to_string();
+
+    // Params stream parsing: ONLY via --params flag. Piped stdin remains the body.
+    if let Some(ref blob) = params_flag {
+        if let Some(pc) = parse_content_stream(blob) {
+            if header.is_none() { header = pc.header; }
+            if footer.is_none() { footer = pc.footer; }
+            if status_bar.is_none() { status_bar = pc.status; }
+            if title.is_none() { title = pc.title; }
+            if let Some(ic) = pc.icon { icon = Some(ic); }
+            if title_color.is_none() { title_color = pc.title_color; }
+            if status_color.is_none() { status_color = pc.status_color; }
+            if header_color.is_none() { header_color = pc.header_color; }
+            if footer_color.is_none() { footer_color = pc.footer_color; }
+            // Map layout tokens if provided via params
+            if let Some(spec) = pc.layout.as_deref() {
+                for token in spec.split(',') {
+                    match token.trim() {
+                        "hl" => header_align = "left",
+                        "hc" => header_align = "center",
+                        "hr" => header_align = "right",
+                        "fl" => footer_align = "left",
+                        "fc" => footer_align = "center",
+                        "fr" => footer_align = "right",
+                        "sl" => status_align_override = Some("left".to_string()),
+                        "sc" => status_align_override = Some("center".to_string()),
+                        "sr" => status_align_override = Some("right".to_string()),
+                        "bl" => body_align = "left",
+                        "bc" => body_align = "center",
+                        "br" => body_align = "right",
+                        "bp" => body_pad_emoji = true,
+                        "dt" => divider_after_title = true,
+                        "ds" => divider_before_status = true,
+                        "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
+                        "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
+                        "stn" => { pad_before_title = true; },
+                        "ssn" => { pad_after_status = true; },
+                        "ptn" => { pad_after_title = true; },
+                        "psn" => { pad_before_status = true; },
+                        _ => {}
+                    }
+                }
+            }
+            // Body remains the piped stdin text
+        }
+    }
     
     // Apply theme if specified - using new theme engine
     if let Some(theme_name_str) = &theme_name {
@@ -2202,7 +2375,7 @@ fn main() {
                     };
                     text = format!("{}\n{}", theme_emoji, text);
                     // Clear icon so it doesn't get used in positioning system
-                    icon = None;
+                    icon = None;                    
                     if fixed_width.is_none() {
                         fixed_width = boxy_theme.width;
                     }
@@ -2239,18 +2412,22 @@ fn main() {
     // 🔥 IF YOU TOUCH THIS, YOU WILL BREAK SPACING AND HATE YOURSELF 🔥
     // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
     //
+    // No longer prepend icon to the raw text; icon is injected on first line in draw_box
+    // TODO: ^^ this may be wrong implementation
+
+    // TODO: vv previous correct imeplementation
     // Apply manual icon using the same unified approach as themes
-    if let Some(manual_icon) = &icon {
-        let icon_expanded = expand_variables(manual_icon);
-        text = format!("{} {}", icon_expanded, text);
-        // Clear icon so it doesn't get used in positioning system
-        icon = None;
-    }
+    // if let Some(manual_icon) = &icon {
+    //     let icon_expanded = expand_variables(manual_icon);
+    //     text = format!("{} {}", icon_expanded, text);
+    //     // Clear icon so it doesn't get used in positioning system
+    //     icon = None;
+    // }
     
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref());
+        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
     }
 }

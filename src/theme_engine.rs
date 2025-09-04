@@ -1,4 +1,4 @@
-// Advanced Theme Engine - YAML-based theme system for boxy v0.6+
+// Advanced Theme Engine - YAML-based theme system for boxy vCURR
 // Inherits complete jynx architecture patterns with XDG+ directory support
 
 use serde::{Deserialize, Serialize};
