@@ -379,24 +379,7 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(
-    text: &str,
-    h_padding: usize,
-    _v_padding: usize,
-    style: &BoxStyle,
-    color: &str,
-    text_color: &str,
-    title: Option<&str>,
-    footer: Option<&str>,
-    icon: Option<&str>,
-    fixed_width: Option<usize>,
-    status_bar: Option<&str>,
-    header: Option<&str>,
-    divider_after_title: bool,
-    divider_before_status: bool,
-    pad_after_title_divider: bool,
-    pad_before_status_divider: bool,
-) {
+fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>, status_bar: Option<&str>, header: Option<&str>) {
     let terminal_width = get_terminal_width();
     
     // Calculate effective box width - respect terminal constraints
@@ -471,27 +454,6 @@ fn draw_box(
             color_code, style.top_left, border, style.top_right, RESET);
     }
     
-    // Optional divider after title (inside box)
-    if divider_after_title {
-        let inner_width = final_width.saturating_sub(2);
-        let line = style.horizontal.repeat(inner_width);
-        println!(
-            "{}{}{}{}{}",
-            color_code, style.vertical, RESET,
-            line,
-            format!("{}{}{}", color_code, style.vertical, RESET)
-        );
-        if pad_after_title_divider {
-            // blank content line
-            let blanks = " ".repeat(inner_width);
-            println!("{}{}{}{}{}{}",
-                color_code, style.vertical, RESET,
-                blanks,
-                color_code, style.vertical);
-            println!("{}", RESET);
-        }
-    }
-
     // Content lines - LIPSIFIED for all cases
     for (i, line) in lines.iter().enumerate() {
         let available_content_width = inner_width.saturating_sub(2 * h_padding);
@@ -563,15 +525,6 @@ fn draw_box(
             color_code, style.bottom_left, border, style.bottom_right, RESET);
     }
     
-    // Optional divider before status (outside box in current renderer)
-    if divider_before_status {
-        if pad_before_status_divider {
-            println!("");
-        }
-        let line = style.horizontal.repeat(final_width);
-        println!("{}{}{}", color_code, line, RESET);
-    }
-
     // Optional status bar with alignment support - LIPSIFIED for terminal width
     if let Some(status_text) = status_bar {
         let expanded_status = expand_variables(status_text);
@@ -631,9 +584,69 @@ fn draw_box(
 }
 
 /// Handle migrate-commands subcommand for helping users transition
-// Migration subcommand removed in v0.8
-fn handle_migrate_command(_args: &[String], _jynx: &JynxIntegration) {
-    println!("This command has been removed in v0.8.");
+fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
+    if args.is_empty() {
+        println!("{} {} - Migration Assistant", NAME, VERSION);
+        println!();
+        println!("USAGE:");
+        println!("    {} migrate-commands [OPTIONS]", NAME);
+        println!();
+        println!("OPTIONS:");
+        println!("    --check <command>    Check a command for migration suggestions");
+        println!("    --interactive        Interactive migration guide");
+        println!("    --examples           Show migration examples");
+        println!("    --guide              Comprehensive migration guide");
+        println!("    --v6-changes         Show v0.6.0 breaking changes");
+        println!("    --help               Show this help message");
+        println!();
+        println!("EXAMPLES:");
+        println!("    {} migrate-commands --check 'echo test | boxy --icon \u{1f4e6} --title Status'", NAME);
+        println!("    {} migrate-commands --interactive", NAME);
+        println!("    {} migrate-commands --examples", NAME);
+        println!("    {} migrate-commands --guide", NAME);
+        return;
+    }
+    
+    match args[0].as_str() {
+        "--check" => {
+            if args.len() < 2 {
+                eprintln!("Error: --check requires a command. Usage: {} migrate-commands --check <command>", NAME);
+                std::process::exit(1);
+            }
+            analyze_command_for_migration(&args[1]);
+        }
+        "--interactive" => {
+            run_interactive_migration_guide();
+        }
+        "--examples" => {
+            show_migration_examples(jynx);
+        }
+        "--guide" => {
+            show_comprehensive_migration_guide();
+        }
+        "--v6-changes" => {
+            show_v6_breaking_changes();
+        }
+        "--help" => {
+            println!("{} {} - Migration Assistant", NAME, VERSION);
+            println!();
+            println!("The migration assistant helps you update commands to use new boxy features:");
+            println!();
+            println!("  • --header vs --title distinction");
+            println!("  • Enhanced --title with icon support");
+            println!("  • Status alignment prefixes");
+            println!("  • Improved theme integration");
+            println!();
+            println!("Run with --examples to see before/after examples.");
+            println!("Run with --guide for the comprehensive migration guide.");
+        }
+        _ => {
+            eprintln!("Unknown migrate-commands option: {}", args[0]);
+            eprintln!("Use '{} migrate-commands --help' for available options", NAME);
+            eprintln!("Available options: --check, --interactive, --examples, --guide, --v6-changes, --help");
+            std::process::exit(1);
+        }
+    }
 }
 
 /// Analyze a command string for migration opportunities
@@ -768,15 +781,15 @@ fn show_migration_examples(jynx: &JynxIntegration) {
         println!();
     }
     
-    // Migration tips removed in v0.8
+    println!("💡 {}TIP:{} Use 'boxy migrate-commands --check <command>' to analyze specific commands", get_color_code("azure"), RESET);
 }
 
 /// Interactive migration guide
 fn run_interactive_migration_guide() {
-    // Removed in v0.8
-    println!("This guide has been removed in v0.8.");
+    println!("{} {} - Interactive Migration Guide", NAME, VERSION);
     println!();
-    return;
+    println!("This guide will help you understand the key changes in boxy's new version:");
+    println!();
     
     // Step 1: Header vs Title
     println!("{}📋 Step 1: Understanding --header vs --title{}", get_color_code("azure"), RESET);
@@ -841,11 +854,9 @@ fn run_interactive_migration_guide() {
 
 /// Comprehensive migration guide
 fn show_comprehensive_migration_guide() {
-    // Removed in v0.8
-    println!("This guide has been removed in v0.8.");
+    println!("{} {} - Comprehensive Migration Guide", NAME, VERSION);
     println!("{}===================================={}", get_color_code("azure"), RESET);
     println!();
-    return;
     
     // Overview
     println!("{}📝 OVERVIEW{}", get_color_code("green"), RESET);
@@ -954,11 +965,9 @@ fn show_comprehensive_migration_guide() {
 
 /// Show v0.6.0 breaking changes summary
 fn show_v6_breaking_changes() {
-    // Removed in v0.8
-    println!("This summary has been removed in v0.8.");
+    println!("{} {} - v0.6.0 Breaking Changes", NAME, VERSION);
     println!("{}==========================={}", get_color_code("red"), RESET);
     println!();
-    return;
     
     println!("{}⚡ BREAKING CHANGES IN v0.6.0{}", get_color_code("red"), RESET);
     println!();
@@ -1884,7 +1893,14 @@ fn show_usage_examples() {
     println!("  {} theme import ~/my_theme.yml", NAME);
     println!();
     
-    // Migration helpers removed in v0.8
+    // =============== MIGRATION ===============
+    println!("{}MIGRATION FROM v0.5:{}", get_color_code("amber"), RESET);
+    println!("  # Get migration help for existing commands");
+    println!("  {} migrate-commands --check \"echo 'test' | boxy --icon ✅ --color green\"", NAME);
+    println!();
+    println!("  # Interactive migration assistant");
+    println!("  {} migrate-commands --interactive", NAME);
+    println!();
     
     // =============== TIPS ===============
     println!("{}PRO TIPS:{}", get_color_code("emerald"), RESET);
@@ -1902,19 +1918,28 @@ fn show_usage_examples() {
 fn main() {
     let args: Vec<String> = env::args().collect();
     
-    // PRIORITY 1: Handle subcommands anywhere in argv (flags may precede)
-    if let Some(pos) = args.iter().position(|a| a == "theme") {
+    // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
+    // Subcommands should always execute regardless of piped input
+    if args.len() >= 2 && args[1] == "theme" {
+        // Initialize jynx for theme commands
         let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
         let theme_jynx = JynxIntegration::new(no_color);
-        handle_theme_command(&args[pos + 1..], &theme_jynx);
+        handle_theme_command(&args[2..], &theme_jynx);
         return;
     }
     
-    // migrate-commands removed in v0.8
+    // Handle migrate-commands subcommand
+    if args.len() >= 2 && args[1] == "migrate-commands" {
+        // Initialize jynx for migration commands
+        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
+        let migrate_jynx = JynxIntegration::new(no_color);
+        handle_migrate_command(&args[2..], &migrate_jynx);
+        return;
+    }
     
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme");
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme" | "migrate-commands");
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return;
@@ -1932,11 +1957,6 @@ fn main() {
     let mut fixed_width: Option<usize> = None;
     let mut theme_name: Option<String> = None;
     let mut status_bar: Option<String> = None;
-    // Layout controls (basic support for dividers)
-    let mut divider_after_title = false;
-    let mut divider_before_status = false;
-    let mut pad_after_title_divider = false;
-    let mut pad_before_status_divider = false;
     let mut skip_next = false;
     let mut deprecation_warnings: Vec<String> = Vec::new();
     let mut no_color_requested = false;
@@ -2028,23 +2048,14 @@ fn main() {
             }
             "--width" | "-w" => {
                 if i + 1 < args.len() {
-                    let warg = &args[i + 1];
-                    if warg.eq_ignore_ascii_case("max") {
-                        fixed_width = Some(get_terminal_width());
-                        skip_next = true;
-                    } else if warg.eq_ignore_ascii_case("auto") {
-                        fixed_width = None;
-                        skip_next = true;
-                    } else {
-                        match warg.parse::<usize>() {
-                            Ok(w) if w >= 4 => {
-                                fixed_width = Some(w);
-                                skip_next = true;
-                            }
-                            _ => {
-                                eprintln!("Error: Width must be <number>|max|auto (number >= 4)");
-                                std::process::exit(1);
-                            }
+                    match args[i + 1].parse::<usize>() {
+                        Ok(w) if w >= 4 => {
+                            fixed_width = Some(w);
+                            skip_next = true;
+                        }
+                        _ => {
+                            eprintln!("Error: Width must be a number >= 4 (minimum for box borders)");
+                            std::process::exit(1);
                         }
                     }
                 }
@@ -2052,21 +2063,6 @@ fn main() {
             "--theme" => {
                 if i + 1 < args.len() {
                     theme_name = Some(args[i + 1].clone());
-                    skip_next = true;
-                }
-            }
-            "--layout" => {
-                if i + 1 < args.len() {
-                    let spec = &args[i + 1];
-                    for token in spec.split(',') {
-                        match token.trim() {
-                            "dt" => divider_after_title = true,
-                            "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
-                            "ds" => divider_before_status = true,
-                            "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
-                            _ => { /* ignore unsupported tokens for now */ }
-                        }
-                    }
                     skip_next = true;
                 }
             }
@@ -2255,23 +2251,6 @@ fn main() {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(
-            &text,
-            1,
-            1,
-            style,
-            color,
-            text_color,
-            title.as_deref(),
-            footer.as_deref(),
-            icon.as_deref(),
-            fixed_width,
-            status_bar.as_deref(),
-            header.as_deref(),
-            divider_after_title,
-            divider_before_status,
-            pad_after_title_divider,
-            pad_before_status_divider,
-        );
+        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref());
     }
 }

@@ -91,6 +91,15 @@ echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; 
 echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
 ```
 
+### CLI Reference (v0.8)
+
+- Input: Pipe content to `boxy` or pass via `--params` (metadata only).
+- Visual: `--style`, `--color`, `--text`, `--width <N|max|auto>`.
+- Sections: `--header`, `--title`, `--status` (sl|sc|sr), `--footer`.
+- Layout: `--layout` tokens `hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp`.
+- Themes: `--theme <name>`; manage via `boxy theme list|show <name>`. Env: `BOXY_THEME`.
+- Utility: `--no-boxy[=strict]`, `--colors`, `--examples`, `--help`, `--version`.
+
 ## Box Styles
 
 - `normal` - Standard box drawing characters `┌─┐│└┘`

@@ -33,15 +33,6 @@ pub struct BoxyTheme {
     pub header: Option<String>,           // External header above box
     pub footer: Option<String>,           // Footer below box
     pub icon: Option<String>,             // Leading icon for content
-    // Section colors (optional)
-    #[serde(default)]
-    pub title_color: Option<String>,
-    #[serde(default)]
-    pub status_color: Option<String>,
-    #[serde(default)]
-    pub header_color: Option<String>,
-    #[serde(default)]
-    pub footer_color: Option<String>,
     
     // === LAYOUT PROPERTIES ===
     pub width: Option<usize>,             // Fixed width in characters
@@ -60,8 +51,6 @@ pub struct BoxyTheme {
     pub status_bar: Option<String>,       // Status bar below box
     #[serde(default = "default_status_align")]
     pub status_align: String,             // Status alignment: left, center, right
-    #[serde(default)]
-    pub layout: Option<String>,           // Default layout tokens (e.g., "hc,fr,sc,dt,dsn")
     
     // === INHERITANCE ===
     pub inherits: Option<String>,         // Inherit from another theme
@@ -286,11 +275,6 @@ impl ThemeEngine {
         if theme.text_color != "auto" && theme.text_color != "none" {
             validate_color(&theme.text_color)?;
         }
-        // Validate section colors if present
-        if let Some(c) = &theme.title_color { validate_color(c)?; }
-        if let Some(c) = &theme.status_color { validate_color(c)?; }
-        if let Some(c) = &theme.header_color { validate_color(c)?; }
-        if let Some(c) = &theme.footer_color { validate_color(c)?; }
         
         // Validate style
         let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];
@@ -352,10 +336,6 @@ impl ThemeEngine {
             title: child.title.or(parent.title),
             header: child.header.or(parent.header),
             footer: child.footer.or(parent.footer),
-            title_color: child.title_color.or(parent.title_color),
-            status_color: child.status_color.or(parent.status_color),
-            header_color: child.header_color.or(parent.header_color),
-            footer_color: child.footer_color.or(parent.footer_color),
             icon: child.icon.or(parent.icon),
             width: child.width.or(parent.width),
             padding: if child.padding == 1 && parent.padding != 1 { parent.padding } else { child.padding },
@@ -364,7 +344,6 @@ impl ThemeEngine {
             footer_align: if child.footer_align == "center" && parent.footer_align != "center" { parent.footer_align } else { child.footer_align },
             status_bar: child.status_bar.or(parent.status_bar),
             status_align: if child.status_align == "left" && parent.status_align != "left" { parent.status_align } else { child.status_align },
-            layout: child.layout.or(parent.layout),
             inherits: None, // Clear inheritance to prevent cycles
             metadata: child.metadata.or(parent.metadata),
         }
@@ -401,10 +380,6 @@ impl Default for BoxyTheme {
             title: None,
             header: None,
             footer: None,
-            title_color: None,
-            status_color: None,
-            header_color: None,
-            footer_color: None,
             icon: None,
             width: None,
             padding: 1,
@@ -413,7 +388,6 @@ impl Default for BoxyTheme {
             footer_align: "center".to_string(),
             status_bar: None,
             status_align: "left".to_string(),
-            layout: None,
             inherits: None,
             metadata: None,
         }
