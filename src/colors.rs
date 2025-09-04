@@ -2,6 +2,9 @@
 // Complete 90+ semantic color palette for rich theme support
 // Version: boxy v0.6.0+ (inherits jynx proven architecture)
 
+pub const RESET: &str = "\x1B[0m";
+
+
 /// Core color mapping function - supports 90+ semantic colors
 pub fn get_color_code(color: &str) -> &'static str {
     match color {
