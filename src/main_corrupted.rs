@@ -1,12 +1,12 @@
-//repair
+//
+//v8 (CURR)
 use unicode_width::UnicodeWidthStr;
 use std::io::{self, Read, Write};
 use std::env;
-use std::process::{Command, Stdio};
-use std::fs::{self, File};
+use std::process::Command;
+use std::fs;
 use std::path::PathBuf;
 use regex::Regex;
-use std::collections::HashMap;
 
 mod colors;
 mod theme_engine;
@@ -24,45 +24,36 @@ struct BoxStyle {
     bottom_right: &'static str,
     horizontal: &'static str,
     vertical: &'static str,
-    tee_left: &'static str,
-    tee_right: &'static str,
-    #[allow(dead_code)]
-    cross: &'static str,
 }
 
 const NORMAL: BoxStyle = BoxStyle {
     top_left: "┌", top_right: "┐",
     bottom_left: "└", bottom_right: "┘",
     horizontal: "─", vertical: "│",
-    tee_left: "├", tee_right: "┤", cross: "┼",
 };
 
 const ROUNDED: BoxStyle = BoxStyle {
     top_left: "╭", top_right: "╮",
     bottom_left: "╰", bottom_right: "╯",
     horizontal: "─", vertical: "│",
-    tee_left: "├", tee_right: "┤", cross: "┼",
 };
 
 const DOUBLE: BoxStyle = BoxStyle {
     top_left: "╔", top_right: "╗",
     bottom_left: "╚", bottom_right: "╝",
     horizontal: "═", vertical: "║",
-    tee_left: "╠", tee_right: "╣", cross: "╬",
 };
 
 const HEAVY: BoxStyle = BoxStyle {
     top_left: "┏", top_right: "┓",
     bottom_left: "┗", bottom_right: "┛",
     horizontal: "━", vertical: "┃",
-    tee_left: "┣", tee_right: "┫", cross: "╋",
 };
 
 const ASCII: BoxStyle = BoxStyle {
     top_left: "+", top_right: "+",
     bottom_left: "+", bottom_right: "+",
     horizontal: "-", vertical: "|",
-    tee_left: "+", tee_right: "+", cross: "+",
 };
 
 
@@ -211,141 +202,25 @@ fn jynx_println(content: &str, template: &str, jynx: &JynxIntegration) {
     print!("{}", enhanced_content);
 }
 
-#[derive(Default, Debug)]
-struct ParsedContent {
-    header: Option<String>,
-    footer: Option<String>,
-    status: Option<String>,
-    title: Option<String>,
-    body: Option<String>,
-    icon: Option<String>,
-    layout: Option<String>,
-    title_color: Option<String>,
-    status_color: Option<String>,
-    header_color: Option<String>,
-    footer_color: Option<String>
-}
-
-fn unescape_stream_value(s: &str) -> String {
-    let mut out = String::new();
-    let mut chars = s.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c == '\\' {
-            match chars.next() {
-                Some('n') => out.push('\n'),
-                Some('t') => out.push('\t'),
-                Some(other) => { out.push(other); },
-                None => break,
-            }
-        } else if c == '/' {
-            if let Some('n') = chars.peek().copied() { chars.next(); out.push('\n'); } else { out.push(c); }
-        } else {
-            out.push(c);
-        }
-    }
-    out
-}
-
-fn parse_content_stream(input: &str) -> Option<ParsedContent> {
-    // Matches k='v' with single quotes; non-greedy across newlines; optional trailing semicolon
-    let re = Regex::new(r"(?s)([A-Za-z]{2})\s*=\s*'(.+?)'\s*;?").ok()?;
-    let mut map: HashMap<String, String> = HashMap::new();
-    for cap in re.captures_iter(input) {
-        let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
-        let v_raw = cap.get(2).map(|m| m.as_str()).unwrap_or("");
-        let v = unescape_stream_value(v_raw);
-        map.insert(k, v);
-    }
-    if map.is_empty() {
-        return None;
-    }
-    let mut pc = ParsedContent::default();
-    if let Some(v) = map.remove("hd") { pc.header = Some(v); }
-    if let Some(v) = map.remove("ft") { pc.footer = Some(v); }
-    if let Some(v) = map.remove("st") { pc.status = Some(v); }
-    if let Some(v) = map.remove("tl") { pc.title = Some(v); }
-    // Body (bd) intentionally ignored; body should come from piped stdin
-    if let Some(v) = map.remove("ic") { pc.icon = Some(v); }
-    if let Some(v) = map.remove("tc") { pc.title_color = Some(v); }
-    if let Some(v) = map.remove("sc") { pc.status_color = Some(v); }
-    // If nothing recognized, return None to avoid hijacking arbitrary input
-    if pc.header.is_none() && pc.footer.is_none() && pc.status.is_none() && pc.title.is_none() && pc.body.is_none() && pc.icon.is_none() {
-        None
-    } else {
-        Some(pc)
-    }
-}
-
-/// Width diagnostics subcommand
-fn handle_width_command() {
-    // Helper to run command with /dev/tty as stdin when available
-    fn run_with_tty(mut cmd: Command) -> Option<String> {
-        if let Ok(tty) = File::open("/dev/tty") {
-            let _ = cmd.stdin(Stdio::from(tty));
-        }
-        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
-    }
-
-    // Gather tput cols (tty)
-    let tput_cols_tty = {
-        let mut c = Command::new("tput");
-        c.arg("cols");
-        run_with_tty(c).and_then(|s| s.trim().parse::<usize>().ok())
-    };
-
-    // Gather stty size (rows cols) via tty
-    let stty_cols_tty = {
-        let mut c = Command::new("stty");
-        c.arg("size");
-        run_with_tty(c).and_then(|s| {
-            let parts: Vec<&str> = s.split_whitespace().collect();
-            if parts.len() == 2 { parts[1].parse::<usize>().ok() } else { None }
-        })
-    };
-
-    let effective = get_terminal_width();
-    
-    println!("Width diagnostics:");
-    println!("  effective (get_terminal_width): {}", effective);
-    println!("  tput cols (tty): {}", tput_cols_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
-    println!("  stty size cols (tty): {}", stty_cols_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
-}
-
 /// Get terminal width with fallback to 80 columns
 fn get_terminal_width() -> usize {
-    // Helper to run with /dev/tty
-    fn run_with_tty(mut cmd: Command) -> Option<String> {
-        if let Ok(tty) = File::open("/dev/tty") {
-            let _ = cmd.stdin(Stdio::from(tty));
-        }
-        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
-    }
-
-    // Try tput cols with tty (preferred)
-    {
-        let mut c = Command::new("tput");
-        c.arg("cols");
-        if let Some(out) = run_with_tty(c) {
-        if let Ok(width) = out.trim().parse::<usize>() {
-            if width >= 10 { return width; }
-        }
-        }
-    }
-
-    // Try stty size with tty
-    {
-        let mut c = Command::new("stty");
-        c.arg("size");
-        if let Some(out) = run_with_tty(c) {
-        let parts: Vec<&str> = out.split_whitespace().collect();
-        if parts.len() == 2 {
-            if let Ok(width) = parts[1].trim().parse::<usize>() {
-                if width >= 10 { return width; }
+    // Try tput cols first
+    if let Ok(output) = Command::new("tput").arg("cols").output() {
+        if let Ok(width_str) = String::from_utf8(output.stdout) {
+            if let Ok(width) = width_str.trim().parse::<usize>() {
+                return width;
             }
         }
+    }
+    
+    // Try COLUMNS environment variable
+    if let Ok(cols) = env::var("COLUMNS") {
+        if let Ok(width) = cols.parse::<usize>() {
+            return width;
         }
     }
-
+    
+    // Fallback to 80 columns
     80
 }
 
@@ -390,7 +265,7 @@ fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
     result
 }
 
-fn render_title_or_footer(text: &str, total_width: usize, style_char: &str, align: &str) -> String {
+fn render_title_or_footer(text: &str, total_width: usize, style_char: &str) -> String {
     if total_width < 4 {
         // Minimum viable box: just return style chars
         return style_char.repeat(total_width);
@@ -429,14 +304,8 @@ fn render_title_or_footer(text: &str, total_width: usize, style_char: &str, alig
     let final_text_width = get_display_width(&final_text);
     // CRITICAL FIX: Use saturating_sub to prevent underflow
     let remaining_width = total_width.saturating_sub(final_text_width + 2); // -2 for spaces around text
-    let (left_pad, right_pad) = match align {
-        "left" => (0, remaining_width),
-        "right" => (remaining_width, 0),
-        _ => {
-            let lp = remaining_width / 2;
-            (lp, remaining_width.saturating_sub(lp))
-        }
-    };
+    let left_pad = remaining_width / 2;
+    let right_pad = remaining_width.saturating_sub(left_pad);
     
     format!("{} {} {}", 
         style_char.repeat(left_pad), 
@@ -512,7 +381,29 @@ fn strip_box(text: &str, strict: bool) -> String {
     content_lines.join("\n")
 }
 
-fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, color: &str, text_color: &str, title: Option<&str>, footer: Option<&str>, icon: Option<&str>, fixed_width: Option<usize>, status_bar: Option<&str>, header: Option<&str>, header_align: &str, footer_align: &str, status_align_override: Option<&str>, divider_after_title: bool, divider_before_status: bool, pad_after_title_divider: bool, pad_before_status_divider: bool, pad_before_title: bool, pad_after_status: bool, pad_after_title: bool, pad_before_status: bool, title_color_name: Option<&str>, status_color_name: Option<&str>, body_align: &str, body_pad_emoji: bool, pad_body_above: bool, pad_body_below: bool){
+
+
+  // draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
+
+
+fn draw_box(
+    text: &str,
+    h_padding: usize,
+    _v_padding: usize,
+    style: &BoxStyle,
+    color: &str,
+    text_color: &str,
+    title: Option<&str>,
+    footer: Option<&str>,
+    icon: Option<&str>,
+    fixed_width: Option<usize>,
+    status_bar: Option<&str>,
+    header: Option<&str>,
+    divider_after_title: bool,
+    divider_before_status: bool,
+    pad_after_title_divider: bool,
+    pad_before_status_divider: bool,
+) {
     let terminal_width = get_terminal_width();
     
     // Calculate effective box width - respect terminal constraints
@@ -557,50 +448,65 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
     };
     
     let pad = " ".repeat(h_padding);
-    let title_color_code = title_color_name.map(|n| get_color_code(n)).unwrap_or("");
-    let status_color_code = status_color_name.map(|n| get_color_code(n)).unwrap_or("");
     
-    // Top border with optional HEADER inside the border
+    // External header (appears above the box)
     if let Some(header_text) = header {
         let expanded_header = expand_variables(header_text);
-        let header_line = render_title_or_footer(&expanded_header, inner_width, style.horizontal, header_align);
-        println!("{}{}{}{}{}", color_code, style.top_left, header_line, style.top_right, RESET);
-    } else {
-        let border = style.horizontal.repeat(inner_width);
-        println!("{}{}{}{}{}", color_code, style.top_left, border, style.top_right, RESET);
+        let header_width = get_display_width(&expanded_header);
+        
+        // LIPSIFY header more aggressively - use 90% of terminal width as threshold
+        let header_threshold = (terminal_width * 9) / 10; // 90% of terminal width
+        let final_header = if header_width > header_threshold {
+            truncate_with_ellipsis(&expanded_header, header_threshold)
+        } else {
+            expanded_header
+        };
+        
+        // Print external header with subtle styling
+        println!("{}{}{}", get_color_code("grey7"), final_header, RESET);
     }
     
-    // Content lines - LIPSIFIED for all cases
-    // Compose content lines; if title is provided, insert it as the first line
-    let mut composed_lines: Vec<String> = Vec::new();
+    // Top border with optional title - LIPSIFIED for terminal width
     if let Some(title_text) = title {
-        composed_lines.push(expand_variables(title_text));
+        let expanded_title = expand_variables(title_text);
+        let title_line = render_title_or_footer(&expanded_title, inner_width, style.horizontal);
+        println!("{}{}{}{}{}", 
+            color_code, style.top_left, title_line, style.top_right, RESET);
+    } else {
+        let border = style.horizontal.repeat(inner_width);
+        println!("{}{}{}{}{}", 
+            color_code, style.top_left, border, style.top_right, RESET);
     }
-    composed_lines.extend(lines.iter().map(|l| (*l).to_string()));
-
-    // Optional padding blank line before title
-    if pad_before_title && title.is_some() {
-        let available_content_width = inner_width.saturating_sub(2 * h_padding);
+    
+    // Optional divider after title (inside box)
+    if divider_after_title {
+        let inner_width = final_width.saturating_sub(2);
+        let line = style.horizontal.repeat(inner_width);
         println!(
-            "{}{}{}{}{}{}{}{}",
-            color_code,
-            style.vertical,
-            RESET,
-            pad,
-            " ".repeat(available_content_width),
-            pad,
-            format!("{}{}{}", color_code, style.vertical, RESET),
-            ""
+            "{}{}{}{}{}",
+            color_code, style.vertical, RESET,
+            line,
+            format!("{}{}{}", color_code, style.vertical, RESET)
         );
+        if pad_after_title_divider {
+            // blank content line
+            let blanks = " ".repeat(inner_width);
+            println!("{}{}{}{}{}{}",
+                color_code, style.vertical, RESET,
+                blanks,
+                color_code, style.vertical);
+            println!("{}", RESET);
+        }
     }
 
-    for (i, line) in composed_lines.iter().enumerate() {
+    // Content lines - LIPSIFIED for all cases
+    for (i, line) in lines.iter().enumerate() {
         let available_content_width = inner_width.saturating_sub(2 * h_padding);
         
         // LIPSIFY: Always truncate if line exceeds available width
-        let line_width = get_display_width(&line);
+        let line_width = get_display_width(line);
         let display_line = if line_width > available_content_width {
-            truncate_with_ellipsis(&line, available_content_width)
+            truncate_with_ellipsis(line, available_content_width)
         } else {
             line.to_string()
         };
@@ -609,19 +515,6 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
         let spaces = " ".repeat(available_content_width.saturating_sub(width));
         
         if i == 0 && icon.is_some() {
-            // Avoid duplicate icon if the title line already starts with an emoji/non-ASCII
-            let starts_with_emoji = line.chars().next().map(|c| !c.is_ascii()).unwrap_or(false);
-            if starts_with_emoji {
-                // Fall through to normal rendering without icon injection
-                let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
-                let colored_display_line = if line_code.is_empty() { display_line.to_string() } else { format!("{}{}{}", line_code, display_line, RESET) };
-                println!("{}{}{}{}{}{}{}{}",
-                    color_code, style.vertical, RESET,
-                    pad, colored_display_line, spaces, pad,
-                    format!("{}{}{}", color_code, style.vertical, RESET));
-                // Continue to next line
-                continue;
-            }
             // First line with icon - LIPSIFIED
             let icon_str = icon.unwrap();
             let icon_expanded = expand_variables(icon_str);
@@ -636,11 +529,10 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
             };
             
             // Apply text color to the text part only (not icon)
-            let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
-            let colored_final_line = if line_code.is_empty() {
+            let colored_final_line = if text_color_code.is_empty() {
                 final_line.to_string()
             } else {
-                format!("{}{}{}", line_code, final_line, RESET)
+                format!("{}{}{}", text_color_code, final_line, RESET)
             };
             
             let final_width = get_display_width(&final_line);
@@ -652,12 +544,11 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
                 colored_final_line, final_spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         } else {
-            // Apply text/status/title color to the display line
-            let line_code = if i == 0 && !title_color_code.is_empty() { title_color_code } else { text_color_code };
-            let colored_display_line = if line_code.is_empty() {
+            // Apply text color to the display line
+            let colored_display_line = if text_color_code.is_empty() {
                 display_line.to_string()
             } else {
-                format!("{}{}{}", line_code, display_line, RESET)
+                format!("{}{}{}", text_color_code, display_line, RESET)
             };
             
             println!("{}{}{}{}{}{}{}{}",
@@ -665,296 +556,167 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
                 pad, colored_display_line, spaces, pad,
                 format!("{}{}{}", color_code, style.vertical, RESET));
         }
-
-        if divider_after_title && i == 0 {
-            println!(
-                "{}{}{}{}{}",
-                color_code,
-                style.tee_left,
-                style.horizontal.repeat(inner_width),
-                style.tee_right,
-                RESET
-            );
-            if pad_after_title_divider {
-                let available_content_width = inner_width.saturating_sub(2 * h_padding);
-                println!(
-                    "{}{}{}{}{}{}{}{}",
-                    color_code,
-                    style.vertical,
-                    RESET,
-                    pad,
-                    " ".repeat(available_content_width),
-                    pad,
-                    format!("{}{}{}", color_code, style.vertical, RESET),
-                    ""
-                );
-            }
-        } else if pad_after_title && i == 0 {
-            // Optional padding blank line after title when no divider requested
-            let available_content_width = inner_width.saturating_sub(2 * h_padding);
-            println!(
-                "{}{}{}{}{}{}{}{}",
-                color_code,
-                style.vertical,
-                RESET,
-                pad,
-                " ".repeat(available_content_width),
-                pad,
-                format!("{}{}{}", color_code, style.vertical, RESET),
-                ""
-            );
-        }
     }
     
-    // Optional STATUS line rendered inside the box (before footer)
+    // Bottom border with optional footer - LIPSIFIED for terminal width
+    if let Some(footer_text) = footer {
+        let expanded_footer = expand_variables(footer_text);
+        let footer_line = render_title_or_footer(&expanded_footer, inner_width, style.horizontal);
+        println!("{}{}{}{}{}", 
+            color_code, style.bottom_left, footer_line, style.bottom_right, RESET);
+    } else {
+        let border = style.horizontal.repeat(inner_width);
+        println!("{}{}{}{}{}", 
+            color_code, style.bottom_left, border, style.bottom_right, RESET);
+    }
+    
+    // Optional divider before status (outside box in current renderer)
+    if divider_before_status {
+        if pad_before_status_divider {
+            println!("");
+        }
+        let line = style.horizontal.repeat(final_width);
+        println!("{}{}{}", color_code, line, RESET);
+    }
+
+    // Optional status bar with alignment support - LIPSIFIED for terminal width
     if let Some(status_text) = status_bar {
-        if pad_before_status {
-            let available_content_width = inner_width.saturating_sub(2 * h_padding);
-            println!(
-                "{}{}{}{}{}{}{}{}",
-                color_code,
-                style.vertical,
-                RESET,
-                pad,
-                " ".repeat(available_content_width),
-                pad,
-                format!("{}{}{}", color_code, style.vertical, RESET),
-                ""
-            );
-        }
-        if divider_before_status {
-            if pad_before_status_divider {
-                let available_content_width = inner_width.saturating_sub(2 * h_padding);
-                println!(
-                    "{}{}{}{}{}{}{}{}",
-                    color_code,
-                    style.vertical,
-                    RESET,
-                    pad,
-                    " ".repeat(available_content_width),
-                    pad,
-                    format!("{}{}{}", color_code, style.vertical, RESET),
-                    ""
-                );
-            }
-            println!(
-                "{}{}{}{}{}",
-                color_code,
-                style.tee_left,
-                style.horizontal.repeat(inner_width),
-                style.tee_right,
-                RESET
-            );
-        }
         let expanded_status = expand_variables(status_text);
-        let (alignment, clean_status) = if let Some(ov) = status_align_override { (ov, expanded_status) } else if expanded_status.starts_with("sl:") {
+        
+        // Check for alignment codes: sl, sc, sr (status), hl, hr, hc (header), fl, fr, fc (footer)
+        let (alignment, clean_status) = if expanded_status.starts_with("sl:") {
             ("left", expanded_status.strip_prefix("sl:").unwrap_or(&expanded_status).to_string())
         } else if expanded_status.starts_with("sc:") {
             ("center", expanded_status.strip_prefix("sc:").unwrap_or(&expanded_status).to_string())
         } else if expanded_status.starts_with("sr:") {
             ("right", expanded_status.strip_prefix("sr:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("hl:") {
+            ("left", expanded_status.strip_prefix("hl:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("hc:") {
+            ("center", expanded_status.strip_prefix("hc:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("hr:") {
+            ("right", expanded_status.strip_prefix("hr:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("fl:") {
+            ("left", expanded_status.strip_prefix("fl:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("fc:") {
+            ("center", expanded_status.strip_prefix("fc:").unwrap_or(&expanded_status).to_string())
+        } else if expanded_status.starts_with("fr:") {
+            ("right", expanded_status.strip_prefix("fr:").unwrap_or(&expanded_status).to_string())
         } else {
-            ("left", expanded_status)
+            ("left", expanded_status) // default alignment
         };
-
-        let available_content_width = inner_width.saturating_sub(2 * h_padding);
-        let status_display = if get_display_width(&clean_status) > available_content_width {
-            truncate_with_ellipsis(&clean_status, available_content_width)
+        
+        let status_width = get_display_width(&clean_status);
+        
+        // LIPSIFY status bar more aggressively - use 70% of terminal width as threshold  
+        let status_threshold = (terminal_width * 7) / 10; // 70% of terminal width
+        let final_status = if status_width > status_threshold {
+            truncate_with_ellipsis(&clean_status, status_threshold)
         } else {
             clean_status
         };
-
-        let final_width = get_display_width(&status_display);
-        let (left_pad_inner, right_pad_inner) = match alignment {
+        
+        // Apply alignment
+        let aligned_status = match alignment {
             "center" => {
-                let space = available_content_width.saturating_sub(final_width);
-                let lp = space / 2; (lp, space.saturating_sub(lp))
+                let final_width = get_display_width(&final_status);
+                let padding_total = terminal_width.saturating_sub(final_width);
+                let left_padding = padding_total / 2;
+                format!("{}{}", " ".repeat(left_padding), final_status)
             }
             "right" => {
-                let space = available_content_width.saturating_sub(final_width);
-                (space, 0)
+                let final_width = get_display_width(&final_status);
+                let padding_total = terminal_width.saturating_sub(final_width);
+                format!("{}{}", " ".repeat(padding_total), final_status)
             }
-            _ => (0, available_content_width.saturating_sub(final_width)),
+            _ => final_status, // left alignment (default)
         };
+        
+        // Status bar with subtle styling
+        println!("{}{}{}", get_color_code("grey3"), aligned_status, RESET);
+    }
+}
 
-        let status_line = format!("{}{}{}", " ".repeat(left_pad_inner), status_display, " ".repeat(right_pad_inner));
-        let status_code = if !status_color_code.is_empty() { status_color_code } else { text_color_code };
-        let colored_status = if status_code.is_empty() { status_line } else { format!("{}{}{}", status_code, status_line, RESET) }; //todo: status_code color code? doesnt do anything yet, incomplete feature
+/// Handle migrate-commands subcommand for helping users transition
+// Migration subcommand removed in v0.8
+fn handle_migrate_command(_args: &[String], _jynx: &JynxIntegration) {
+    println!("This command has been removed in v0.8.");
+}
 
-        println!("{}{}{}{}{}{}{}{}",
-            color_code, style.vertical, RESET,
-            pad, colored_status, pad,
-            format!("{}{}{}", color_code, style.vertical, RESET),
-            "");
-
-        // Optional padding blank line after status
-        if pad_after_status {
-            let available_content_width = inner_width.saturating_sub(2 * h_padding);
-            println!(
-                "{}{}{}{}{}{}{}{}",
-                color_code,
-                style.vertical,
-                RESET,
-                pad,
-                " ".repeat(available_content_width),
-                pad,
-                format!("{}{}{}", color_code, style.vertical, RESET),
-                ""
-            );
+/// Analyze a command string for migration opportunities
+fn analyze_command_for_migration(command: &str) {
+    println!("Migration Analysis for: {}", command);
+    println!("{}=========================={}", get_color_code("azure"), RESET);
+    println!();
+    
+    let mut suggestions = Vec::new();
+    
+    // Check for --icon + --title pattern
+    if command.contains("--icon") && command.contains("--title") {
+        suggestions.push((
+            "🔄 Icon + Title Combination".to_string(),
+            "Consider using --title with embedded icon instead of separate --icon and --title flags.".to_string(),
+            extract_migration_suggestion_for_icon_title(command)
+        ));
+    }
+    
+    // Check for long --status without alignment
+    if let Some(status_part) = extract_status_from_command(command) {
+        if status_part.len() > 50 && !status_part.starts_with("sl:") && !status_part.starts_with("sc:") && !status_part.starts_with("sr:") {
+            suggestions.push((
+                "📍 Status Alignment".to_string(),
+                "Long status text should use alignment prefixes for better control.".to_string(),
+                format!("  Old: --status \"{}\"", status_part),
+            ));
         }
     }
-
-    // Bottom border with optional FOOTER inside the border
-    if let Some(footer_text) = footer {
-        let expanded_footer = expand_variables(footer_text);
-        let footer_line = render_title_or_footer(&expanded_footer, inner_width, style.horizontal, footer_align);
-        println!("{}{}{}{}{}", color_code, style.bottom_left, footer_line, style.bottom_right, RESET);
+    
+    if suggestions.is_empty() {
+        println!("✅ No migration suggestions found. Your command follows current best practices!");
     } else {
-        let border = style.horizontal.repeat(inner_width);
-        println!("{}{}{}{}{}", color_code, style.bottom_left, border, style.bottom_right, RESET);
-    }
-}
-
-/// TODO: REMOVE /Handle migrate-commands subcommand for helping users transition
-fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
-    // if args.is_empty() {
-    //     println!("{} {} - Migration Assistant", NAME, VERSION);
-    //     println!();
-    //     println!("USAGE:");
-    //     println!("    {} migrate-commands [OPTIONS]", NAME);
-    //     println!();
-    //     println!("OPTIONS:");
-    //     println!("    --check <command>    Check a command for migration suggestions");
-    //     println!("    --interactive        Interactive migration guide");
-    //     println!("    --examples           Show migration examples");
-    //     println!("    --guide              Comprehensive migration guide");
-    //     println!("    --v6-changes         Show v0.6.0 breaking changes");
-    //     println!("    --help               Show this help message");
-    //     println!();
-    //     println!("EXAMPLES:");
-    //     println!("    {} migrate-commands --check 'echo test | boxy --icon \u{1f4e6} --title Status'", NAME);
-    //     println!("    {} migrate-commands --interactive", NAME);
-    //     println!("    {} migrate-commands --examples", NAME);
-    //     println!("    {} migrate-commands --guide", NAME);
-    //     return;
-    // }
-    
-    // match args[0].as_str() {
-    //     "--check" => {
-    //         if args.len() < 2 {
-    //             eprintln!("Error: --check requires a command. Usage: {} migrate-commands --check <command>", NAME);
-    //             std::process::exit(1);
-    //         }
-    //         analyze_command_for_migration(&args[1]);
-    //     }
-    //     "--interactive" => {
-    //         run_interactive_migration_guide();
-    //     }
-    //     "--examples" => {
-    //         show_migration_examples(jynx);
-    //     }
-    //     "--guide" => {
-    //         show_comprehensive_migration_guide();
-    //     }
-    //     "--v6-changes" => {
-    //         show_v6_breaking_changes();
-    //     }
-    //     "--help" => {
-    //         println!("{} {} - Migration Assistant", NAME, VERSION);
-    //         println!();
-    //         println!("The migration assistant helps you update commands to use new boxy features:");
-    //         println!();
-    //         println!("  • --header vs --title distinction");
-    //         println!("  • Enhanced --title with icon support");
-    //         println!("  • Status alignment prefixes");
-    //         println!("  • Improved theme integration");
-    //         println!();
-    //         println!("Run with --examples to see before/after examples.");
-    //         println!("Run with --guide for the comprehensive migration guide.");
-    //     }
-    //     _ => {
-    //         eprintln!("Unknown migrate-commands option: {}", args[0]);
-    //         eprintln!("Use '{} migrate-commands --help' for available options", NAME);
-    //         eprintln!("Available options: --check, --interactive, --examples, --guide, --v6-changes, --help");
-    //         std::process::exit(1);
-    //     }
-    // }
-}
-
-/// TODO:REMOVE
-fn analyze_command_for_migration(command: &str) {
-    // println!("Migration Analysis for: {}", command);
-    // println!("{}=========================={}", get_color_code("azure"), RESET);
-    // println!();
-    
-    // let mut suggestions = Vec::new();
-    
-    // // Check for --icon + --title pattern
-    // if command.contains("--icon") && command.contains("--title") {
-    //     suggestions.push((
-    //         "🔄 Icon + Title Combination".to_string(),
-    //         "Consider using --title with embedded icon instead of separate --icon and --title flags.".to_string(),
-    //         extract_migration_suggestion_for_icon_title(command)
-    //     ));
-    // }
-    
-    // // Check for long --status without alignment
-    // if let Some(status_part) = extract_status_from_command(command) {
-    //     if status_part.len() > 50 && !status_part.starts_with("sl:") && !status_part.starts_with("sc:") && !status_part.starts_with("sr:") {
-    //         suggestions.push((
-    //             "📍 Status Alignment".to_string(),
-    //             "Long status text should use alignment prefixes for better control.".to_string(),
-    //             format!("  Old: --status \"{}\"", status_part),
-    //         ));
-    //     }
-    // }
-    
-    // if suggestions.is_empty() {
-    //     println!("✅ No migration suggestions found. Your command follows current best practices!");
-    // } else {
-    //     println!("Found {} migration suggestions:", suggestions.len());
-    //     println!();
+        println!("Found {} migration suggestions:", suggestions.len());
+        println!();
         
-    //     for (i, (title, description, example)) in suggestions.iter().enumerate() {
-    //         println!("{}. {}", i + 1, title);
-    //         println!("   {}", description);
-    //         if !example.is_empty() {
-    //             println!("{}", example);
-    //         }
-    //         println!();
-    //     }
-    // }
+        for (i, (title, description, example)) in suggestions.iter().enumerate() {
+            println!("{}. {}", i + 1, title);
+            println!("   {}", description);
+            if !example.is_empty() {
+                println!("{}", example);
+            }
+            println!();
+        }
+    }
 }
 
 /// Extract migration suggestion for icon+title pattern
-fn extract_migration_suggestion_for_icon_title(command: &str) {
-    // // Simple extraction - in a real implementation would be more sophisticated
-    // let icon_part = if let Some(start) = command.find("--icon ") {
-    //     let after_icon = &command[start + 7..];
-    //     if let Some(end) = after_icon.find(" --") {
-    //         after_icon[..end].trim().trim_matches('"').trim_matches('\'').to_string()
-    //     } else {
-    //         after_icon.split_whitespace().next().unwrap_or("").trim_matches('"').trim_matches('\'').to_string()
-    //     }
-    // } else {
-    //     "📦".to_string()
-    // };
+fn extract_migration_suggestion_for_icon_title(command: &str) -> String {
+    // Simple extraction - in a real implementation would be more sophisticated
+    let icon_part = if let Some(start) = command.find("--icon ") {
+        let after_icon = &command[start + 7..];
+        if let Some(end) = after_icon.find(" --") {
+            after_icon[..end].trim().trim_matches('"').trim_matches('\'').to_string()
+        } else {
+            after_icon.split_whitespace().next().unwrap_or("").trim_matches('"').trim_matches('\'').to_string()
+        }
+    } else {
+        "📦".to_string()
+    };
     
-    // let title_part = if let Some(start) = command.find("--title ") {
-    //     let after_title = &command[start + 8..];
-    //     if let Some(end) = after_title.find(" --") {
-    //         after_title[..end].trim().trim_matches('"').trim_matches('\'').to_string()
-    //     } else {
-    //         after_title.split_whitespace().next().unwrap_or("Title").trim_matches('"').trim_matches('\'').to_string()
-    //     }
-    // } else {
-    //     "Title".to_string()
-    // };
+    let title_part = if let Some(start) = command.find("--title ") {
+        let after_title = &command[start + 8..];
+        if let Some(end) = after_title.find(" --") {
+            after_title[..end].trim().trim_matches('"').trim_matches('\'').to_string()
+        } else {
+            after_title.split_whitespace().next().unwrap_or("Title").trim_matches('"').trim_matches('\'').to_string()
+        }
+    } else {
+        "Title".to_string()
+    };
     
-    // format!(
-    //     "  Old: --icon \"{}\" --title \"{}\"\n  New: --title \"{} {}\"",
-    //     icon_part, title_part, icon_part, title_part
-    // )
+    format!(
+        "  Old: --icon \"{}\" --title \"{}\"\n  New: --title \"{} {}\"",
+        icon_part, title_part, icon_part, title_part
+    )
 }
 
 /// Extract status text from command
@@ -973,233 +735,237 @@ fn extract_status_from_command(command: &str) -> Option<String> {
 
 /// Show migration examples
 fn show_migration_examples(jynx: &JynxIntegration) {
-    // let header = format!("{} {} - Migration Examples", NAME, VERSION);
+    let header = format!("{} {} - Migration Examples", NAME, VERSION);
     
-    // if jynx.is_active() {
-    //     jynx_println(&header, "migration", jynx);
-    //     println!();
-    // } else {
-    //     println!("{}", header);
-    //     println!();
-    // }
+    if jynx.is_active() {
+        jynx_println(&header, "migration", jynx);
+        println!();
+    } else {
+        println!("{}", header);
+        println!();
+    }
     
-    // let examples = vec![
-    //     (
-    //         "🔄 Icon + Title Combination",
-    //         "echo 'Success' | boxy --icon ✅ --title 'Status'",
-    //         "echo 'Success' | boxy --title '✅ Status'"
-    //     ),
-    //     (
-    //         "📍 Status Alignment", 
-    //         "echo 'Done' | boxy --status 'This is a very long status message'",
-    //         "echo 'Done' | boxy --status 'sc:This is a very long status message'"
-    //     ),
-    //     (
-    //         "🏷️ Header vs Title",
-    //         "echo 'Output' | boxy --title 'Application Name'",
-    //         "echo 'Output' | boxy --header 'Application Name' --title '✅ Status'"
-    //     ),
-    //     (
-    //         "🎨 Theme Integration",
-    //         "echo 'Error' | boxy --icon ❌ --color red",
-    //         "echo 'Error' | boxy --theme error"
-    //     ),
-    // ];
+    let examples = vec![
+        (
+            "🔄 Icon + Title Combination",
+            "echo 'Success' | boxy --icon ✅ --title 'Status'",
+            "echo 'Success' | boxy --title '✅ Status'"
+        ),
+        (
+            "📍 Status Alignment", 
+            "echo 'Done' | boxy --status 'This is a very long status message'",
+            "echo 'Done' | boxy --status 'sc:This is a very long status message'"
+        ),
+        (
+            "🏷️ Header vs Title",
+            "echo 'Output' | boxy --title 'Application Name'",
+            "echo 'Output' | boxy --header 'Application Name' --title '✅ Status'"
+        ),
+        (
+            "🎨 Theme Integration",
+            "echo 'Error' | boxy --icon ❌ --color red",
+            "echo 'Error' | boxy --theme error"
+        ),
+    ];
     
-    // for (category, old_command, new_command) in examples {
-    //     println!("{}", category);
-    //     println!("  {}OLD:{} {}", get_color_code("red"), RESET, old_command);
-    //     println!("  {}NEW:{} {}", get_color_code("green"), RESET, new_command);
-    //     println!();
-    // }
+    for (category, old_command, new_command) in examples {
+        println!("{}", category);
+        println!("  {}OLD:{} {}", get_color_code("red"), RESET, old_command);
+        println!("  {}NEW:{} {}", get_color_code("green"), RESET, new_command);
+        println!();
+    }
     
-    // println!("💡 {}TIP:{} Use 'boxy migrate-commands --check <command>' to analyze specific commands", get_color_code("azure"), RESET);
+    // Migration tips removed in v0.8
 }
 
 /// Interactive migration guide
 fn run_interactive_migration_guide() {
-    // println!("{} {} - Interactive Migration Guide", NAME, VERSION);
-    // println!();
-    // println!("This guide will help you understand the key changes in boxy's new version:");
-    // println!();
+    // Removed in v0.8
+    println!("This guide has been removed in v0.8.");
+    println!();
+    return;
     
-    // // Step 1: Header vs Title
-    // println!("{}📋 Step 1: Understanding --header vs --title{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  {}--header{}  Appears ABOVE the box (external)", get_color_code("green"), RESET);
-    // println!("  {}--title{}   Appears IN the top border (internal)", get_color_code("blue"), RESET);
-    // println!();
-    // println!("Example:");
-    // println!("  echo 'Content' | boxy --header 'My App' --title '✅ Success'");
-    // println!();
+    // Step 1: Header vs Title
+    println!("{}📋 Step 1: Understanding --header vs --title{}", get_color_code("azure"), RESET);
+    println!();
+    println!("  {}--header{}  Appears ABOVE the box (external)", get_color_code("green"), RESET);
+    println!("  {}--title{}   Appears IN the top border (internal)", get_color_code("blue"), RESET);
+    println!();
+    println!("Example:");
+    println!("  echo 'Content' | boxy --header 'My App' --title '✅ Success'");
+    println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+    print!("Press Enter to continue...");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 2: Enhanced Title
-    // println!("{}🎨 Step 2: Enhanced --title with Icon Support{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  Old way: --icon 📦 --title 'Status'");
-    // println!("  New way: --title '📦 Status'");
-    // println!();
-    // println!("The new --title automatically detects and formats icons!");
-    // println!();
+    // Step 2: Enhanced Title
+    println!("{}🎨 Step 2: Enhanced --title with Icon Support{}", get_color_code("azure"), RESET);
+    println!();
+    println!("  Old way: --icon 📦 --title 'Status'");
+    println!("  New way: --title '📦 Status'");
+    println!();
+    println!("The new --title automatically detects and formats icons!");
+    println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+    print!("Press Enter to continue...");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 3: Status Alignment
-    // println!("{}📍 Step 3: Status Bar Alignment{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  {}sl:{}text  Left aligned", get_color_code("green"), RESET);
-    // println!("  {}sc:{}text  Center aligned", get_color_code("green"), RESET);
-    // println!("  {}sr:{}text  Right aligned", get_color_code("green"), RESET);
-    // println!();
-    // println!("Example: --status 'sc:Centered status message'");
-    // println!();
+    // Step 3: Status Alignment
+    println!("{}📍 Step 3: Status Bar Alignment{}", get_color_code("azure"), RESET);
+    println!();
+    println!("  {}sl:{}text  Left aligned", get_color_code("green"), RESET);
+    println!("  {}sc:{}text  Center aligned", get_color_code("green"), RESET);
+    println!("  {}sr:{}text  Right aligned", get_color_code("green"), RESET);
+    println!();
+    println!("Example: --status 'sc:Centered status message'");
+    println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+    print!("Press Enter to continue...");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 4: Themes
-    // println!("{}🎭 Step 4: Theme Integration{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  Instead of: --icon ❌ --color red");
-    // println!("  Use:        --theme error");
-    // println!();
-    // println!("Available themes: error, success, warning, info, critical");
-    // println!();
+    // Step 4: Themes
+    println!("{}🎭 Step 4: Theme Integration{}", get_color_code("azure"), RESET);
+    println!();
+    println!("  Instead of: --icon ❌ --color red");
+    println!("  Use:        --theme error");
+    println!();
+    println!("Available themes: error, success, warning, info, critical");
+    println!();
     
-    // println!("{}✅ Migration guide complete!{}", get_color_code("green"), RESET);
-    // println!();
-    // println!("Next steps:");
-    // println!("  • Use 'boxy migrate-commands --examples' to see more examples");
-    // println!("  • Use 'boxy migrate-commands --check <command>' to analyze specific commands");
-    // println!("  • Check 'boxy --help' for the complete updated syntax");
+    println!("{}✅ Migration guide complete!{}", get_color_code("green"), RESET);
+    println!();
+    println!("Next steps:");
+    println!("  • Use 'boxy migrate-commands --examples' to see more examples");
+    println!("  • Use 'boxy migrate-commands --check <command>' to analyze specific commands");
+    println!("  • Check 'boxy --help' for the complete updated syntax");
 }
 
 /// Comprehensive migration guide
 fn show_comprehensive_migration_guide() {
-    // println!("{} {} - Comprehensive Migration Guide", NAME, VERSION);
-    // println!("{}===================================={}", get_color_code("azure"), RESET);
-    // println!();
+    // Removed in v0.8
+    println!("This guide has been removed in v0.8.");
+    println!("{}===================================={}", get_color_code("azure"), RESET);
+    println!();
+    return;
     
-    // // Overview
-    // println!("{}📝 OVERVIEW{}", get_color_code("green"), RESET);
-    // println!("This guide covers all breaking changes and migration paths from boxy v0.5.x to v0.6.0+.");
-    // println!();
+    // Overview
+    println!("{}📝 OVERVIEW{}", get_color_code("green"), RESET);
+    println!("This guide covers all breaking changes and migration paths from boxy v0.5.x to v0.6.0+.");
+    println!();
     
-    // // Breaking Changes Summary
-    // println!("{}⚡ BREAKING CHANGES SUMMARY{}", get_color_code("red"), RESET);
-    // println!("1. 🏷️ New --header flag for external headers (above box)");
-    // println!("2. 🎨 Enhanced --title flag with automatic icon support");
-    // println!("3. 📍 Improved status alignment with prefix system");
-    // println!("4. 🎭 Better theme integration and icon handling");
-    // println!();
+    // Breaking Changes Summary
+    println!("{}⚡ BREAKING CHANGES SUMMARY{}", get_color_code("red"), RESET);
+    println!("1. 🏷️ New --header flag for external headers (above box)");
+    println!("2. 🎨 Enhanced --title flag with automatic icon support");
+    println!("3. 📍 Improved status alignment with prefix system");
+    println!("4. 🎭 Better theme integration and icon handling");
+    println!();
     
-    // // Detailed Migration Sections
-    // println!("{}📦 1. HEADER vs TITLE DISTINCTION{}", get_color_code("blue"), RESET);
-    // println!("OLD BEHAVIOR: --title was used for both external labels and internal titles");
-    // println!("NEW BEHAVIOR: Clear separation between external and internal titles");
-    // println!();
-    // println!("  {}--header{}  External header (appears above the box)", get_color_code("green"), RESET);
-    // println!("  {}--title{}   Internal title (embedded in the box border)", get_color_code("blue"), RESET);
-    // println!();
-    // println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
-    // println!("  OLD: echo 'data' | boxy --title 'MyApp v1.0'");
-    // println!("  NEW: echo 'data' | boxy --header 'MyApp v1.0' --title '✅ Ready'");
-    // println!();
-    // println!("  OLD: echo 'output' | boxy --title 'Processing'");
-    // println!("  NEW: echo 'output' | boxy --title '⚙️ Processing' (if internal status)");
-    // println!("       echo 'output' | boxy --header 'Processing' (if application label)");
-    // println!();
+    // Detailed Migration Sections
+    println!("{}📦 1. HEADER vs TITLE DISTINCTION{}", get_color_code("blue"), RESET);
+    println!("OLD BEHAVIOR: --title was used for both external labels and internal titles");
+    println!("NEW BEHAVIOR: Clear separation between external and internal titles");
+    println!();
+    println!("  {}--header{}  External header (appears above the box)", get_color_code("green"), RESET);
+    println!("  {}--title{}   Internal title (embedded in the box border)", get_color_code("blue"), RESET);
+    println!();
+    println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
+    println!("  OLD: echo 'data' | boxy --title 'MyApp v1.0'");
+    println!("  NEW: echo 'data' | boxy --header 'MyApp v1.0' --title '✅ Ready'");
+    println!();
+    println!("  OLD: echo 'output' | boxy --title 'Processing'");
+    println!("  NEW: echo 'output' | boxy --title '⚙️ Processing' (if internal status)");
+    println!("       echo 'output' | boxy --header 'Processing' (if application label)");
+    println!();
     
-    // // Icon Integration
-    // println!("{}🎨 2. ENHANCED TITLE WITH ICON SUPPORT{}", get_color_code("blue"), RESET);
-    // println!("OLD BEHAVIOR: Separate --icon and --title flags with complex positioning");
-    // println!("NEW BEHAVIOR: Unified --title with automatic icon detection and formatting");
-    // println!();
-    // println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
-    // println!("  OLD: echo 'Success' | boxy --icon ✅ --title 'Operation'");
-    // println!("  NEW: echo 'Success' | boxy --title '✅ Operation'");
-    // println!();
-    // println!("  OLD: echo 'Error' | boxy --icon ❌ --title 'Failed'");
-    // println!("  NEW: echo 'Error' | boxy --title '❌ Failed'");
-    // println!();
-    // println!("{}BENEFITS:{}", get_color_code("cyan"), RESET);
-    // println!("  • Consistent spacing and alignment");
-    // println!("  • Better text color support");
-    // println!("  • Simpler command syntax");
-    // println!("  • Automatic icon detection");
-    // println!();
+    // Icon Integration
+    println!("{}🎨 2. ENHANCED TITLE WITH ICON SUPPORT{}", get_color_code("blue"), RESET);
+    println!("OLD BEHAVIOR: Separate --icon and --title flags with complex positioning");
+    println!("NEW BEHAVIOR: Unified --title with automatic icon detection and formatting");
+    println!();
+    println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
+    println!("  OLD: echo 'Success' | boxy --icon ✅ --title 'Operation'");
+    println!("  NEW: echo 'Success' | boxy --title '✅ Operation'");
+    println!();
+    println!("  OLD: echo 'Error' | boxy --icon ❌ --title 'Failed'");
+    println!("  NEW: echo 'Error' | boxy --title '❌ Failed'");
+    println!();
+    println!("{}BENEFITS:{}", get_color_code("cyan"), RESET);
+    println!("  • Consistent spacing and alignment");
+    println!("  • Better text color support");
+    println!("  • Simpler command syntax");
+    println!("  • Automatic icon detection");
+    println!();
     
-    // // Status Alignment
-    // println!("{}📍 3. STATUS BAR ALIGNMENT{}", get_color_code("blue"), RESET);
-    // println!("NEW FEATURE: Status bars now support alignment prefixes for better control");
-    // println!();
-    // println!("{}ALIGNMENT PREFIXES:{}", get_color_code("green"), RESET);
-    // println!("  {}sl:{} Left aligned", get_color_code("green"), RESET);
-    // println!("  {}sc:{} Center aligned", get_color_code("green"), RESET);
-    // println!("  {}sr:{} Right aligned", get_color_code("green"), RESET);
-    // println!();
-    // println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
-    // println!("  OLD: echo 'Done' | boxy --status 'Build completed successfully'");
-    // println!("  NEW: echo 'Done' | boxy --status 'sc:Build completed successfully'");
-    // println!();
+    // Status Alignment
+    println!("{}📍 3. STATUS BAR ALIGNMENT{}", get_color_code("blue"), RESET);
+    println!("NEW FEATURE: Status bars now support alignment prefixes for better control");
+    println!();
+    println!("{}ALIGNMENT PREFIXES:{}", get_color_code("green"), RESET);
+    println!("  {}sl:{} Left aligned", get_color_code("green"), RESET);
+    println!("  {}sc:{} Center aligned", get_color_code("green"), RESET);
+    println!("  {}sr:{} Right aligned", get_color_code("green"), RESET);
+    println!();
+    println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
+    println!("  OLD: echo 'Done' | boxy --status 'Build completed successfully'");
+    println!("  NEW: echo 'Done' | boxy --status 'sc:Build completed successfully'");
+    println!();
     
-    // // Theme Integration
-    // println!("{}🎭 4. IMPROVED THEME INTEGRATION{}", get_color_code("blue"), RESET);
-    // println!("ENHANCED: Themes now work seamlessly with the new header/title system");
-    // println!();
-    // println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
-    // println!("  OLD: echo 'Error' | boxy --icon ❌ --color red");
-    // println!("  NEW: echo 'Error' | boxy --theme error");
-    // println!();
-    // println!("  OLD: echo 'Success' | boxy --icon ✅ --color green");
-    // println!("  NEW: echo 'Success' | boxy --theme success");
-    // println!();
+    // Theme Integration
+    println!("{}🎭 4. IMPROVED THEME INTEGRATION{}", get_color_code("blue"), RESET);
+    println!("ENHANCED: Themes now work seamlessly with the new header/title system");
+    println!();
+    println!("{}MIGRATION EXAMPLES:{}", get_color_code("orange"), RESET);
+    println!("  OLD: echo 'Error' | boxy --icon ❌ --color red");
+    println!("  NEW: echo 'Error' | boxy --theme error");
+    println!();
+    println!("  OLD: echo 'Success' | boxy --icon ✅ --color green");
+    println!("  NEW: echo 'Success' | boxy --theme success");
+    println!();
     
-    // // Backward Compatibility
-    // println!("{}🔄 5. BACKWARD COMPATIBILITY{}", get_color_code("purple"), RESET);
-    // println!("DEPRECATION PERIOD: Old syntax still works but shows warnings");
-    // println!("MIGRATION TOOLS: Use 'boxy migrate-commands' for assistance");
-    // println!();
-    // println!("{}TIMELINE:{}", get_color_code("orange"), RESET);
-    // println!("  v0.6.0: New features added, old syntax shows warnings");
-    // println!("  v0.7.0: Old syntax will be removed (planned)");
-    // println!();
+    // Backward Compatibility
+    println!("{}🔄 5. BACKWARD COMPATIBILITY{}", get_color_code("purple"), RESET);
+    println!("DEPRECATION PERIOD: Old syntax still works but shows warnings");
+    println!("MIGRATION TOOLS: Use 'boxy migrate-commands' for assistance");
+    println!();
+    println!("{}TIMELINE:{}", get_color_code("orange"), RESET);
+    println!("  v0.6.0: New features added, old syntax shows warnings");
+    println!("  v0.7.0: Old syntax will be removed (planned)");
+    println!();
     
-    // // Quick Reference
-    // println!("{}📝 6. QUICK REFERENCE{}", get_color_code("cyan"), RESET);
-    // println!("{}COMMON PATTERNS:{}", get_color_code("green"), RESET);
-    // println!("  Application output:  echo 'data' | boxy --header 'MyApp' --title '✅ Ready'");
-    // println!("  Error message:       echo 'Failed' | boxy --theme error");
-    // println!("  Success message:     echo 'Done' | boxy --theme success");
-    // println!("  Status with align:   echo 'OK' | boxy --status 'sc:Centered status'");
-    // println!();
+    // Quick Reference
+    println!("{}📝 6. QUICK REFERENCE{}", get_color_code("cyan"), RESET);
+    println!("{}COMMON PATTERNS:{}", get_color_code("green"), RESET);
+    println!("  Application output:  echo 'data' | boxy --header 'MyApp' --title '✅ Ready'");
+    println!("  Error message:       echo 'Failed' | boxy --theme error");
+    println!("  Success message:     echo 'Done' | boxy --theme success");
+    println!("  Status with align:   echo 'OK' | boxy --status 'sc:Centered status'");
+    println!();
     
-    // // Tools and Resources
-    // println!("{}🔧 MIGRATION TOOLS{}", get_color_code("azure"), RESET);
-    // println!("  {}boxy migrate-commands --check <command>{}     Analyze specific commands", get_color_code("green"), RESET);
-    // println!("  {}boxy migrate-commands --interactive{}        Interactive guide", get_color_code("green"), RESET);
-    // println!("  {}boxy migrate-commands --examples{}           See before/after examples", get_color_code("green"), RESET);
-    // println!("  {}boxy --help{}                               Updated syntax reference", get_color_code("green"), RESET);
-    // println!();
+    // Tools and Resources
+    println!("{}🔧 MIGRATION TOOLS{}", get_color_code("azure"), RESET);
+    println!("  {}boxy migrate-commands --check <command>{}     Analyze specific commands", get_color_code("green"), RESET);
+    println!("  {}boxy migrate-commands --interactive{}        Interactive guide", get_color_code("green"), RESET);
+    println!("  {}boxy migrate-commands --examples{}           See before/after examples", get_color_code("green"), RESET);
+    println!("  {}boxy --help{}                               Updated syntax reference", get_color_code("green"), RESET);
+    println!();
     
-    // println!("{}✅ Need help? Run 'boxy migrate-commands --interactive' for step-by-step guidance{}", get_color_code("green"), RESET);
+    println!("{}✅ Need help? Run 'boxy migrate-commands --interactive' for step-by-step guidance{}", get_color_code("green"), RESET);
 }
 
 /// Show v0.6.0 breaking changes summary
 fn show_v6_breaking_changes() {
-    println!("{} {} - v0.6.0 Breaking Changes", NAME, VERSION);
+    // Removed in v0.8
+    println!("This summary has been removed in v0.8.");
     println!("{}==========================={}", get_color_code("red"), RESET);
     println!();
+    return;
     
     println!("{}⚡ BREAKING CHANGES IN v0.6.0{}", get_color_code("red"), RESET);
     println!();
@@ -1879,10 +1645,9 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!();
     
     println!("  {}Content & Layout:{}", get_color_code("cyan"), RESET);
-    println!("    --header <TEXT>            External header (above the box)");
+    println!("    --header <TEXT>            Header text (inside top border)");
     println!("    --title <TEXT>             Title line (first in-box line; emoji-aware icon)");
     println!("    --footer <TEXT>            Footer text (inside bottom border)");
-    println!("    --icon <ICON>              Add icon to content (deprecated - use --title)"); //??
     println!("    --status <TEXT>            Status line inside box (use sl:|sc:|sr: prefixes)");
     println!("    --layout <spec>            Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp");
     println!("    --pad <a|b>               Blank line above (a) and/or below (b) the body");
@@ -1901,6 +1666,8 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    --no-color                 Disable jynx integration and color output");
     println!("    width                      Show terminal width diagnostics");
     println!("    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin");
+    println!("    --title-color <COLOR>      Color for title line (overrides --text)");
+    println!("    --status-color <COLOR>     Color for status line (overrides --text)");
     println!("    -h, --help                 Show this help message");
     println!("    --colors                   Preview all 90+ available colors");
     println!("    -v, --version              Show version information");
@@ -1923,10 +1690,9 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("    {} theme import <file>       Import theme from YAML", NAME);
     println!("    {} theme export <name>       Export theme to YAML", NAME);
     println!("    {} theme edit <name>         Edit existing theme", NAME);
-    println!("    Env: BOXY_THEME=<name>      Set default theme (overridden by --theme)");
     println!();
     
-    // =============== NEW IN V0.6 =============== //TODO:CLEANUP
+    // =============== NEW IN V0.6 ===============
     println!("{}NEW IN v0.6:{}", get_color_code("orchid"), RESET);
     println!("  {}Header vs Title Distinction:{}", get_color_code("cyan"), RESET);
     println!("    --header     External headers (app names, system labels)");
@@ -1984,18 +1750,18 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!();
     
     // =============== MIGRATION ===============
-    // println!("{}MIGRATION (v0.5 → v0.6):{}", get_color_code("rust"), RESET);
-    // println!("  {} migrate-commands --interactive    Interactive migration guide", NAME);
-    // println!("  {} migrate-commands --check \"cmd\"     Analyze existing command", NAME);
-    // println!("  {} migrate-commands --examples       Before/after examples", NAME);
-    // println!("  {} migrate-commands --guide          Comprehensive migration guide", NAME);
-    // println!();
+    println!("{}MIGRATION (v0.5 → v0.6):{}", get_color_code("rust"), RESET);
+    println!("  {} migrate-commands --interactive    Interactive migration guide", NAME);
+    println!("  {} migrate-commands --check \"cmd\"     Analyze existing command", NAME);
+    println!("  {} migrate-commands --examples       Before/after examples", NAME);
+    println!("  {} migrate-commands --guide          Comprehensive migration guide", NAME);
+    println!();
     
-    // println!("  {}Common Migrations:{}", get_color_code("cyan"), RESET);
-    // println!("    OLD: --icon ✅ --title \"Status\"     → NEW: --title \"✅ Status\"");
-    // println!("    OLD: --color red --style heavy      → NEW: --theme error");
-    // println!("    OLD: --title \"MyApp\"               → NEW: --header \"MyApp\" --title \"🟢 Ready\"");
-    // println!();
+    println!("  {}Common Migrations:{}", get_color_code("cyan"), RESET);
+    println!("    OLD: --icon ✅ --title \"Status\"     → NEW: --title \"✅ Status\"");
+    println!("    OLD: --color red --style heavy      → NEW: --theme error");
+    println!("    OLD: --title \"MyApp\"               → NEW: --header \"MyApp\" --title \"🟢 Ready\"");
+    println!();
     
     // =============== TIPS ===============
     println!("{}TIPS & BEST PRACTICES:{}", get_color_code("sage"), RESET);
@@ -2011,6 +1777,7 @@ fn show_comprehensive_help(jynx: &JynxIntegration) {
     println!("{}MORE INFORMATION:{}", get_color_code("steel"), RESET);
     println!("  {} --colors                 Preview color palette", NAME);
     println!("  {} theme list               Show available themes", NAME);
+    println!("  {} migrate-commands --help   Migration assistance", NAME);
     println!("  GitHub: https://github.com/qodeninja/boxy");
     println!("  Documentation: See THEME_SYSTEM_v0.6.md");
     println!();
@@ -2133,14 +1900,7 @@ fn show_usage_examples() {
     println!("  {} theme import ~/my_theme.yml", NAME);
     println!();
     
-    // // =============== MIGRATION ===============
-    // println!("{}MIGRATION FROM v0.5:{}", get_color_code("amber"), RESET);
-    // println!("  # Get migration help for existing commands");
-    // println!("  {} migrate-commands --check \"echo 'test' | boxy --icon ✅ --color green\"", NAME);
-    // println!();
-    // println!("  # Interactive migration assistant");
-    // println!("  {} migrate-commands --interactive", NAME);
-    // println!();
+    // Migration helpers removed in v0.8
     
     // =============== TIPS ===============
     println!("{}PRO TIPS:{}", get_color_code("emerald"), RESET);
@@ -2157,7 +1917,38 @@ fn show_usage_examples() {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
+    
+    // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
+    // Subcommands should always execute regardless of piped input
+    if args.len() >= 2 && args[1] == "width" {
+        handle_width_command();
+        return;
+    }
+    if args.len() >= 2 && args[1] == "theme" {
+        // Initialize jynx for theme commands
+        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
+        let theme_jynx = JynxIntegration::new(no_color);
+        handle_theme_command(&args[2..], &theme_jynx);
+        return;
+    }
+    
+    // Handle migrate-commands subcommand
+    // if args.len() >= 2 && args[1] == "migrate-commands" {
+    //     // Initialize jynx for migration commands
+    //     let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
+    //     let migrate_jynx = JynxIntegration::new(no_color);
+    //     handle_migrate_command(&args[2..], &migrate_jynx);
+    //     return;
+    // }
+    
+    // PRIORITY 2: Check for other subcommands that should prevent stdin reading
+    // This explicit check ensures no ambiguity about input precedence
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "theme");
+    if has_subcommand {
+        // This should never be reached due to early returns above, but serves as a safety net
+        return;
+    }
+    
     let mut style = &NORMAL;
     let mut color = "none";
     let mut text_color = "none";
@@ -2177,8 +1968,8 @@ fn main() {
     let mut header_align: &str = "center";
     let mut footer_align: &str = "center";
     let mut status_align_override: Option<String> = None;
-    let mut body_align: &str = "left"; //todo: missing implementation?
-    let mut body_pad_emoji = false; //todo: missing implementation?
+    let mut body_align: &str = "left";
+    let mut body_pad_emoji = false;
     let mut pad_body_above = false;
     let mut pad_body_below = false;
     let mut divider_after_title = false;
@@ -2191,42 +1982,10 @@ fn main() {
     let mut pad_before_status = false;
     let mut skip_next = false;
     let mut params_flag: Option<String> = None;
+    let mut deprecation_warnings: Vec<String> = Vec::new();
     // Deprecated suggestions removed in v0.6.x -> simplified migration help view only
     let mut no_color_requested = false;
     
-
-    // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
-    // Subcommands should always execute regardless of piped input
-    if args.len() >= 2 && args[1] == "width" {
-        handle_width_command();
-        return;
-    }
-    
-    if args.len() >= 2 && args[1] == "theme" {
-        // Initialize jynx for theme commands
-        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
-        let theme_jynx = JynxIntegration::new(no_color);
-        handle_theme_command(&args[2..], &theme_jynx);
-        return;
-    }
-    
-    // Handle migrate-commands subcommand
-    // if args.len() >= 2 && args[1] == "migrate-commands" {
-    //     // Initialize jynx for migration commands
-    //     let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
-    //     let migrate_jynx = JynxIntegration::new(no_color);
-    //     handle_migrate_command(&args[2..], &migrate_jynx);
-    //     return;
-    // }    
-    // PRIORITY 2: Check for other subcommands that should prevent stdin reading
-    // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" );
-    if has_subcommand {
-        // This should never be reached due to early returns above, but serves as a safety net
-        return;
-    }
-    
-
     // Pre-scan for --no-color to initialize jynx properly
     for arg in args.iter().skip(1) {
         if arg == "--no-color" || arg == "--no-colour" {
@@ -2334,7 +2093,7 @@ fn main() {
                                 skip_next = true;
                             }
                             _ => {
-                                eprintln!("Error: Width must be <number>=4, or 'max'/'auto'");
+                                eprintln!("Error: Width must be <number>|max|auto (number >= 4)");
                                 std::process::exit(1);
                             }
                         }
@@ -2347,7 +2106,21 @@ fn main() {
                     skip_next = true;
                 }
             }
-
+            "--layout" => {
+                if i + 1 < args.len() {
+                    let spec = &args[i + 1];
+                    for token in spec.split(',') {
+                        match token.trim() {
+                            "dt" => divider_after_title = true,
+                            "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
+                            "ds" => divider_before_status = true,
+                            "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
+                            _ => { /* ignore unsupported tokens for now */ }
+                        }
+                    }
+                    skip_next = true;
+                }
+            }
             "--title" => {
                 if i + 1 < args.len() {
                     title = Some(args[i + 1].clone());
@@ -2378,18 +2151,17 @@ fn main() {
                     status_bar = Some(status_text.clone());
                     
                     // Check for deprecation patterns
-                    // if !status_text.starts_with("sl:") && !status_text.starts_with("sc:") && !status_text.starts_with("sr:") &&
-                    //    !status_text.starts_with("hl:") && !status_text.starts_with("hc:") && !status_text.starts_with("hr:") &&
-                    //    !status_text.starts_with("fl:") && !status_text.starts_with("fc:") && !status_text.starts_with("fr:") &&
-                    //    get_display_width(status_text) > 50 {
-                    //     deprecation_warnings.push(format!(
-                    //         "Long status text without alignment prefix. Consider using sl:, sc:, or sr: prefixes for better control."
-                    //     ));
-                    //}
-                    
+                    if !status_text.starts_with("sl:") && !status_text.starts_with("sc:") && !status_text.starts_with("sr:") &&
+                       !status_text.starts_with("hl:") && !status_text.starts_with("hc:") && !status_text.starts_with("hr:") &&
+                       !status_text.starts_with("fl:") && !status_text.starts_with("fc:") && !status_text.starts_with("fr:") &&
+                       get_display_width(status_text) > 50 {
+                        deprecation_warnings.push(format!(
+                            "Long status text without alignment prefix. Consider using sl:, sc:, or sr: prefixes for better control."
+                        ));
+                    }
                     skip_next = true;
                 }
-            }
+            }               
             "--title-color" => {
                 if i + 1 < args.len() {
                     let c = &args[i + 1];
@@ -2461,6 +2233,7 @@ fn main() {
                     }
                     skip_next = true;
                 }
+
             }
             arg if arg.starts_with("--no-boxy") => {
                 no_boxy = true;
@@ -2483,43 +2256,43 @@ fn main() {
     if icon.is_some() && title.is_some() {
         let icon_str = icon.as_deref().unwrap_or("📦");
         let title_str = title.as_deref().unwrap_or("Title");
-        // deprecation_warnings.push(format!(
-        //     "Using --icon with --title may cause layout conflicts.\n       → Try: --title \"{} {}\"",
-        //     icon_str, title_str
-        // ));
+        deprecation_warnings.push(format!(
+            "Using --icon with --title may cause layout conflicts.\n       → Try: --title \"{} {}\"",
+            icon_str, title_str
+        ));
     }
     
     // Auto-detect potential migration opportunities
-    //let mut auto_suggestions = Vec::new();
+    let mut auto_suggestions = Vec::new();
     
     // Suggest header/title distinction for external-looking titles
     if title.is_some() && !icon.is_some() {
         let title_text = title.as_deref().unwrap_or("");
-        // if title_text.len() > 20 || title_text.to_lowercase().contains("app") || title_text.to_lowercase().contains("system") {
-        //     auto_suggestions.push(format!(
-        //         "Consider using --header for application names: --header \"{}\"", title_text
-        //     ));
-        // }
+        if title_text.len() > 20 || title_text.to_lowercase().contains("app") || title_text.to_lowercase().contains("system") {
+            auto_suggestions.push(format!(
+                "Consider using --header for application names: --header \"{}\"", title_text
+            ));
+        }
     }
     
     // Display auto-suggestions
-    // if !auto_suggestions.is_empty() {
-    //     eprintln!("{}🤖 AUTO-SUGGESTION:{}", get_color_code("cyan"), RESET);
-    //     for suggestion in &auto_suggestions {
-    //         eprintln!("{}{}{}", get_color_code("cyan"), suggestion, RESET);
-    //     }
-    //     eprintln!();
-    // }
+    if !auto_suggestions.is_empty() {
+        eprintln!("{}🤖 AUTO-SUGGESTION:{}", get_color_code("cyan"), RESET);
+        for suggestion in &auto_suggestions {
+            eprintln!("{}{}{}", get_color_code("cyan"), suggestion, RESET);
+        }
+        eprintln!();
+    }
     
-    // TODO:remove
-    // if !deprecation_warnings.is_empty() {
-    //     for warning in &deprecation_warnings {
-    //         eprintln!("{}⚠️  DEPRECATION WARNING:{} {}", get_color_code("orange"), RESET, warning);
-    //     }
-    //     eprintln!();
-    //     eprintln!("{}💡 MIGRATION TIP:{} Use 'boxy migrate-commands --help' for migration assistance", get_color_code("azure"), RESET);
-    //     eprintln!();
-    // }
+    // Display deprecation warnings with migration suggestions
+    if !deprecation_warnings.is_empty() {
+        for warning in &deprecation_warnings {
+            eprintln!("{}⚠️  DEPRECATION WARNING:{} {}", get_color_code("orange"), RESET, warning);
+        }
+        eprintln!();
+        eprintln!("{}💡 MIGRATION TIP:{} Use 'boxy migrate-commands --help' for migration assistance", get_color_code("azure"), RESET);
+        eprintln!();
+    }
     
     // PRIORITY 3: Read from stdin only if no subcommands were processed
     // At this point, all subcommands and utility flags (--help, --version, etc.) have been handled
@@ -2527,7 +2300,8 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).expect("Failed to read input");
     
-    let text = input.trim_end_matches('\n').to_string();
+    let mut text = input.trim_end_matches('\n').to_string();
+
 
     // Params stream parsing: ONLY via --params flag. Piped stdin remains the body.
     if let Some(ref blob) = params_flag {
@@ -2538,7 +2312,7 @@ fn main() {
             if title.is_none() { title = pc.title; }
             if let Some(ic) = pc.icon { icon = Some(ic); }
             if title_color.is_none() { title_color = pc.title_color; }
-            if status_color.is_none() { status_color = pc.status_color; } // ? why
+            if status_color.is_none() { status_color = pc.status_color; }
             if header_color.is_none() { header_color = pc.header_color; }
             if footer_color.is_none() { footer_color = pc.footer_color; }
             // Map layout tokens if provided via params
@@ -2583,15 +2357,25 @@ fn main() {
                     if color == "none" {
                         color = Box::leak(boxy_theme.color.clone().into_boxed_str());
                     }
-                    // Prefer to use theme icon as icon decoration (first content line), not a separate line
-                    if icon.is_none() {
+                    // When using themes, theme icons get their own line
+                    let theme_emoji = if let Some(override_icon) = &icon {
+                        // If explicit icon provided, use that instead of theme's emoji
+                        override_icon.clone()
+                    } else {
+                        // Extract icon from either icon field or title field (YAML themes use title)
                         if let Some(icon_str) = &boxy_theme.icon {
-                            icon = Some(icon_str.clone());
+                            icon_str.clone()
                         } else if let Some(title_str) = &boxy_theme.title {
+                            // Extract just the emoji from title like "❌ Error" -> "❌"
                             let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
-                            if !emoji_part.trim().is_empty() { icon = Some(emoji_part.trim().to_string()); }
+                            emoji_part.trim().to_string()
+                        } else {
+                            "📦".to_string()
                         }
-                    }
+                    };
+                    text = format!("{}\n{}", theme_emoji, text);
+                    // Clear icon so it doesn't get used in positioning system
+                    icon = None;
                     if fixed_width.is_none() {
                         fixed_width = boxy_theme.width;
                     }
@@ -2610,9 +2394,6 @@ fn main() {
         }
     }
     
-    let status_color_str = status_color.as_deref().unwrap_or("");
-    eprintln!("Status Color: {}", status_color_str);
-
     // ⚠️  CRITICAL: DO NOT CHANGE THIS ICON LOGIC! ⚠️
     //
     // 🚨 WARNING: The icon positioning was a NIGHTMARE to get right! 🚨
@@ -2631,129 +2412,40 @@ fn main() {
     // 🔥 IF YOU TOUCH THIS, YOU WILL BREAK SPACING AND HATE YOURSELF 🔥
     // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
     //
-    // No longer prepend icon to the raw text; icon is injected on first line in draw_box
-    // todo: check on this ? Apply manual icon using the same unified approach as themes
-    // if let Some(manual_icon) = &icon {
-    //     let icon_expanded = expand_variables(manual_icon);
-    //     text = format!("{} {}", icon_expanded, text);
-    //     // Clear icon so it doesn't get used in positioning system
-    //     icon = None;
-    // }
-
-
+    // Apply manual icon using the same unified approach as themes
+    if let Some(manual_icon) = &icon {
+        let icon_expanded = expand_variables(manual_icon);
+        text = format!("{} {}", icon_expanded, text);
+        // Clear icon so it doesn't get used in positioning system
+        icon = None;
+    }
+    
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
-        draw_box(
-          &text, 
-          1, 1, 
-          style, color, text_color, 
-          title.as_deref(), 
-          footer.as_deref(), 
-          icon.as_deref(), 
-          fixed_width, 
-          status_bar.as_deref(), 
-          header.as_deref(), 
-          header_align, footer_align, 
-          status_align_override.as_deref(), 
-          divider_after_title, divider_before_status, 
-          pad_after_title_divider, pad_before_status_divider, 
-          pad_before_title, pad_after_status, 
-          pad_after_title, pad_before_status, 
-          title_color.as_deref(), 
-          status_color.as_deref(), 
-          body_align,
-          body_pad_emoji, 
-          pad_body_above, 
-          pad_body_below
-        );
+        // draw_box(
+        //     &text,
+        //     1,
+        //     1,
+        //     style,
+        //     color,
+        //     text_color,
+        //     title.as_deref(),
+        //     footer.as_deref(),
+        //     icon.as_deref(),
+        //     fixed_width,
+        //     status_bar.as_deref(),
+        //     header.as_deref(),
+        //     divider_after_title,
+        //     divider_before_status,
+        //     pad_after_title_divider,
+        //     pad_before_status_divider,
+        // );
+
+        draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
+
+
+
     }
-    
-  }
-
-
-// fn draw_box(
-//   text: &str, 
-//   h_padding: usize, 
-//   _v_padding: usize, 
-//   style: &BoxStyle, 
-//   color: &str, 
-//   text_color: &str, 
-//   title: Option<&str>, 
-//   footer: Option<&str>, 
-//   icon: Option<&str>, 
-//   fixed_width: Option<usize>, 
-//   status_bar: Option<&str>, 
-//   header: Option<&str>, 
-//   header_align: &str, 
-//   footer_align: &str, 
-//   status_align_override: Option<&str>, 
-//   divider_after_title: bool, 
-//   divider_before_status: bool, 
-//   pad_after_title_divider: bool, 
-//   pad_before_status_divider: bool, 
-//   pad_before_title: bool, 
-//   pad_after_status: bool, 
-//   pad_after_title: bool, 
-//   pad_before_status: bool, 
-//   title_color_name: Option<&str>, 
-//   status_color_name: Option<&str>, 
-//   body_align: Option<&str>, 
-//   body_pad_emoji: Option<&str>, 
-//   pad_body_above: bool, 
-//   pad_body_below: bool
-// )
-
-  // TODO: broken draw_box missing  body_align body_pad_emoji
-
-  // draw_box(&text, 1, 1, style, color, text_color, title.as_deref(), footer.as_deref(), icon.as_deref(), fixed_width, status_bar.as_deref(), header.as_deref(), header_align, footer_align, status_align_override.as_deref(), divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider, pad_before_title, pad_after_status, pad_after_title, pad_before_status, title_color.as_deref(), status_color.as_deref(), body_align, body_pad_emoji, pad_body_above, pad_body_below);
-
-
-
-//save reference
-    //   // Apply theme if specified - using new theme engine
-    // if let Some(theme_name_str) = &theme_name {
-    //     match ThemeEngine::new() {
-    //         Ok(theme_engine) => {
-    //             if let Some(boxy_theme) = theme_engine.get_theme(theme_name_str) {
-    //                 // Theme overrides defaults but explicit flags override theme
-    //                 if color == "none" {
-    //                     color = Box::leak(boxy_theme.color.clone().into_boxed_str());
-    //                 }
-    //                 // When using themes, theme icons get their own line
-    //                 let theme_emoji = if let Some(override_icon) = &icon {
-    //                     // If explicit icon provided, use that instead of theme's emoji
-    //                     override_icon.clone()
-    //                 } else {
-    //                     // Extract icon from either icon field or title field (YAML themes use title)
-    //                     if let Some(icon_str) = &boxy_theme.icon {
-    //                         icon_str.clone()
-    //                     } else if let Some(title_str) = &boxy_theme.title {
-    //                         // Extract just the emoji from title like "❌ Error" -> "❌"
-    //                         let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
-    //                         emoji_part.trim().to_string()
-    //                     } else {
-    //                         "📦".to_string()
-    //                     }
-    //                 };
-    //                 text = format!("{}\n{}", theme_emoji, text);
-    //                 // Clear icon so it doesn't get used in positioning system
-    //                 icon = None;
-    //                 if fixed_width.is_none() {
-    //                     fixed_width = boxy_theme.width;
-    //                 }
-    //             } else {
-    //                 eprintln!("Unknown theme: {}. Available themes:", theme_name_str);
-    //                 let theme_list = theme_engine.list_themes();
-    //                 let theme_names: Vec<String> = theme_list.iter().map(|(name, _)| name.clone()).collect();
-    //                 eprintln!("  {}", theme_names.join(", "));
-    //                 std::process::exit(1);
-    //             }
-    //         }
-    //         Err(e) => {
-    //             eprintln!("Warning: Failed to load theme engine: {}", e);
-    //             eprintln!("Continuing without theme...");
-    //         }
-    //     }
-    // }
+}
