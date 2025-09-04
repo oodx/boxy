@@ -816,7 +816,7 @@ fn draw_box(text: &str, h_padding: usize, _v_padding: usize, style: &BoxStyle, c
 }
 
 /// TODO: REMOVE /Handle migrate-commands subcommand for helping users transition
-fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
+// fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
     // if args.is_empty() {
     //     println!("{} {} - Migration Assistant", NAME, VERSION);
     //     println!();
@@ -878,214 +878,214 @@ fn handle_migrate_command(args: &[String], jynx: &JynxIntegration) {
     //         eprintln!("Available options: --check, --interactive, --examples, --guide, --v6-changes, --help");
     //         std::process::exit(1);
     //     }
-    // }
-}
+//     // }
+// }
 
 /// TODO:REMOVE
-fn analyze_command_for_migration(command: &str) {
-    // println!("Migration Analysis for: {}", command);
-    // println!("{}=========================={}", get_color_code("azure"), RESET);
-    // println!();
+// fn analyze_command_for_migration(command: &str) {
+//     // println!("Migration Analysis for: {}", command);
+//     // println!("{}=========================={}", get_color_code("azure"), RESET);
+//     // println!();
     
-    // let mut suggestions = Vec::new();
+//     // let mut suggestions = Vec::new();
     
-    // // Check for --icon + --title pattern
-    // if command.contains("--icon") && command.contains("--title") {
-    //     suggestions.push((
-    //         "🔄 Icon + Title Combination".to_string(),
-    //         "Consider using --title with embedded icon instead of separate --icon and --title flags.".to_string(),
-    //         extract_migration_suggestion_for_icon_title(command)
-    //     ));
-    // }
+//     // // Check for --icon + --title pattern
+//     // if command.contains("--icon") && command.contains("--title") {
+//     //     suggestions.push((
+//     //         "🔄 Icon + Title Combination".to_string(),
+//     //         "Consider using --title with embedded icon instead of separate --icon and --title flags.".to_string(),
+//     //         extract_migration_suggestion_for_icon_title(command)
+//     //     ));
+//     // }
     
-    // // Check for long --status without alignment
-    // if let Some(status_part) = extract_status_from_command(command) {
-    //     if status_part.len() > 50 && !status_part.starts_with("sl:") && !status_part.starts_with("sc:") && !status_part.starts_with("sr:") {
-    //         suggestions.push((
-    //             "📍 Status Alignment".to_string(),
-    //             "Long status text should use alignment prefixes for better control.".to_string(),
-    //             format!("  Old: --status \"{}\"", status_part),
-    //         ));
-    //     }
-    // }
+//     // // Check for long --status without alignment
+//     // if let Some(status_part) = extract_status_from_command(command) {
+//     //     if status_part.len() > 50 && !status_part.starts_with("sl:") && !status_part.starts_with("sc:") && !status_part.starts_with("sr:") {
+//     //         suggestions.push((
+//     //             "📍 Status Alignment".to_string(),
+//     //             "Long status text should use alignment prefixes for better control.".to_string(),
+//     //             format!("  Old: --status \"{}\"", status_part),
+//     //         ));
+//     //     }
+//     // }
     
-    // if suggestions.is_empty() {
-    //     println!("✅ No migration suggestions found. Your command follows current best practices!");
-    // } else {
-    //     println!("Found {} migration suggestions:", suggestions.len());
-    //     println!();
+//     // if suggestions.is_empty() {
+//     //     println!("✅ No migration suggestions found. Your command follows current best practices!");
+//     // } else {
+//     //     println!("Found {} migration suggestions:", suggestions.len());
+//     //     println!();
         
-    //     for (i, (title, description, example)) in suggestions.iter().enumerate() {
-    //         println!("{}. {}", i + 1, title);
-    //         println!("   {}", description);
-    //         if !example.is_empty() {
-    //             println!("{}", example);
-    //         }
-    //         println!();
-    //     }
-    // }
-}
+//     //     for (i, (title, description, example)) in suggestions.iter().enumerate() {
+//     //         println!("{}. {}", i + 1, title);
+//     //         println!("   {}", description);
+//     //         if !example.is_empty() {
+//     //             println!("{}", example);
+//     //         }
+//     //         println!();
+//     //     }
+//     // }
+// }
 
 /// Extract migration suggestion for icon+title pattern
-fn extract_migration_suggestion_for_icon_title(command: &str) {
-    // // Simple extraction - in a real implementation would be more sophisticated
-    // let icon_part = if let Some(start) = command.find("--icon ") {
-    //     let after_icon = &command[start + 7..];
-    //     if let Some(end) = after_icon.find(" --") {
-    //         after_icon[..end].trim().trim_matches('"').trim_matches('\'').to_string()
-    //     } else {
-    //         after_icon.split_whitespace().next().unwrap_or("").trim_matches('"').trim_matches('\'').to_string()
-    //     }
-    // } else {
-    //     "📦".to_string()
-    // };
+// fn extract_migration_suggestion_for_icon_title(command: &str) {
+//     // // Simple extraction - in a real implementation would be more sophisticated
+//     // let icon_part = if let Some(start) = command.find("--icon ") {
+//     //     let after_icon = &command[start + 7..];
+//     //     if let Some(end) = after_icon.find(" --") {
+//     //         after_icon[..end].trim().trim_matches('"').trim_matches('\'').to_string()
+//     //     } else {
+//     //         after_icon.split_whitespace().next().unwrap_or("").trim_matches('"').trim_matches('\'').to_string()
+//     //     }
+//     // } else {
+//     //     "📦".to_string()
+//     // };
     
-    // let title_part = if let Some(start) = command.find("--title ") {
-    //     let after_title = &command[start + 8..];
-    //     if let Some(end) = after_title.find(" --") {
-    //         after_title[..end].trim().trim_matches('"').trim_matches('\'').to_string()
-    //     } else {
-    //         after_title.split_whitespace().next().unwrap_or("Title").trim_matches('"').trim_matches('\'').to_string()
-    //     }
-    // } else {
-    //     "Title".to_string()
-    // };
+//     // let title_part = if let Some(start) = command.find("--title ") {
+//     //     let after_title = &command[start + 8..];
+//     //     if let Some(end) = after_title.find(" --") {
+//     //         after_title[..end].trim().trim_matches('"').trim_matches('\'').to_string()
+//     //     } else {
+//     //         after_title.split_whitespace().next().unwrap_or("Title").trim_matches('"').trim_matches('\'').to_string()
+//     //     }
+//     // } else {
+//     //     "Title".to_string()
+//     // };
     
-    // format!(
-    //     "  Old: --icon \"{}\" --title \"{}\"\n  New: --title \"{} {}\"",
-    //     icon_part, title_part, icon_part, title_part
-    // )
-}
+//     // format!(
+//     //     "  Old: --icon \"{}\" --title \"{}\"\n  New: --title \"{} {}\"",
+//     //     icon_part, title_part, icon_part, title_part
+//     // )
+// }
 
-/// Extract status text from command
-fn extract_status_from_command(command: &str) -> Option<String> {
-    if let Some(start) = command.find("--status ") {
-        let after_status = &command[start + 9..];
-        if let Some(end) = after_status.find(" --") {
-            Some(after_status[..end].trim().trim_matches('"').trim_matches('\'').to_string())
-        } else {
-            Some(after_status.trim().trim_matches('"').trim_matches('\'').to_string())
-        }
-    } else {
-        None
-    }
-}
+/// KEEP THIS! Extract status text from command
+// fn extract_status_from_command(command: &str) -> Option<String> {
+//     if let Some(start) = command.find("--status ") {
+//         let after_status = &command[start + 9..];
+//         if let Some(end) = after_status.find(" --") {
+//             Some(after_status[..end].trim().trim_matches('"').trim_matches('\'').to_string())
+//         } else {
+//             Some(after_status.trim().trim_matches('"').trim_matches('\'').to_string())
+//         }
+//     } else {
+//         None
+//     }
+// }
 
 /// Show migration examples
-fn show_migration_examples(jynx: &JynxIntegration) {
-    // let header = format!("{} {} - Migration Examples", NAME, VERSION);
+// fn show_migration_examples(jynx: &JynxIntegration) {
+//     // let header = format!("{} {} - Migration Examples", NAME, VERSION);
     
-    // if jynx.is_active() {
-    //     jynx_println(&header, "migration", jynx);
-    //     println!();
-    // } else {
-    //     println!("{}", header);
-    //     println!();
-    // }
+//     // if jynx.is_active() {
+//     //     jynx_println(&header, "migration", jynx);
+//     //     println!();
+//     // } else {
+//     //     println!("{}", header);
+//     //     println!();
+//     // }
     
-    // let examples = vec![
-    //     (
-    //         "🔄 Icon + Title Combination",
-    //         "echo 'Success' | boxy --icon ✅ --title 'Status'",
-    //         "echo 'Success' | boxy --title '✅ Status'"
-    //     ),
-    //     (
-    //         "📍 Status Alignment", 
-    //         "echo 'Done' | boxy --status 'This is a very long status message'",
-    //         "echo 'Done' | boxy --status 'sc:This is a very long status message'"
-    //     ),
-    //     (
-    //         "🏷️ Header vs Title",
-    //         "echo 'Output' | boxy --title 'Application Name'",
-    //         "echo 'Output' | boxy --header 'Application Name' --title '✅ Status'"
-    //     ),
-    //     (
-    //         "🎨 Theme Integration",
-    //         "echo 'Error' | boxy --icon ❌ --color red",
-    //         "echo 'Error' | boxy --theme error"
-    //     ),
-    // ];
+//     // let examples = vec![
+//     //     (
+//     //         "🔄 Icon + Title Combination",
+//     //         "echo 'Success' | boxy --icon ✅ --title 'Status'",
+//     //         "echo 'Success' | boxy --title '✅ Status'"
+//     //     ),
+//     //     (
+//     //         "📍 Status Alignment", 
+//     //         "echo 'Done' | boxy --status 'This is a very long status message'",
+//     //         "echo 'Done' | boxy --status 'sc:This is a very long status message'"
+//     //     ),
+//     //     (
+//     //         "🏷️ Header vs Title",
+//     //         "echo 'Output' | boxy --title 'Application Name'",
+//     //         "echo 'Output' | boxy --header 'Application Name' --title '✅ Status'"
+//     //     ),
+//     //     (
+//     //         "🎨 Theme Integration",
+//     //         "echo 'Error' | boxy --icon ❌ --color red",
+//     //         "echo 'Error' | boxy --theme error"
+//     //     ),
+//     // ];
     
-    // for (category, old_command, new_command) in examples {
-    //     println!("{}", category);
-    //     println!("  {}OLD:{} {}", get_color_code("red"), RESET, old_command);
-    //     println!("  {}NEW:{} {}", get_color_code("green"), RESET, new_command);
-    //     println!();
-    // }
+//     // for (category, old_command, new_command) in examples {
+//     //     println!("{}", category);
+//     //     println!("  {}OLD:{} {}", get_color_code("red"), RESET, old_command);
+//     //     println!("  {}NEW:{} {}", get_color_code("green"), RESET, new_command);
+//     //     println!();
+//     // }
     
-    // println!("💡 {}TIP:{} Use 'boxy migrate-commands --check <command>' to analyze specific commands", get_color_code("azure"), RESET);
-}
+//     // println!("💡 {}TIP:{} Use 'boxy migrate-commands --check <command>' to analyze specific commands", get_color_code("azure"), RESET);
+// }
 
 /// Interactive migration guide
-fn run_interactive_migration_guide() {
-    // println!("{} {} - Interactive Migration Guide", NAME, VERSION);
-    // println!();
-    // println!("This guide will help you understand the key changes in boxy's new version:");
-    // println!();
+// fn run_interactive_migration_guide() {
+//     // println!("{} {} - Interactive Migration Guide", NAME, VERSION);
+//     // println!();
+//     // println!("This guide will help you understand the key changes in boxy's new version:");
+//     // println!();
     
-    // // Step 1: Header vs Title
-    // println!("{}📋 Step 1: Understanding --header vs --title{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  {}--header{}  Appears ABOVE the box (external)", get_color_code("green"), RESET);
-    // println!("  {}--title{}   Appears IN the top border (internal)", get_color_code("blue"), RESET);
-    // println!();
-    // println!("Example:");
-    // println!("  echo 'Content' | boxy --header 'My App' --title '✅ Success'");
-    // println!();
+//     // // Step 1: Header vs Title
+//     // println!("{}📋 Step 1: Understanding --header vs --title{}", get_color_code("azure"), RESET);
+//     // println!();
+//     // println!("  {}--header{}  Appears ABOVE the box (external)", get_color_code("green"), RESET);
+//     // println!("  {}--title{}   Appears IN the top border (internal)", get_color_code("blue"), RESET);
+//     // println!();
+//     // println!("Example:");
+//     // println!("  echo 'Content' | boxy --header 'My App' --title '✅ Success'");
+//     // println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+//     // print!("Press Enter to continue...");
+//     // io::stdout().flush().unwrap();
+//     // let mut input = String::new();
+//     // io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 2: Enhanced Title
-    // println!("{}🎨 Step 2: Enhanced --title with Icon Support{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  Old way: --icon 📦 --title 'Status'");
-    // println!("  New way: --title '📦 Status'");
-    // println!();
-    // println!("The new --title automatically detects and formats icons!");
-    // println!();
+//     // // Step 2: Enhanced Title
+//     // println!("{}🎨 Step 2: Enhanced --title with Icon Support{}", get_color_code("azure"), RESET);
+//     // println!();
+//     // println!("  Old way: --icon 📦 --title 'Status'");
+//     // println!("  New way: --title '📦 Status'");
+//     // println!();
+//     // println!("The new --title automatically detects and formats icons!");
+//     // println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+//     // print!("Press Enter to continue...");
+//     // io::stdout().flush().unwrap();
+//     // let mut input = String::new();
+//     // io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 3: Status Alignment
-    // println!("{}📍 Step 3: Status Bar Alignment{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  {}sl:{}text  Left aligned", get_color_code("green"), RESET);
-    // println!("  {}sc:{}text  Center aligned", get_color_code("green"), RESET);
-    // println!("  {}sr:{}text  Right aligned", get_color_code("green"), RESET);
-    // println!();
-    // println!("Example: --status 'sc:Centered status message'");
-    // println!();
+//     // // Step 3: Status Alignment
+//     // println!("{}📍 Step 3: Status Bar Alignment{}", get_color_code("azure"), RESET);
+//     // println!();
+//     // println!("  {}sl:{}text  Left aligned", get_color_code("green"), RESET);
+//     // println!("  {}sc:{}text  Center aligned", get_color_code("green"), RESET);
+//     // println!("  {}sr:{}text  Right aligned", get_color_code("green"), RESET);
+//     // println!();
+//     // println!("Example: --status 'sc:Centered status message'");
+//     // println!();
     
-    // print!("Press Enter to continue...");
-    // io::stdout().flush().unwrap();
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input).unwrap();
+//     // print!("Press Enter to continue...");
+//     // io::stdout().flush().unwrap();
+//     // let mut input = String::new();
+//     // io::stdin().read_line(&mut input).unwrap();
     
-    // // Step 4: Themes
-    // println!("{}🎭 Step 4: Theme Integration{}", get_color_code("azure"), RESET);
-    // println!();
-    // println!("  Instead of: --icon ❌ --color red");
-    // println!("  Use:        --theme error");
-    // println!();
-    // println!("Available themes: error, success, warning, info, critical");
-    // println!();
+//     // // Step 4: Themes
+//     // println!("{}🎭 Step 4: Theme Integration{}", get_color_code("azure"), RESET);
+//     // println!();
+//     // println!("  Instead of: --icon ❌ --color red");
+//     // println!("  Use:        --theme error");
+//     // println!();
+//     // println!("Available themes: error, success, warning, info, critical");
+//     // println!();
     
-    // println!("{}✅ Migration guide complete!{}", get_color_code("green"), RESET);
-    // println!();
-    // println!("Next steps:");
-    // println!("  • Use 'boxy migrate-commands --examples' to see more examples");
-    // println!("  • Use 'boxy migrate-commands --check <command>' to analyze specific commands");
-    // println!("  • Check 'boxy --help' for the complete updated syntax");
-}
+//     // println!("{}✅ Migration guide complete!{}", get_color_code("green"), RESET);
+//     // println!();
+//     // println!("Next steps:");
+//     // println!("  • Use 'boxy migrate-commands --examples' to see more examples");
+//     // println!("  • Use 'boxy migrate-commands --check <command>' to analyze specific commands");
+//     // println!("  • Check 'boxy --help' for the complete updated syntax");
+// }
 
-/// Comprehensive migration guide
-fn show_comprehensive_migration_guide() {
+// /// Comprehensive migration guide
+// fn show_comprehensive_migration_guide() {
     // println!("{} {} - Comprehensive Migration Guide", NAME, VERSION);
     // println!("{}===================================={}", get_color_code("azure"), RESET);
     // println!();
@@ -1193,63 +1193,63 @@ fn show_comprehensive_migration_guide() {
     // println!();
     
     // println!("{}✅ Need help? Run 'boxy migrate-commands --interactive' for step-by-step guidance{}", get_color_code("green"), RESET);
-}
+// }
 
 /// Show v0.6.0 breaking changes summary
-fn show_v6_breaking_changes() {
-    println!("{} {} - v0.6.0 Breaking Changes", NAME, VERSION);
-    println!("{}==========================={}", get_color_code("red"), RESET);
-    println!();
+// fn show_v6_breaking_changes() {
+//     println!("{} {} - v0.6.0 Breaking Changes", NAME, VERSION);
+//     println!("{}==========================={}", get_color_code("red"), RESET);
+//     println!();
     
-    println!("{}⚡ BREAKING CHANGES IN v0.6.0{}", get_color_code("red"), RESET);
-    println!();
+//     println!("{}⚡ BREAKING CHANGES IN v0.6.0{}", get_color_code("red"), RESET);
+//     println!();
     
-    println!("{}1. NEW --header FLAG{}", get_color_code("orange"), RESET);
-    println!("   • {}--header{} now creates external headers (above the box)", get_color_code("green"), RESET);
-    println!("   • {}--title{} is now for internal titles (in the border)", get_color_code("blue"), RESET);
-    println!("   • Migration: Long app names should use --header, status should use --title");
-    println!();
+//     println!("{}1. NEW --header FLAG{}", get_color_code("orange"), RESET);
+//     println!("   • {}--header{} now creates external headers (above the box)", get_color_code("green"), RESET);
+//     println!("   • {}--title{} is now for internal titles (in the border)", get_color_code("blue"), RESET);
+//     println!("   • Migration: Long app names should use --header, status should use --title");
+//     println!();
     
-    println!("{}2. ENHANCED --title WITH ICONS{}", get_color_code("orange"), RESET);
-    println!("   • --title now auto-detects and formats icons");
-    println!("   • Pattern: --title 'icon text' instead of --icon + --title");
-    println!("   • Migration: Combine --icon 📦 --title Status → --title '📦 Status'");
-    println!();
+//     println!("{}2. ENHANCED --title WITH ICONS{}", get_color_code("orange"), RESET);
+//     println!("   • --title now auto-detects and formats icons");
+//     println!("   • Pattern: --title 'icon text' instead of --icon + --title");
+//     println!("   • Migration: Combine --icon 📦 --title Status → --title '📦 Status'");
+//     println!();
     
-    println!("{}3. STATUS ALIGNMENT PREFIXES{}", get_color_code("orange"), RESET);
-    println!("   • New prefixes: sl: (left), sc: (center), sr: (right)");
-    println!("   • Long status text without prefixes shows deprecation warning");
-    println!("   • Migration: --status 'text' → --status 'sc:text'");
-    println!();
+//     println!("{}3. STATUS ALIGNMENT PREFIXES{}", get_color_code("orange"), RESET);
+//     println!("   • New prefixes: sl: (left), sc: (center), sr: (right)");
+//     println!("   • Long status text without prefixes shows deprecation warning");
+//     println!("   • Migration: --status 'text' → --status 'sc:text'");
+//     println!();
     
-    println!("{}4. IMPROVED THEME SYSTEM{}", get_color_code("orange"), RESET);
-    println!("   • Themes now integrate better with new header/title system");
-    println!("   • Theme icons are automatically formatted");
-    println!("   • Migration: --icon + --color → --theme");
-    println!();
+//     println!("{}4. IMPROVED THEME SYSTEM{}", get_color_code("orange"), RESET);
+//     println!("   • Themes now integrate better with new header/title system");
+//     println!("   • Theme icons are automatically formatted");
+//     println!("   • Migration: --icon + --color → --theme");
+//     println!();
     
-    println!("{}🛠️ MIGRATION TIMELINE{}", get_color_code("blue"), RESET);
-    println!("   • {}v0.6.0:{} New features available, old syntax shows warnings", get_color_code("green"), RESET);
-    println!("   • {}v0.6.x:{} Deprecation period - both syntaxes work", get_color_code("orange"), RESET);
-    println!("   • {}v0.7.0:{} Old deprecated syntax will be removed", get_color_code("red"), RESET);
-    println!();
+//     println!("{}🛠️ MIGRATION TIMELINE{}", get_color_code("blue"), RESET);
+//     println!("   • {}v0.6.0:{} New features available, old syntax shows warnings", get_color_code("green"), RESET);
+//     println!("   • {}v0.6.x:{} Deprecation period - both syntaxes work", get_color_code("orange"), RESET);
+//     println!("   • {}v0.7.0:{} Old deprecated syntax will be removed", get_color_code("red"), RESET);
+//     println!();
     
-    println!("{}📝 COMPATIBILITY{}", get_color_code("cyan"), RESET);
-    println!("   • All existing commands still work");
-    println!("   • New features are opt-in");
-    println!("   • Deprecation warnings help identify migration opportunities");
-    println!("   • Use migration tools for smooth transition");
-    println!();
+//     println!("{}📝 COMPATIBILITY{}", get_color_code("cyan"), RESET);
+//     println!("   • All existing commands still work");
+//     println!("   • New features are opt-in");
+//     println!("   • Deprecation warnings help identify migration opportunities");
+//     println!("   • Use migration tools for smooth transition");
+//     println!();
     
-    println!("{}🚀 NEXT STEPS{}", get_color_code("green"), RESET);
-    println!("   1. Run: boxy migrate-commands --interactive");
-    println!("   2. Test your scripts with new syntax");
-    println!("   3. Update documentation and scripts gradually");
-    println!("   4. Use 'boxy migrate-commands --check <command>' for specific help");
-    println!();
+//     println!("{}🚀 NEXT STEPS{}", get_color_code("green"), RESET);
+//     println!("   1. Run: boxy migrate-commands --interactive");
+//     println!("   2. Test your scripts with new syntax");
+//     println!("   3. Update documentation and scripts gradually");
+//     println!("   4. Use 'boxy migrate-commands --check <command>' for specific help");
+//     println!();
     
-    println!("{}ℹ️ For detailed migration guide: boxy migrate-commands --guide{}", get_color_code("azure"), RESET);
-}
+//     println!("{}ℹ️ For detailed migration guide: boxy migrate-commands --guide{}", get_color_code("azure"), RESET);
+// }
 
 /// Handle theme subcommands: list, show, etc.
 fn handle_theme_command(args: &[String], jynx: &JynxIntegration) {
