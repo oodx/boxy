@@ -1,0 +1,88 @@
+# Boxy Theme Template
+# Copy this file into your XDG+ themes directory (e.g., ~/.local/etc/rsb/boxy/themes/my_theme.yml)
+# and customize. Fields marked (optional) can be omitted.
+
+metadata:
+  name: "my-theme-collection"           # (string) Human name for this theme file/collection
+  version: "1.0.0"                      # (string) Semantic version for your collection
+  description: "Custom Boxy themes"     # (string) Short description
+  author: "you"                         # (optional) Author
+  created: "2025-09-03"                 # (optional)
+  updated: "2025-09-03"                 # (optional)
+  compatibility: "boxy v0.6+"           # (optional)
+
+# (optional) Define custom color names that map to ANSI sequences
+# These can be used anywhere a color is accepted (color, text_color, title_color, etc.)
+colors: {}
+#  company_blue: "\u001B[38;5;25m"
+#  company_green: "\u001B[38;5;29m"
+
+# Define your themes here. Each key below is the theme name used with --theme <name>.
+themes:
+  # Example: a base theme to inherit from
+  base:
+    color: "azure"                      # (color) border color
+    text_color: "auto"                  # (color|auto|none) default text color
+    style: "normal"                     # (normal|rounded|double|heavy|ascii)
+    text_style: "normal"                # (normal|bold|italic|underline|dim)
+    padding: 1                           # (int) inner horizontal padding
+    title_align: "center"               # (left|center|right)
+    header_align: "center"              # (left|center|right)
+    footer_align: "center"              # (left|center|right)
+    status_align: "left"                # (left|center|right)
+
+  # Example: success theme inheriting from base
+  success:
+    inherits: "base"                    # Inherit all unspecified fields from base
+    color: "emerald"                    # Override border color
+    text_style: "bold"                  # Override text style
+    title: "✅ Success"                 # Title with emoji
+    # Section color overrides (optional)
+    # title_color: "jade"
+    # status_color: "mint"
+    # header_color: "steel"
+    # footer_color: "violet"
+    # Fixed width (optional)
+    # width: 60
+    # Default section layout tokens (optional)
+    # layout: "hc,fr,sc,dt,dsn"         # See README for full token list
+
+  # Example: error theme
+  error:
+    inherits: "base"
+    style: "heavy"
+    color: "crimson"
+    text_color: "white"
+    text_style: "bold"
+    title: "❌ Error"
+
+  # Example: info theme
+  info:
+    inherits: "base"
+    color: "azure"
+    title: "ℹ️ Info"
+
+  # Example: warning theme
+  warning:
+    inherits: "base"
+    style: "heavy"
+    color: "amber"
+    title: "⚠️ Warning"
+
+# (optional) Shortcuts for theme names
+presets: {}
+#  good: "success"
+#  bad: "error"
+
+# (optional) Define custom text styles (name → ANSI sequences)
+text_styles: {}
+#  loud: "\u001B[1m\u001B[4m"   # bold + underline
+
+# Global settings for this theme file
+settings:
+  default_theme: info                   # Theme used when none is specified
+  fallback_color: slate                 # Fallback border color name
+  max_width: 120                        # Maximum box width
+  min_width: 10                         # Minimum box width
+  cache_themes: true                    # Cache themes in memory
+  validate_colors: true                 # Validate color names

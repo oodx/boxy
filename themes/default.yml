@@ -1,0 +1,122 @@
+metadata:
+  name: "boxy-default-themes"
+  version: "1.0.0"
+  description: "Compiled default theme set for Boxy"
+  author: "boxy"
+  created: "2025-09-03"
+  updated: "2025-09-03"
+  compatibility: "boxy v0.6+"
+
+# Optional custom colors (empty by default)
+colors: {}
+
+themes:
+  # Base primitives (inherit from these)
+  base:
+    color: "azure"
+    text_color: "auto"
+    style: "normal"
+    text_style: "normal"
+    padding: 1
+    title_align: "center"
+    header_align: "center"
+    footer_align: "center"
+    status_align: "left"
+
+  base_rounded:
+    inherits: "base"
+    style: "rounded"
+
+  base_heavy:
+    inherits: "base"
+    style: "heavy"
+
+  base_double:
+    inherits: "base"
+    style: "double"
+
+  # Semantic set
+  error:
+    inherits: "base_heavy"
+    color: "crimson"
+    text_color: "white"
+    text_style: "bold"
+    title: "❌ Error"
+
+  success:
+    inherits: "base_rounded"
+    color: "emerald"
+    text_color: "auto"
+    text_style: "bold"
+    title: "✅ Success"
+
+  warning:
+    inherits: "base_heavy"
+    color: "amber"
+    text_color: "auto"
+    text_style: "normal"
+    title: "⚠️ Warning"
+
+  info:
+    inherits: "base"
+    color: "azure"
+    text_color: "auto"
+    text_style: "normal"
+    title: "ℹ️ Info"
+
+  critical:
+    inherits: "base_double"
+    color: "crimson"
+    text_color: "white"
+    text_style: "bold"
+    title: "⛔ Critical"
+    width: 60
+
+  # Standard BashFX/stderr themes
+  warn:
+    inherits: "base"
+    color: "orange"
+    text_color: "auto"
+    text_style: "normal"
+    title: "⚠️ Warning"
+
+  fatal:
+    inherits: "base_heavy"
+    color: "red"
+    text_color: "white"
+    text_style: "bold"
+    title: "💀 Fatal"
+
+  debug:
+    inherits: "base"
+    color: "blue"
+    text_color: "auto"
+    text_style: "normal"
+    title: "🐛 Debug"
+
+  magic:
+    inherits: "base_rounded"
+    color: "purple"
+    text_color: "auto"
+    text_style: "normal"
+    title: "✨ Magic"
+
+  # A playful theme for demos
+  silly:
+    inherits: "base_rounded"
+    color: "violet"
+    text_color: "auto"
+    title: "🪀 Silly"
+
+presets: {}
+
+text_styles: {}
+
+settings:
+  default_theme: info
+  fallback_color: slate
+  max_width: 120
+  min_width: 10
+  cache_themes: true
+  validate_colors: true
+
