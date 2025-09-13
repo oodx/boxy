@@ -95,6 +95,54 @@ pub fn draw_box(config: BoxyConfig) {
     // body_align, body_pad_emoji, pad_body_above, pad_body_below are stored in config but not yet implemented
 }
 
+pub fn render_box_to_string(config: BoxyConfig) -> String {
+    let mut output = String::new();
+
+    // Use RSB-compliant helper for width calculation
+    let final_width = calculate_box_width(&config.text, config.width.h_padding, config.width.fixed_width);
+    let inner_width = final_width.saturating_sub(2); // Account for borders
+    let color_code = get_color_code(&config.colors.box_color);
+
+    // Determine text color: "auto" means match box color, "none" means default
+    let text_color_code = match config.colors.text_color.as_str() {
+        "auto" => get_color_code(&config.colors.box_color), // Use same color as box
+        "none" => "",                    // Default terminal color
+        _ => get_color_code(&config.colors.text_color), // Explicit color
+    };
+
+    let title_color_code = config.colors.title_color.as_ref().map(|n| get_color_code(n)).unwrap_or("");
+    let status_color_code = config.colors.status_color.as_ref().map(|n| get_color_code(n)).unwrap_or("");
+
+    // Use Header component for top border rendering
+    let header = Header::new(&config);
+    output.push_str(&header.render(inner_width, &color_code));
+    output.push('\n');
+
+    // Use Body component for content rendering with preserved emoji/width calculations
+    let body = Body::new(&config);
+    let body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
+    for line in body_lines {
+        output.push_str(&line);
+        output.push('\n');
+    }
+
+    // Use Status component for status bar rendering
+    let status = Status::new(&config);
+    if status.should_render() {
+        let status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
+        for line in status_lines {
+            output.push_str(&line);
+            output.push('\n');
+        }
+    }
+
+    // Use Footer component for bottom border rendering
+    let footer = Footer::new(&config);
+    output.push_str(&footer.render(inner_width, &color_code));
+
+    output
+}
+
 pub fn strip_box(text: &str, strict: bool) -> String {
     let lines: Vec<&str> = text.lines().collect();
     let mut content_lines = Vec::new();
