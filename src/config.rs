@@ -154,6 +154,8 @@ pub struct BoxyConfig {
     pub style: BoxStyle,
     pub colors: BoxColors,
     pub width: WidthConfig,
+    // Optional fixed height; only honored when BOXY_MULTIPLEX_MODE is enabled
+    pub fixed_height: Option<usize>,
     pub padding: PaddingConfig,
     
     // Advanced layout
@@ -175,6 +177,7 @@ impl Default for BoxyConfig {
             style: BoxStyle::default(),
             colors: BoxColors::default(),
             width: WidthConfig::default(),
+            fixed_height: None,
             padding: PaddingConfig::default(),
             dividers: DividerConfig::default(),
             alignment: AlignmentConfig::default(),
@@ -239,6 +242,7 @@ pub fn resolve_box_config(
             h_padding,
             v_padding,
         },
+        fixed_height: None,
         padding: PaddingConfig {
             pad_before_title,
             pad_after_title,

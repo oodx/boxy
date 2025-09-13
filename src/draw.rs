@@ -4,6 +4,8 @@ use rsb::prelude::*;
 use crate::{ BOX_CHARS };
 use crate::{ get_display_width, get_terminal_width, get_color_code };
 use crate::config::BoxyConfig;
+use crate::RESET;
+use std::env;
 use crate::components::{Header, Footer, Status, Body};
 
 // RSB-compliant helper functions for draw_box decomposition
@@ -74,17 +76,58 @@ pub fn draw_box(config: BoxyConfig) {
     // Use Body component for content rendering with preserved emoji/width calculations
     let body = Body::new(&config);
     let body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
-    for line in body_lines {
+
+    // Prepare status lines early for height calculation
+    let status = Status::new(&config);
+    let status_lines: Vec<String> = if status.should_render() {
+        status.render(inner_width, &color_code, &text_color_code, &status_color_code)
+    } else {
+        Vec::new()
+    };
+
+    // Multiplex mode: pad interior to fixed height if requested
+    let mut multiplex_mode = rsb::prelude::param!("BOXY_MULTIPLEX_MODE", default: "");
+    if multiplex_mode.is_empty() {
+        multiplex_mode = env::var("BOXY_MULTIPLEX_MODE").unwrap_or_default();
+    }
+    let multiplex_on = !multiplex_mode.is_empty()
+        && multiplex_mode != "0"
+        && multiplex_mode.to_lowercase() != "false";
+    let mut padded_body_lines = body_lines.clone();
+    if multiplex_on {
+        if let Some(target_height) = config.fixed_height {
+            // Total lines are: header(1) + body + status + footer(1)
+            let current_total = 1 + padded_body_lines.len() + status_lines.len() + 1;
+            if target_height > current_total {
+                let filler_needed = target_height - current_total;
+                // Build a blank interior line template
+                let available_content_width = inner_width.saturating_sub(2 * config.width.h_padding);
+                let pad = " ".repeat(config.width.h_padding);
+                let blank_line = format!(
+                    "{}{}{}{}{}{}{}",
+                    &color_code,
+                    config.style.vertical,
+                    RESET,
+                    &pad,
+                    " ".repeat(available_content_width),
+                    &pad,
+                    format!("{}{}{}", &color_code, config.style.vertical, RESET)
+                );
+                for _ in 0..filler_needed {
+                    padded_body_lines.push(blank_line.clone());
+                }
+            }
+        }
+    }
+
+    // Print body (padded if needed)
+    for line in padded_body_lines {
         println!("{}", line);
     }
-    
-    // Use Status component for status bar rendering
-    let status = Status::new(&config);
-    if status.should_render() {
-        let status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
-        for line in status_lines {
-            println!("{}", line);
-        }
+
+    // Print status lines after padding so they stay at bottom
+    for line in status_lines {
+        println!("{}", line);
     }
 
     // Use Footer component for bottom border rendering
@@ -120,20 +163,60 @@ pub fn render_box_to_string(config: BoxyConfig) -> String {
 
     // Use Body component for content rendering with preserved emoji/width calculations
     let body = Body::new(&config);
-    let body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
-    for line in body_lines {
-        output.push_str(&line);
+    let mut body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
+
+    // Prepare status lines early for height calculation
+    let status = Status::new(&config);
+    let status_lines: Vec<String> = if status.should_render() {
+        status.render(inner_width, &color_code, &text_color_code, &status_color_code)
+    } else {
+        Vec::new()
+    };
+
+    // Multiplex mode: pad interior to fixed height if requested
+    let mut multiplex_mode = rsb::prelude::param!("BOXY_MULTIPLEX_MODE", default: "");
+    if multiplex_mode.is_empty() {
+        multiplex_mode = env::var("BOXY_MULTIPLEX_MODE").unwrap_or_default();
+    }
+    let multiplex_on = !multiplex_mode.is_empty()
+        && multiplex_mode != "0"
+        && multiplex_mode.to_lowercase() != "false";
+    if multiplex_on {
+        if let Some(target_height) = config.fixed_height {
+            // Total lines are: header(1) + body + status + footer(1)
+            let current_total = 1 + body_lines.len() + status_lines.len() + 1;
+            if target_height > current_total {
+                let filler_needed = target_height - current_total;
+                // Build a blank interior line template
+                let available_content_width = inner_width.saturating_sub(2 * config.width.h_padding);
+                let pad = " ".repeat(config.width.h_padding);
+                let blank_line = format!(
+                    "{}{}{}{}{}{}{}",
+                    &color_code,
+                    config.style.vertical,
+                    RESET,
+                    &pad,
+                    " ".repeat(available_content_width),
+                    &pad,
+                    format!("{}{}{}", &color_code, config.style.vertical, RESET)
+                );
+                for _ in 0..filler_needed {
+                    body_lines.push(blank_line.clone());
+                }
+            }
+        }
+    }
+
+    // Append (possibly padded) body
+    for line in &body_lines {
+        output.push_str(line);
         output.push('\n');
     }
 
-    // Use Status component for status bar rendering
-    let status = Status::new(&config);
-    if status.should_render() {
-        let status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
-        for line in status_lines {
-            output.push_str(&line);
-            output.push('\n');
-        }
+    // Append status lines after padding so they stay at bottom
+    for line in &status_lines {
+        output.push_str(line);
+        output.push('\n');
     }
 
     // Use Footer component for bottom border rendering
