@@ -3,6 +3,10 @@
 # Emoji debugging toolkit for boxy development
 # Usage: ./debug_emoji.sh "ℹ️"
 
+///   cargo run --bin emoji_debug compare "✅" "ℹ️" "🚀" "🟢" "⚠" "✗"
+///   echo -en 'á' | iconv -f utf-8 -t UNICODEBIG | xxd -g 2
+
+
 if [ $# -eq 0 ]; then
     echo "Usage: $0 'emoji_string'"
     echo "Example: $0 'ℹ️'"
@@ -50,7 +54,7 @@ echo "[${EMOJI}${EMOJI}] <- comparison with double"
 echo -e "\n✅ BOXY INTEGRATION TEST:"
 echo "Testing emoji in boxy:"
 if [ -f "./target/release/boxy" ]; then
-    echo "Simple: $(timeout 5s bash -c "echo 'test' | ./target/release/boxy --icon '$EMOJI'" 2>/dev/null | head -1 || echo "Timeout or error")"
+    echo -e "Simple:\n$(timeout 5s bash -c "echo 'test' | ./target/release/boxy --icon '$EMOJI'" 2>/dev/null | head -2 || echo "Timeout or error")"
 else
     echo "Simple: Build boxy first with 'cargo build --release'"
 fi
