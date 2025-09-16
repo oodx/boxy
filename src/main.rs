@@ -1,5 +1,27 @@
 //repair
 
+/// 🔒 PROTECTED ICON POSITIONING MACRO 🔒
+///
+/// ⚠️  CRITICAL: This macro encapsulates the ONLY working icon positioning pattern!
+///
+/// The icon positioning was a NIGHTMARE to get right. This macro enforces:
+/// 1. Prepend icon to content string early: "✅ Success!"
+/// 2. Clear icon variable so draw_box() uses normal (non-icon) path
+/// 3. Everything flows through consistent spacing calculations
+///
+/// 🔥 NEVER MODIFY THIS MACRO OR USE ANY OTHER PATTERN! 🔥
+/// 🔥 ANY DEVIATION WILL BREAK ICON SPACING IN WINDOWS TERMINAL! 🔥
+macro_rules! apply_icon_to_text {
+    ($text:expr, $icon:expr) => {
+        if let Some(manual_icon) = &$icon {
+            let icon_expanded = expand_variables(manual_icon);
+            $text = format!("{} {}", icon_expanded, $text);
+            // Clear icon so it doesn't get used in positioning system
+            $icon = None;
+        }
+    };
+}
+
 mod boxes;
 mod parser;
 mod colors;
@@ -423,7 +445,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).expect("Failed to read input");
     
-    let text = input.trim_end_matches('\n').to_string();
+    let mut text = input.trim_end_matches('\n').to_string();
 
     // Params stream parsing: ONLY via --params flag. Piped stdin remains the body.
     if let Some(ref blob) = params_flag {
@@ -553,15 +575,8 @@ fn run_boxy_application() -> Result<(), AppError> {
     // 🔥 IF YOU TOUCH THIS, YOU WILL BREAK SPACING AND HATE YOURSELF 🔥
     // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
     //
-    // No longer prepend icon to the raw text; icon is injected on first line in draw_box
-    // todo: check on this ? Apply manual icon using the same unified approach as themes
-    // DO NOT REMOVE THIS
-    // if let Some(manual_icon) = &icon {
-    //     let icon_expanded = expand_variables(manual_icon);
-    //     text = format!("{} {}", icon_expanded, text);
-    //     // Clear icon so it doesn't get used in positioning system
-    //     icon = None;
-    // }
+    // 🔒 PROTECTED ICON POSITIONING - DO NOT MODIFY MANUALLY! 🔒
+    apply_icon_to_text!(text, icon);
 
 
     if no_boxy {
