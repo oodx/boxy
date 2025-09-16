@@ -2,9 +2,10 @@
 name = "boxy"
 version = "0.9.0"
 edition = "2024"
-authors = ["Qodeninja <qodeninja@outlook.com>"]
+authors = ["qodeninja <1043235+qodeninja@users.noreply.github.com>"]
 description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"
-license = "MIT"
+license = "AGPL-3.0"            
+license-file = "LICENSE"  
 publish = false  
 
 [dependencies]

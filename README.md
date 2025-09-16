@@ -206,4 +206,17 @@ Unlike bash-based box drawing tools, boxy correctly handles:
 
 ## License
 
-MIT
+RSB Framework, Oxidex (ODX), and REBEL libraries, services, and software are offered under a **multi-license model**:
+
+| License | Who it’s for | Obligations |
+|---------|--------------|-------------|
+| [AGPL-3.0](./LICENSE) | Open-source projects that agree to release their own source code under the AGPL. | Must comply with the AGPL for any distribution or network service. |
+| [Community Edition License](./docs/LICENSE_COMMUNITY.txt) | Personal, educational, or academic use **only**. Not for companies, organizations, or anyone acting for the benefit of a business. | Must meet all CE eligibility requirements and follow its terms. |
+| [Commercial License](./docs/LICENSE_COMMERCIAL.txt) | Companies, contractors, or anyone needing to embed the software in closed-source, SaaS, or other commercial products. | Requires a signed commercial agreement with Dr. Vegajunk Hackware. |
+
+By **downloading, installing, linking to, or otherwise using RSB Framework, Oxidex, or REBEL libraries, services, and software**, you:
+
+1. **Accept** the terms of one of the licenses above, **and**  
+2. **Represent that you meet all eligibility requirements** for the license you have chosen.
+
+> Questions about eligibility or commercial licensing: **licensing@vegajunk.com**
