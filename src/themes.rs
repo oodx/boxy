@@ -753,6 +753,14 @@ pub fn handle_theme_dryrun(theme_name: &str) {
                 println!("🧪 Theme Dry Run: {} theme", theme_name);
                 println!();
 
+                // Show theme loading hierarchy trail
+                println!("🔍 Theme Loading Trail:");
+                let hierarchy = theme_engine.get_theme_hierarchy();
+                for (i, source) in hierarchy.iter().enumerate() {
+                    println!("  {}. ✓ {}", i + 1, source);
+                }
+                println!();
+
                 // Show theme source and properties
                 println!("📋 Theme Properties:");
                 println!("  Color: {}", theme.color);

@@ -15,6 +15,7 @@ pub struct ThemeEngine {
     themes: HashMap<String, BoxyTheme>,
     theme_files: Vec<PathBuf>,
     theme_hierarchy: Vec<String>, // Track loading hierarchy for debug
+    file_trail: Vec<String>, // Track each individual file found
     xdg_base_dir: PathBuf,
 }
 
@@ -160,6 +161,7 @@ impl ThemeEngine {
             themes: HashMap::new(),
             theme_files: Vec::new(),
             theme_hierarchy: Vec::new(),
+            file_trail: Vec::new(),
             xdg_base_dir,
         };
         
@@ -187,6 +189,7 @@ impl ThemeEngine {
     /// Load built-in themes as fallback (converted from current themes.rs)
     fn load_builtin_themes(&mut self) {
         self.theme_hierarchy.push("Built-in themes (compiled fallback)".to_string());
+        self.file_trail.push("  📦 Built-in themes: error, success, warning, info, critical, debug, magic, silly, blueprint".to_string());
         let builtin_themes = vec![
             ("error", BoxyTheme {
                 color: "crimson".to_string(),
@@ -246,7 +249,7 @@ impl ThemeEngine {
         // First, load theme files from XDG+ themes directory (lowest external priority)
         if themes_dir.exists() {
             self.theme_hierarchy.push(format!("XDG themes directory: {}", themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&themes_dir) {
+            if let Err(e) = self.load_themes_from_directory(&themes_dir, "XDG") {
                 eprintln!("Warning: Failed to load themes from XDG directory: {}", e);
             }
         }
@@ -255,7 +258,7 @@ impl ThemeEngine {
         let local_themes_dir = PathBuf::from("themes");
         if local_themes_dir.exists() {
             self.theme_hierarchy.push(format!("Local themes directory: {}", local_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&local_themes_dir) {
+            if let Err(e) = self.load_themes_from_directory(&local_themes_dir, "local themes") {
                 eprintln!("Warning: Failed to load themes from local directory: {}", e);
             }
         }
@@ -264,7 +267,7 @@ impl ThemeEngine {
         let dot_themes_dir = PathBuf::from(".themes");
         if dot_themes_dir.exists() {
             self.theme_hierarchy.push(format!("Local .themes directory: {}", dot_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir) {
+            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir, ".themes") {
                 eprintln!("Warning: Failed to load themes from .themes directory: {}", e);
             }
         }
@@ -272,6 +275,7 @@ impl ThemeEngine {
         // Finally, check for local single boxy*.yaml file (highest priority)
         if let Some(boxy_file) = self.find_local_boxy_file()? {
             self.theme_hierarchy.push(format!("Local boxy file: {} (alphabetically first)", boxy_file.display()));
+            self.file_trail.push(format!("  📄 {}", boxy_file.display()));
             if let Err(e) = self.load_theme_file(&boxy_file) {
                 eprintln!("Warning: Failed to load local boxy file {:?}: {}", boxy_file, e);
             }
@@ -316,10 +320,12 @@ impl ThemeEngine {
     }
 
     /// Load theme files from a specific directory
-    fn load_themes_from_directory(&mut self, themes_dir: &PathBuf) -> Result<(), String> {
+    fn load_themes_from_directory(&mut self, themes_dir: &PathBuf, dir_type: &str) -> Result<(), String> {
         let entries = fs::read_dir(themes_dir)
             .map_err(|e| format!("Failed to read themes directory {:?}: {}", themes_dir, e))?;
-            
+
+        let mut theme_files_found = Vec::new();
+
         for entry in entries {
             let path = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?.path();
             if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
@@ -328,6 +334,7 @@ impl ThemeEngine {
                     if filename.contains("template") || filename.contains("tmpl") {
                         continue;
                     }
+                    theme_files_found.push(filename.to_string());
                 }
                 if let Err(e) = self.load_theme_file(&path) {
                     eprintln!("Warning: Failed to load theme file {:?}: {}", path, e);
@@ -335,6 +342,15 @@ impl ThemeEngine {
                 }
             }
         }
+
+        // Add files found to trail
+        if theme_files_found.is_empty() {
+            self.file_trail.push(format!("  📁 {} directory: (no theme files found)", dir_type));
+        } else {
+            theme_files_found.sort();
+            self.file_trail.push(format!("  📁 {} directory: {}", dir_type, theme_files_found.join(", ")));
+        }
+
         Ok(())
     }
     
