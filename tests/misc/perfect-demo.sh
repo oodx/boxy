@@ -133,7 +133,7 @@ echo "Body content from stdin" | $BOXY --params "hd='Stream Processing'; tl='�
 # 9. WIDTH AND TRUNCATION
 echo -e "\n📏 WIDTH MANAGEMENT:"
 echo "This is a very long message that demonstrates boxy's intelligent text truncation and width management capabilities in action" | \
-    $BOXY --width 30 --color orange --title "📐 Auto-truncation"
+    $BOXY --width 30 --theme info --title "📐 Auto-truncation"
 
 # 10. COMPLEX REAL-WORLD SCENARIO
 echo -e "\n🏢 REAL-WORLD SCENARIO:"

@@ -15,16 +15,32 @@ macro_rules! apply_icon_to_text {
     ($text:expr, $icon:expr) => {
         if let Some(manual_icon) = &$icon {
             let icon_expanded = expand_variables(manual_icon);
-            $text = format!("{} {}", icon_expanded, $text);
+            if $text.trim().is_empty() {
+                $text = icon_expanded;
+            } else {
+                $text = format!("{} {}", icon_expanded, $text);
+            }
             // Clear icon so it doesn't get used in positioning system
             $icon = None;
         }
     };
 }
 
+/// 🔒 PROTECTED THEME ICON APPLICATION 🔒
+/// Uses the same safe pattern as apply_icon_to_text! macro
+fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
+    let icon_expanded = expand_variables(theme_icon);
+    if text.trim().is_empty() {
+        *text = icon_expanded;
+    } else {
+        *text = format!("{} {}", icon_expanded, text);
+    }
+}
+
 mod boxes;
 mod parser;
 mod colors;
+mod emoji_debug;
 mod jynx_plugin;
 mod width_plugin;
 mod theme_engine;
@@ -503,13 +519,15 @@ fn run_boxy_application() -> Result<(), AppError> {
                     if color == "none" {
                         color = Box::leak(boxy_theme.color.clone().into_boxed_str());
                     }
-                    // Prefer to use theme icon as icon decoration (first content line), not a separate line
+                    // Apply theme icon directly to text using safe pattern (no icon variable)
                     if icon.is_none() {
                         if let Some(icon_str) = &boxy_theme.icon {
-                            icon = Some(icon_str.clone());
+                            apply_theme_icon_to_text(&mut text, icon_str);
                         } else if let Some(title_str) = &boxy_theme.title {
                             let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
-                            if !emoji_part.trim().is_empty() { icon = Some(emoji_part.trim().to_string()); }
+                            if !emoji_part.trim().is_empty() {
+                                apply_theme_icon_to_text(&mut text, emoji_part.trim());
+                            }
                         }
                     }
                     if fixed_width.is_none() {

@@ -5,6 +5,7 @@ pub mod config;
 pub mod draw;
 pub mod width_plugin;
 pub mod parser;
+pub mod emoji_debug;
 
 pub use boxes::*;
 pub use colors::*;

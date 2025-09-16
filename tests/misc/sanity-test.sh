@@ -68,3 +68,10 @@ echo "Custom theme" | $BOXY --color blue --icon "✅"
 # Colored boxes
 echo "Hello World" | $BOXY --color red --icon "🚀"
 echo "Hello World" | $BOXY -c orange --icon "🚀"
+
+# Word-wrapping tests
+echo "This is a very long line that should wrap nicely at word boundaries when using the wrap flag" | $BOXY --wrap
+echo "Short line" | $BOXY --wrap
+echo "Text with #W# ideal wrap point for testing" | $BOXY --wrap
+echo "Remove this part #T# keep this content" | $BOXY --wrap
+echo "Word wrapping with theme" | $BOXY --theme success --wrap
