@@ -139,7 +139,7 @@ impl Default for ThemeSettings {
 // Default value functions for serde
 fn default_color() -> String { "".to_string() }  // Empty color means inherit from parent
 fn default_text_color() -> String { "auto".to_string() }
-fn default_style() -> String { "normal".to_string() }
+fn default_style() -> String { "".to_string() }  // Empty style means inherit from parent
 fn default_text_style() -> String { "normal".to_string() }
 fn default_padding() -> usize { 1 }
 fn default_align() -> String { "center".to_string() }
@@ -169,6 +169,7 @@ impl ThemeEngine {
             eprintln!("Warning: Failed to load theme files: {}", e);
             // Continue with built-in themes
         }
+
         
         Ok(engine)
     }
@@ -263,6 +264,12 @@ impl ThemeEngine {
         for entry in entries {
             let path = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?.path();
             if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
+                // Skip template files
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    if filename.contains("template") || filename.contains("tmpl") {
+                        continue;
+                    }
+                }
                 if let Err(e) = self.load_theme_file(&path) {
                     eprintln!("Warning: Failed to load theme file {:?}: {}", path, e);
                     // Continue loading other files
@@ -378,8 +385,10 @@ impl ThemeEngine {
         BoxyTheme {
             color: if child.color.is_empty() { parent.color } else { child.color },
             text_color: if child.text_color == "auto" && parent.text_color != "auto" { parent.text_color } else { child.text_color },
-            // For style inheritance: if child style is default and different from parent, use parent
-            style: if child.style == "normal" && !parent.style.is_empty() && parent.style != "normal" { parent.style } else { child.style },
+            // For style inheritance: if child style is empty or "inherit", use parent style
+            style: if child.style.is_empty() || child.style == "inherit" {
+                if !parent.style.is_empty() && parent.style != "inherit" { parent.style } else { "normal".to_string() }
+            } else { child.style },
             // For text_style inheritance: if child text_style is default and different from parent, use parent  
             text_style: if child.text_style == "normal" && !parent.text_style.is_empty() && parent.text_style != "normal" { parent.text_style } else { child.text_style },
             title: child.title.or(parent.title),

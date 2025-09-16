@@ -31,12 +31,12 @@ themes:
     footer_align: "center"              # (left|center|right)
     status_align: "left"                # (left|center|right)
 
-  # Example: success theme inheriting from base
-  success:
+  # Example: custom theme inheriting from base
+  example_success:
     inherits: "base"                    # Inherit all unspecified fields from base
     color: "emerald"                    # Override border color
     text_style: "bold"                  # Override text style
-    title: "✅ Success"                 # Title with emoji
+    title: "✅ Custom Success"          # Title with emoji
     # Section color overrides (optional)
     # title_color: "jade"
     # status_color: "mint"

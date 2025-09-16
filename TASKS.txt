@@ -1,0 +1,145 @@
+# BOXY REGRESSION TASKS
+# Generated from Tina's validation analysis on 2025-09-16
+# UPDATED: Major fixes and features implemented
+
+## ✅ RESOLVED: Theme Style Inheritance Fixed
+**Status**: ✅ COMPLETED - Theme styles now properly applied, both CLI flags and theme inheritance work
+**Impact**: ALL themed styles now working correctly (success, magic, silly, error, warning, critical)
+**Resolution**: Added proper style inheritance logic in theme application section of main.rs
+**Evidence**: success theme now shows ╭╮╰╯ (rounded) instead of ┌┐└┘ (normal)
+
+---
+
+## REGR-001: IDENTIFY STYLE APPLICATION FAILURE
+**Priority**: Medium
+**Task**: Trace theme style property from YAML to BoxStyle assignment
+**Location**: src/main.rs theme application section (lines 469-515)
+**Goal**: Find where style inheritance breaks
+**Test**: Compare successful --style flag vs theme style paths
+**Status**: PENDING
+
+## ✅ REGR-001b: CLI STYLE OVERRIDE TRACKING IMPLEMENTED
+**Priority**: Medium ✅ COMPLETED
+**Task**: Add boolean flag to track if style was set via CLI ✅ IMPLEMENTED
+**Location**: Style tracking implemented in theme application logic
+**Implementation**: ✅ Added proper CLI style precedence handling
+**Purpose**: Prevent theme styles from overriding explicit CLI choices ✅ WORKING
+**Dependency**: Required for REGR-002 implementation ✅ FULFILLED
+**Status**: ✅ COMPLETED - CLI styles take precedence over theme styles
+
+## ✅ REGR-002: THEME STYLE INHERITANCE FIXED ⭐ COMPLETED
+**Priority**: HIGH - Core fix required ✅ DONE
+**Task**: Modify theme application to set BoxStyle based on theme.style ✅ COMPLETED
+**Code**: Added style matching logic in theme application section ✅ IMPLEMENTED
+**Implementation**: Added proper style inheritance logic to theme application
+**Validation**: ✅ All style variants working (normal, rounded, double, heavy, ascii)
+**Evidence**: success theme shows ╭╮╰╯, magic theme shows ╭╮╰╯, error theme shows correct styling
+**Status**: ✅ COMPLETED - Core functionality restored
+
+## REGR-003: COMPREHENSIVE STYLE INHERITANCE TESTING
+**Priority**: HIGH - Prevent regressions
+**Task**: Create regression test for each theme+style combination
+**Themes**: success, error, warning, critical, magic, silly
+**Styles**: normal, rounded, double, heavy, ascii (via inheritance)
+**Verify**: Visual output matches expected Unicode characters
+**Status**: PENDING
+
+## REGR-004: UPDATE THEME ENGINE TESTS
+**Priority**: Medium
+**Task**: Fix the weak assertion in theme_engine.rs line 528
+**Change**: Remove || success_theme.style == "normal" fallback
+**Enforce**: Strict style inheritance validation
+**Add**: Tests for all themed styles, not just success
+**Status**: PENDING
+
+## REGR-005: THEME VALIDATION ENHANCEMENT
+**Priority**: Low
+**Task**: Add style inheritance validation to theme engine
+**Feature**: Detect broken inheritance during theme loading
+**Error**: Warn users when theme styles don't apply correctly
+**Documentation**: Update theme docs with style inheritance rules
+**Status**: PENDING
+
+## REGR-006: INTEGRATION TESTING PROTOCOL
+**Priority**: Medium
+**Task**: Add automated tests for theme style rendering
+**Method**: Capture actual box output, verify Unicode characters
+**Coverage**: All built-in themes with their inherited styles
+**CI**: Prevent future style inheritance regressions
+**Status**: PENDING
+
+## ✅ REGR-007: TEXT TRUNCATION AND BOX SIZING FIXED ⭐ COMPLETED
+**Priority**: HIGH - Core layout issue ✅ RESOLVED
+**Task**: Fix incorrect text truncation behavior in box sizing ✅ COMPLETED
+**Problem**: Text being truncated when box should expand ✅ FIXED
+**Current Behavior**: ✅ WORKING CORRECTLY
+  - Box expands to fit text content appropriately
+  - Text truncation only when constraints require it
+  - Word-wrapping available with --wrap flag
+**Implementation**: Fixed text layout engine and added word-wrapping feature
+**Test Cases**: ✅ ALL PASSING
+  - ✅ Short text: Box minimal size
+  - ✅ Long text: Box expands appropriately
+  - ✅ Very long text with --wrap: Content wraps within box
+  - ✅ Fixed width constraints: Proper truncation with "..."
+**Status**: ✅ COMPLETED - Layout engine working correctly
+
+## REGR-008a: VERIFY THEME LOADING MECHANISM
+**Priority**: Medium
+**Task**: Confirm theme engine correctly loads theme style properties
+**Location**: theme_engine.rs and default.yml
+**Test**: Debug print theme.style values during loading
+**Verify**:
+  - success theme loads with style: "rounded"
+  - error theme loads with style: "heavy"
+  - Theme inheritance resolves correctly (success → base_rounded)
+**Method**: Add temporary debug prints in get_theme() method
+**Purpose**: Ensure problem is in application, not loading
+**Status**: PENDING
+
+## REGR-008: ENHANCE test.sh MINIMAL THEME COVERAGE ⭐ CRITICAL
+**Priority**: HIGH - Test coverage issue
+**Task**: Ensure test.sh run minimal shows ALL major theme variations and styles
+**Problem**: Current minimal test only covers 6 themes (error, success, warn, fatal, debug, magic)
+**Missing Coverage**:
+  - All styled themes: info, critical, silly, warning
+  - All style variations: rounded vs normal vs heavy vs double
+  - Theme inheritance verification
+**Expected Coverage**:
+  - ALL 14 available themes from default.yml
+  - Visual verification of style inheritance (rounded borders for success, magic, silly)
+  - Style comparison: normal vs rounded vs heavy vs double borders
+**Location**: tests/misc/sanity-test.sh lines 45-50
+**Test Enhancement**:
+  - Add missing themes: info, critical, silly, warning
+  - Add style verification section
+  - Add side-by-side style comparisons
+  - Verify theme inheritance works correctly
+**Status**: PENDING
+
+---
+
+## EVIDENCE & VALIDATION
+- **Bug confirmed**: success theme shows ┌┐└┘ (straight) instead of ╭╮╰╯ (rounded)
+- **CLI works**: echo "test" | boxy --style rounded produces correct ╭╮╰╯
+- **Theme inheritance**: success → base_rounded → style: "rounded" (defined correctly)
+- **Missing code**: NO style application in theme handling section of main.rs
+- **Test admission**: theme_engine.rs:528 acknowledges inheritance can fail
+
+## ✅ IMPLEMENTATION STATUS & NEW FEATURES
+
+### **✅ COMPLETED (Major Wins)**
+1. **✅ REGR-002** (theme inheritance) - ✅ FIXED - Core functionality restored
+2. **✅ REGR-007** (text truncation) - ✅ FIXED - Layout engine working
+3. **✅ REGR-001b** (CLI override tracking) - ✅ IMPLEMENTED
+4. **✅ WORD-WRAPPING** - 🆕 NEW FEATURE - --wrap flag implemented with #W#/#T# markers
+5. **🔧 ICON-POSITIONING** - Icon positioning regression addressed (preserving compatibility)
+
+### **📋 REMAINING TASKS (Lower Priority)**
+6. **REGR-008** (enhance test coverage) - Partially addressed through validation
+7. **REGR-003** (comprehensive testing) - Working, may need formal test suite
+8. **REGR-001** (trace failure) - Resolved through implementation
+9. **REGR-004** (fix tests) - Future enhancement
+10. **REGR-005** (warnings) - Future user experience improvement
+11. **REGR-006** (CI testing) - Future long-term prevention
+12. **UAT-FINAL** - 🔄 Awaiting final UAT confirmation on icon positioning in wrap mode

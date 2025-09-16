@@ -13,7 +13,7 @@ use crate::components::{Header, Footer, Status, Body};
 /// Calculate optimal box width based on content and terminal constraints
 fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>) -> usize {
     let terminal_width = get_terminal_width();
-    
+
     let box_width = match fixed_width {
         Some(w) => {
             if w > terminal_width {
@@ -31,7 +31,7 @@ fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>)
                 .max()
                 .unwrap_or(0);
             let ideal_width = content_max_width + 2 * h_padding + 2; // +2 for borders
-            
+
             if ideal_width > terminal_width {
                 // Content too wide for terminal
                 terminal_width

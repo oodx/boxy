@@ -182,7 +182,7 @@ impl<'a> Status<'a> {
         let (alignment, clean_status) = self.parse_status_alignment(&expanded_status);
 
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
-        let status_display = if get_display_width(&clean_status) > available_content_width {
+        let status_display = if self.config.width.fixed_width.is_some() && get_display_width(&clean_status) > available_content_width {
             truncate_with_ellipsis(&clean_status, available_content_width)
         } else {
             clean_status
@@ -281,9 +281,9 @@ impl<'a> Body<'a> {
         for (i, line) in composed_lines.iter().enumerate() {
             let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
             
-            // LIPSIFY: Always truncate if line exceeds available width
+            // Only truncate if there are explicit width constraints (fixed_width)
             let line_width = get_display_width(&line);
-            let display_line = if line_width > available_content_width {
+            let display_line = if self.config.width.fixed_width.is_some() && line_width > available_content_width {
                 truncate_with_ellipsis(&line, available_content_width)
             } else {
                 line.to_string()
@@ -333,15 +333,37 @@ impl<'a> Body<'a> {
     fn compose_content_lines(&self) -> Vec<String> {
         use crate::expand_variables;
 
-        let lines: Vec<&str> = self.config.text.lines().collect();
-        let mut composed_lines: Vec<String> = Vec::new();
-        
-        if let Some(title_text) = &self.config.title {
-            composed_lines.push(expand_variables(title_text));
+        if self.config.width.enable_wrapping {
+            // WRAPPING MODE: Use word-wrapping for content
+            use crate::parser::wrap_text_at_word_boundaries;
+            use crate::width_plugin::get_terminal_width;
+
+            let mut composed_lines: Vec<String> = Vec::new();
+
+            if let Some(title_text) = &self.config.title {
+                composed_lines.push(expand_variables(title_text));
+            }
+
+            // Calculate max content width available for wrapping
+            let terminal_width = get_terminal_width();
+            let available_width = terminal_width.saturating_sub(2 * self.config.width.h_padding + 2); // Account for borders and padding
+
+            let wrapped_lines = wrap_text_at_word_boundaries(&self.config.text, available_width);
+            composed_lines.extend(wrapped_lines);
+
+            composed_lines
+        } else {
+            // ORIGINAL MODE: Keep exact original logic to preserve icon positioning
+            let lines: Vec<&str> = self.config.text.lines().collect();
+            let mut composed_lines: Vec<String> = Vec::new();
+
+            if let Some(title_text) = &self.config.title {
+                composed_lines.push(expand_variables(title_text));
+            }
+            composed_lines.extend(lines.iter().map(|l| (*l).to_string()));
+
+            composed_lines
         }
-        composed_lines.extend(lines.iter().map(|l| (*l).to_string()));
-        
-        composed_lines
     }
 
     fn render_padding_line(&self, inner_width: usize, color_code: &str, pad: &str) -> String {
@@ -400,10 +422,10 @@ impl<'a> Body<'a> {
         let icon_str = self.config.icon.as_ref().unwrap();
         let icon_expanded = expand_variables(icon_str);
         
-        // LIPSIFY: Account for icon when truncating
+        // Only truncate icon content if there are explicit width constraints
         let icon_width = get_display_width(&icon_expanded) + 1; // +1 for space
         let line_width = get_display_width(line);
-        let final_line = if line_width > available_content_width.saturating_sub(icon_width) {
+        let final_line = if self.config.width.fixed_width.is_some() && line_width > available_content_width.saturating_sub(icon_width) {
             truncate_with_ellipsis(line, available_content_width.saturating_sub(icon_width))
         } else {
             display_line.to_string()

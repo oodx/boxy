@@ -31,6 +31,7 @@ pub struct WidthConfig {
     pub h_padding: usize,
     #[allow(dead_code)] // Future feature: vertical padding support
     pub v_padding: usize,
+    pub enable_wrapping: bool,
 }
 
 impl Default for WidthConfig {
@@ -39,6 +40,7 @@ impl Default for WidthConfig {
             fixed_width: None,
             h_padding: 1,
             v_padding: 1,
+            enable_wrapping: false,
         }
     }
 }
@@ -218,6 +220,7 @@ pub fn resolve_box_config(
     pad_body_below: bool,
     header_color: Option<&str>,
     footer_color: Option<&str>,
+    enable_wrapping: bool,
 ) -> BoxyConfig {
     BoxyConfig {
         text: text.to_string(),
@@ -241,6 +244,7 @@ pub fn resolve_box_config(
             fixed_width,
             h_padding,
             v_padding,
+            enable_wrapping,
         },
         fixed_height: None,
         padding: PaddingConfig {

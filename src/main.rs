@@ -57,6 +57,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     let args: Vec<String> = env::args().collect();
 
     let mut style = &NORMAL;
+    let mut style_from_cli = false;
     let mut color = "none";
     let mut text_color = "none";
     let mut title: Option<String> = None;
@@ -68,6 +69,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     let mut fixed_width: Option<usize> = None;
     let mut theme_name: Option<String> = None;
     let mut theme_from_env = false;
+    let mut enable_wrapping = false;
     
     // Check for BOXY_THEME environment variable as default (overridden by --theme)
     if let Ok(env_theme) = env::var("BOXY_THEME") {
@@ -182,6 +184,7 @@ fn run_boxy_application() -> Result<(), AppError> {
                             &NORMAL
                         }
                     };
+                    style_from_cli = true;
                     skip_next = true;
                 }
             }
@@ -254,6 +257,9 @@ fn run_boxy_application() -> Result<(), AppError> {
                     theme_from_env = false; // CLI theme overrides environment
                     skip_next = true;
                 }
+            }
+            "--wrap" => {
+                enable_wrapping = true;
             }
 
             "--title" => {
@@ -487,6 +493,17 @@ fn run_boxy_application() -> Result<(), AppError> {
                     if fixed_width.is_none() {
                         fixed_width = boxy_theme.width;
                     }
+                    // Apply theme style if not overridden by CLI
+                    if !style_from_cli {
+                        style = match boxy_theme.style.as_str() {
+                            "rounded" => &ROUNDED,
+                            "double" => &DOUBLE,
+                            "heavy" => &HEAVY,
+                            "ascii" => &ASCII,
+                            "normal" => &NORMAL,
+                            _ => &NORMAL,
+                        };
+                    }
                 } else {
                     if theme_from_env {
                         // For environment themes, warn but continue with default
@@ -571,10 +588,11 @@ fn run_boxy_application() -> Result<(), AppError> {
           status_color.as_deref(), 
           body_align,
           body_pad_emoji, 
-          pad_body_above, 
+          pad_body_above,
           pad_body_below,
           header_color.as_deref(),
-          footer_color.as_deref()
+          footer_color.as_deref(),
+          enable_wrapping
         );
         draw_box(config);
     }

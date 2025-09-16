@@ -87,6 +87,132 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
     }
 }
 
+/// Wrap text at word boundaries with intelligent hint support
+///
+/// Hint markers:
+/// - #W# : Ideal wrap point if needed
+/// - #T# : Truncate everything before this point, wrap content after
+pub fn wrap_text_at_word_boundaries(text: &str, max_width: usize) -> Vec<String> {
+    if max_width == 0 {
+        return vec![String::new()];
+    }
+
+    let mut lines = Vec::new();
+
+    for line in text.lines() {
+        // Process each line separately to preserve original line breaks
+        let wrapped_lines = wrap_single_line(line, max_width);
+        lines.extend(wrapped_lines);
+    }
+
+    // Ensure we return at least one line
+    if lines.is_empty() {
+        lines.push(String::new());
+    }
+
+    lines
+}
+
+/// Wrap a single line at word boundaries with hint processing
+fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
+    // Handle truncate hints first - #T# means truncate before, wrap after
+    if let Some(truncate_pos) = line.find("#T#") {
+        let after_truncate = &line[truncate_pos + 3..]; // Skip the #T# marker
+        return wrap_single_line(after_truncate, max_width);
+    }
+
+    // Process wrap hints - #W# marks ideal wrap points
+    let processed_line = line.replace("#W#", ""); // Remove markers for display
+
+    if get_display_width(&processed_line) <= max_width {
+        return vec![processed_line];
+    }
+
+    let mut result = Vec::new();
+    let mut current_line = String::new();
+    let mut current_width = 0;
+
+    // Split into words while preserving spaces
+    let words: Vec<&str> = processed_line.split_whitespace().collect();
+
+    for (i, word) in words.iter().enumerate() {
+        let word_width = get_display_width(word);
+        let space_width = if i > 0 { 1 } else { 0 }; // Space before word (except first)
+
+        // Check if adding this word would exceed max width
+        if current_width + space_width + word_width > max_width {
+            // If current line has content, finalize it
+            if !current_line.is_empty() {
+                result.push(current_line.clone());
+                current_line.clear();
+                current_width = 0;
+            }
+
+            // Handle words longer than max_width
+            if word_width > max_width {
+                // Break long word across lines
+                let broken_words = break_long_word(word, max_width);
+                for (j, broken_word) in broken_words.iter().enumerate() {
+                    if j == broken_words.len() - 1 {
+                        // Last piece stays in current_line for next iteration
+                        current_line = broken_word.clone();
+                        current_width = get_display_width(&current_line);
+                    } else {
+                        result.push(broken_word.clone());
+                    }
+                }
+            } else {
+                // Word fits on new line
+                current_line = word.to_string();
+                current_width = word_width;
+            }
+        } else {
+            // Add word to current line
+            if !current_line.is_empty() {
+                current_line.push(' ');
+                current_width += 1;
+            }
+            current_line.push_str(word);
+            current_width += word_width;
+        }
+    }
+
+    // Add final line if it has content
+    if !current_line.is_empty() {
+        result.push(current_line);
+    }
+
+    result
+}
+
+/// Break a long word that exceeds max_width
+fn break_long_word(word: &str, max_width: usize) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut current = String::new();
+    let mut current_width = 0;
+
+    for ch in word.chars() {
+        let ch_width = get_display_width(&ch.to_string());
+
+        if current_width + ch_width > max_width {
+            if !current.is_empty() {
+                result.push(current.clone());
+                current.clear();
+                current_width = 0;
+            }
+        }
+
+        current.push(ch);
+        current_width += ch_width;
+    }
+
+    if !current.is_empty() {
+        result.push(current);
+    }
+
+    result
+}
+
 pub fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
     if max_width == 0 {
         return String::new();
