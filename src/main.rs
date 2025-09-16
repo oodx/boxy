@@ -519,6 +519,9 @@ fn run_boxy_application() -> Result<(), AppError> {
                     if color == "none" {
                         color = Box::leak(boxy_theme.color.clone().into_boxed_str());
                     }
+                    if text_color == "none" {
+                        text_color = Box::leak(boxy_theme.text_color.clone().into_boxed_str());
+                    }
                     // Apply theme icon directly to text using safe pattern (no icon variable)
                     if icon.is_none() {
                         if let Some(icon_str) = &boxy_theme.icon {

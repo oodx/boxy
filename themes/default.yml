@@ -38,7 +38,7 @@ themes:
   # Semantic set
   error:
     inherits: "base_heavy"
-    color: "crimson"
+    color: "purple"
     text_color: "white"
     text_style: "bold"
     title: "❌ Error"
@@ -107,6 +107,18 @@ themes:
     color: "violet"
     text_color: "auto"
     title: "🪀 Silly"
+
+  # Technical blueprint theme with blue styling
+  blueprint:
+    inherits: "base"
+    color: "blue"
+    text_color: "blue"
+    style: "ascii"
+    text_style: "normal"
+    padding: 2
+    title: "📐 Blueprint"
+    icon: "📐"
+    title_align: "center"
 
 presets: {}
 

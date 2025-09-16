@@ -4,11 +4,12 @@ A fast command-line utility that draws Unicode boxes around text with proper emo
 
 ## Features
 
-- ✨ Accurate Unicode/emoji width calculation
+- ✨ Custom Unicode/emoji width calculation system (no external dependencies)
 - 🎨 Multiple box styles (normal, rounded, double, heavy, ascii)
 - 🌈 Colored borders and text with predefined color schemes
 - 🎨 Text color control with auto-matching and explicit colors
-- 🎭 Theme system with predefined visual styles
+- 🎭 **5-level theme hierarchy system** with flexible theme loading
+- 🎯 **Theme management commands** (hierarchy, dryrun, list, show)
 - 📋 Title and footer support with emoji/variable expansion (inside borders)
 - 🎯 Icon decorations for content
 - 📏 Fixed width boxes with smart content truncation
@@ -17,6 +18,7 @@ A fast command-line utility that draws Unicode boxes around text with proper emo
 - 🛠️ Param stream (--params) to set header/title/status/footer/layout/colors alongside piped body
 - 🎛️ Title/status color overrides (--title-color/--status-color)
 - 🧪 BOXY_THEME default theme (env)
+- 🔍 **Comprehensive emoji debugging system** for development
 - 🚀 Written in Rust for speed
 - 📝 Handles multi-line text and ANSI color codes
 
@@ -91,13 +93,17 @@ echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; 
 echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
 ```
 
-### CLI Reference (v0.8)
+### CLI Reference (v0.9)
 
 - Input: Pipe content to `boxy` or pass via `--params` (metadata only).
 - Visual: `--style`, `--color`, `--text`, `--width <N|max|auto>`.
 - Sections: `--header`, `--title`, `--status` (sl|sc|sr), `--footer`.
 - Layout: `--layout` tokens `hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp`.
-- Themes: `--theme <name>`; manage via `boxy theme list|show <name>`. Env: `BOXY_THEME`.
+- Themes: `--theme <name>`; manage via `boxy theme <command>`. Env: `BOXY_THEME`.
+  - `boxy theme list` - List all available themes
+  - `boxy theme show <name>` - Show theme details
+  - `boxy theme hierarchy` - Display theme loading hierarchy
+  - `boxy theme dryrun <name>` - Test theme with sample content
 - Utility: `--no-boxy[=strict]`, `--colors`, `--examples`, `--help`, `--version`.
 
 ## Box Styles
@@ -125,12 +131,73 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 Predefined combinations of icon, color, and styling:
 ```bash
 --theme error      # ❌ with red styling
---theme success    # ✅ with green styling  
+--theme success    # ✅ with green styling
 --theme warning    # ⚠️ with orange styling
 --theme info       # ℹ️ with blue styling
 --theme debug      # 🐛 with dark green styling
 # ... and many more
 ```
+
+## Theme Hierarchy System
+
+Boxy uses a **5-level theme hierarchy** that searches for themes in the following priority order:
+
+### 1. Local boxy files (highest priority)
+- Files like `boxy*.yaml` or `boxy*.yml` in the current directory
+- Alphabetically first file is selected if multiple exist
+- Example: `boxy_alpha.yaml`, `boxy_custom.yml`
+
+### 2. Local .themes directory
+- Hidden `.themes/` directory in current working directory
+- Contains project-specific themes
+- Example: `.themes/my_project_theme.yml`
+
+### 3. Local themes directory
+- Public `themes/` directory in current working directory
+- Shared themes for the project
+- Example: `themes/default.yml`, `themes/custom.yml`
+
+### 4. XDG themes directory
+- System-wide themes in XDG config location
+- Path: `~/.local/etc/rsb/boxy/themes/`
+- Global user themes
+
+### 5. Built-in themes (lowest priority)
+- Compiled fallback themes
+- Always available as last resort
+
+### Theme Management Commands
+
+```bash
+# View the theme loading hierarchy
+boxy theme hierarchy
+
+# List all available themes from all levels
+boxy theme list
+
+# Show details for a specific theme
+boxy theme show success
+
+# Test a theme with sample content before using
+boxy theme dryrun error
+```
+
+### Creating Custom Themes
+
+You can create themes at any level of the hierarchy:
+
+```yaml
+# Example: ./themes/my_theme.yml
+themes:
+  my_custom:
+    color: "blue"
+    text_color: "white"
+    style: "rounded"
+    text_style: "bold"
+    title: "🎯 Custom"
+```
+
+Then use with: `echo "Hello" | boxy --theme my_custom`
 
 ## Examples
 
@@ -149,6 +216,11 @@ echo "Deploy to production?" | boxy --theme warning --text auto --width 25
 
 # Interactive menu
 echo -e "1. Deploy to staging\n2. Deploy to production\n3. Rollback\n4. Exit" | boxy --title "🚀 Deployment Menu" -s rounded
+
+# Theme management and testing
+boxy theme hierarchy                           # View theme loading priority
+boxy theme dryrun success                     # Test theme before using
+echo "Task completed" | boxy --theme success  # Apply the tested theme
 
 # Pipeline processing
 command_output | boxy --title "📋 Results" | tee results.txt
@@ -197,12 +269,43 @@ box "Error occurred" --theme error --width 30
 ## Why boxy?
 
 Unlike bash-based box drawing tools, boxy correctly handles:
-- Emoji width (🚀 = 2 columns)
-- Unicode variation selectors
-- Zero-width joiners
-- CJK characters
+- **Custom emoji width calculation** (🚀 = 2 columns) - no external dependencies
+- Unicode variation selectors (ℹ️ vs ℹ)
+- Zero-width joiners and modifiers
+- CJK characters (中文, 日本語, 한국어)
 - Mixed ASCII and Unicode content
 - ANSI color preservation in pipeline modes
+- **Comprehensive emoji debugging** for development and troubleshooting
+
+### Custom Width Calculation System
+Boxy implements its own Unicode width calculation system, removing the dependency on external crates like `unicode-width`. This provides:
+- More accurate emoji width detection
+- Better handling of complex Unicode sequences
+- Reduced binary size and dependencies
+- Custom debugging capabilities for width issues
+
+## Emoji Debugging System
+
+For developers working with Unicode and emoji, boxy includes comprehensive debugging tools:
+
+### Built-in Emoji Debug Binary
+```bash
+# Debug a single emoji or character
+cargo run --bin emoji_debug "✅"
+cargo run --bin emoji_debug "ℹ️"
+
+# Compare multiple characters side by side
+cargo run --bin emoji_debug compare "✅" "ℹ️" "🚀" "X"
+```
+
+### Debug Information Provided
+- Character width calculations
+- Unicode codepoint breakdowns
+- Visual alignment testing
+- Grapheme cluster analysis
+- Comparison utilities for troubleshooting
+
+This debugging system is invaluable when working with complex Unicode sequences or when boxy's width calculations don't match expectations.
 
 ## License
 

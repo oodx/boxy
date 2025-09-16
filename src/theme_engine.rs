@@ -14,6 +14,7 @@ use rsb::param;
 pub struct ThemeEngine {
     themes: HashMap<String, BoxyTheme>,
     theme_files: Vec<PathBuf>,
+    theme_hierarchy: Vec<String>, // Track loading hierarchy for debug
     xdg_base_dir: PathBuf,
 }
 
@@ -158,13 +159,14 @@ impl ThemeEngine {
         let mut engine = ThemeEngine {
             themes: HashMap::new(),
             theme_files: Vec::new(),
+            theme_hierarchy: Vec::new(),
             xdg_base_dir,
         };
         
-        // Load built-in themes first (fallback)
+        // Load built-in themes first (lowest priority - fallback)
         engine.load_builtin_themes();
-        
-        // Load YAML theme files from XDG+ directories
+
+        // Load YAML theme files in reverse priority order (lowest to highest)
         if let Err(e) = engine.load_theme_files() {
             eprintln!("Warning: Failed to load theme files: {}", e);
             // Continue with built-in themes
@@ -184,6 +186,7 @@ impl ThemeEngine {
     
     /// Load built-in themes as fallback (converted from current themes.rs)
     fn load_builtin_themes(&mut self) {
+        self.theme_hierarchy.push("Built-in themes (compiled fallback)".to_string());
         let builtin_themes = vec![
             ("error", BoxyTheme {
                 color: "crimson".to_string(),
@@ -237,25 +240,81 @@ impl ThemeEngine {
             fs::create_dir_all(&themes_dir)
                 .map_err(|e| format!("Failed to create themes directory: {}", e))?;
         }
-        
-        // First, try to load from project's local themes directory (priority)
-        let local_themes_dir = PathBuf::from("themes");
-        if local_themes_dir.exists() {
-            if let Err(e) = self.load_themes_from_directory(&local_themes_dir) {
-                eprintln!("Warning: Failed to load themes from local directory: {}", e);
-            }
-        }
-        
-        // Then, load theme files from XDG+ themes directory
+
+        // Load in REVERSE priority order (lowest priority first, highest last)
+
+        // First, load theme files from XDG+ themes directory (lowest external priority)
         if themes_dir.exists() {
+            self.theme_hierarchy.push(format!("XDG themes directory: {}", themes_dir.display()));
             if let Err(e) = self.load_themes_from_directory(&themes_dir) {
                 eprintln!("Warning: Failed to load themes from XDG directory: {}", e);
             }
         }
-        
+
+        // Second, try to load from project's local themes directory
+        let local_themes_dir = PathBuf::from("themes");
+        if local_themes_dir.exists() {
+            self.theme_hierarchy.push(format!("Local themes directory: {}", local_themes_dir.display()));
+            if let Err(e) = self.load_themes_from_directory(&local_themes_dir) {
+                eprintln!("Warning: Failed to load themes from local directory: {}", e);
+            }
+        }
+
+        // Third, try to load from .themes directory
+        let dot_themes_dir = PathBuf::from(".themes");
+        if dot_themes_dir.exists() {
+            self.theme_hierarchy.push(format!("Local .themes directory: {}", dot_themes_dir.display()));
+            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir) {
+                eprintln!("Warning: Failed to load themes from .themes directory: {}", e);
+            }
+        }
+
+        // Finally, check for local single boxy*.yaml file (highest priority)
+        if let Some(boxy_file) = self.find_local_boxy_file()? {
+            self.theme_hierarchy.push(format!("Local boxy file: {} (alphabetically first)", boxy_file.display()));
+            if let Err(e) = self.load_theme_file(&boxy_file) {
+                eprintln!("Warning: Failed to load local boxy file {:?}: {}", boxy_file, e);
+            }
+        }
+
         Ok(())
     }
-    
+
+    /// Find the first boxy*.yaml file in the current directory (alphabetically sorted)
+    fn find_local_boxy_file(&self) -> Result<Option<PathBuf>, String> {
+        let current_dir = PathBuf::from(".");
+        let entries = match fs::read_dir(&current_dir) {
+            Ok(entries) => entries,
+            Err(_) => return Ok(None), // No current directory access
+        };
+
+        let mut boxy_files = Vec::new();
+
+        // Collect all boxy*.yaml files
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+            let path = entry.path();
+
+            if path.is_file() {
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    if filename.starts_with("boxy") && (filename.ends_with(".yaml") || filename.ends_with(".yml")) {
+                        boxy_files.push(path);
+                    }
+                }
+            }
+        }
+
+        if boxy_files.is_empty() {
+            return Ok(None);
+        }
+
+        // Sort alphabetically for predictable behavior
+        boxy_files.sort();
+
+        // Return the first (alphabetically) boxy file
+        Ok(Some(boxy_files[0].clone()))
+    }
+
     /// Load theme files from a specific directory
     fn load_themes_from_directory(&mut self, themes_dir: &PathBuf) -> Result<(), String> {
         let entries = fs::read_dir(themes_dir)
@@ -290,10 +349,12 @@ impl ThemeEngine {
         // Note: Skip validation here since themes may need inheritance resolution first
         // Validation will happen when themes are retrieved via get_theme()
         
-        // Add themes to engine
+        // Add themes to engine (later loads override earlier loads)
         for (name, mut theme) in theme_file.themes {
             // Set metadata
             theme.metadata = Some(theme_file.metadata.clone());
+
+            // Always insert - later loads have higher priority
             self.themes.insert(name, theme);
         }
         
@@ -430,6 +491,28 @@ impl ThemeEngine {
     /// Get XDG+ themes directory path
     pub fn get_themes_directory(&self) -> PathBuf {
         self.xdg_base_dir.join("themes")
+    }
+
+    /// Get theme hierarchy showing all sources considered during loading
+    pub fn get_theme_hierarchy(&self) -> Vec<String> {
+        self.theme_hierarchy.clone()
+    }
+
+    /// Print theme hierarchy for debugging
+    pub fn print_theme_hierarchy(&self) {
+        println!("🏗️ Theme Loading Hierarchy (priority order - highest first):");
+
+        // Display sources in reverse order since we load lowest priority first
+        let mut sources = self.theme_hierarchy.clone();
+        sources.reverse();
+
+        for (i, source) in sources.iter().enumerate() {
+            println!("  {}. {}", i + 1, source);
+        }
+
+        println!();
+        let theme_names: Vec<String> = self.themes.keys().cloned().collect();
+        println!("📋 Available themes: {}", theme_names.join(", "));
     }
 }
 
