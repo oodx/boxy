@@ -18,6 +18,6 @@ pub use parser::*;
 // Re-export external types that modules need
 pub use std::fs::File;
 pub use std::process::{Command, Stdio};
-pub use unicode_width::UnicodeWidthStr;
+// pub use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 pub use std::collections::HashMap;
 pub use regex::Regex;

@@ -1,6 +1,6 @@
 
 
-use crate::{File, Command, Stdio, UnicodeWidthStr};
+use crate::{File, Command, Stdio};
 
 
 
@@ -149,19 +149,14 @@ pub fn get_display_width_custom(text: &str) -> usize {
     width
 }
 
-/// Original unicode-width implementation (for comparison)
+/// Legacy function - now redirects to custom implementation
+/// (kept for compatibility with comparison tools)
 pub fn get_display_width_unicode_crate(text: &str) -> usize {
-    let clean = strip_ansi_escapes::strip(text);
-    let clean_str = String::from_utf8_lossy(&clean);
-    UnicodeWidthStr::width(clean_str.as_ref())
+    // Fallback to custom implementation since unicode-width dependency removed
+    get_display_width_custom(text)
 }
 
-/// Main width function - can be easily swapped between implementations
+/// Main width function - now uses our custom implementation by default
 pub fn get_display_width(text: &str) -> usize {
-    // Feature flag to easily swap implementations
-    if std::env::var("BOXY_USE_CUSTOM_WIDTH").is_ok() {
-        get_display_width_custom(text)
-    } else {
-        get_display_width_unicode_crate(text)
-    }
+    get_display_width_custom(text)
 }

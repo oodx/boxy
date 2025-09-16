@@ -8,7 +8,7 @@ license = "AGPL-3.0"
 publish = false  
 
 [dependencies]
-unicode-width = "0.2"
+# unicode-width = "0.2"  # Replaced with custom implementation
 strip-ansi-escapes = "0.2"
 regex = "1.11"
 serde = { version = "1.0", features = ["derive"] }

@@ -57,7 +57,7 @@ use std::fs::{self, File};
 
 use regex::Regex;
 use std::collections::HashMap;
-use unicode_width::UnicodeWidthStr;
+// use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
 use boxes::*;
 use parser::*;

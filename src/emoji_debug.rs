@@ -3,14 +3,12 @@
 /// This module provides tools to debug emoji width issues and compare
 /// different width calculation methods for terminal applications.
 
-use unicode_width::UnicodeWidthStr;
+// use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 use strip_ansi_escapes;
 
-/// Calculate display width using unicode-width crate (what boxy currently uses)
+/// Calculate display width using our custom implementation
 pub fn get_unicode_width(text: &str) -> usize {
-    let clean = strip_ansi_escapes::strip(text.as_bytes());
-    let clean_str = String::from_utf8_lossy(&clean);
-    UnicodeWidthStr::width(clean_str.as_ref())
+    crate::width_plugin::get_display_width_custom(text)
 }
 
 /// Calculate "naive" width (just character count)

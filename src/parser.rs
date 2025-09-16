@@ -1,6 +1,6 @@
 
 
-use crate::{HashMap, UnicodeWidthStr, Regex};
+use crate::{HashMap, Regex};
 use crate::width_plugin::*;
 
 // RSB framework imports
@@ -236,7 +236,7 @@ pub fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
     let mut current_width = 0;
     
     for ch in text.chars() {
-        let ch_width = UnicodeWidthStr::width(ch.to_string().as_str());
+        let ch_width = get_display_width(&ch.to_string());
         if current_width + ch_width > target_width {
             break;
         }
