@@ -75,13 +75,16 @@ echo "Custom theme" | $BOXY --color blue --icon "✅"
 echo "Hello World" | $BOXY --color red --icon "🚀"
 echo "Hello World" | $BOXY -c orange --icon "🚀"
 
-# Word-wrapping tests
-echo "This is a very long line that should wrap nicely at word boundaries when using the wrap flag" | $BOXY --wrap
-echo "Short line" | $BOXY --wrap
-echo "Text with #W# ideal wrap point for testing" | $BOXY --wrap
-echo "Remove this part #T# keep this content" | $BOXY --wrap
-echo "Word wrapping with theme" | $BOXY --theme success --wrap
+# Word-wrapping tests (auto width = default wrapping, hints removed)
+echo "This is a very long line that should wrap nicely at word boundaries with default auto wrapping behavior" | $BOXY
+echo "Short line" | $BOXY
+echo "Text with #W# ideal wrap point for testing" | $BOXY
+echo "Remove this part #T# keep this content" | $BOXY
+echo "Word wrapping with theme" | $BOXY --theme success
 
-# Long string wrap hint tests (ensure hints trigger properly)
-echo "This is a very long line with #W# a hint marker that should trigger wrap at this point when line exceeds terminal width" | $BOXY --wrap --width 40
+# Fixed width wrap hint tests (--wrap flag respects markers)
+echo "This is a very long line with #W# a hint marker that should trigger wrap at this point when line exceeds width" | $BOXY --wrap --width 40
 echo "This is a super long line that has #T# some additional content that should be wrapped after ellipsis when line is too long" | $BOXY --wrap --width 35
+
+# Explicit newline marker test
+echo "Line one #NL# Line two #NL# Line three" | $BOXY

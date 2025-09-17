@@ -291,9 +291,12 @@ impl<'a> Body<'a> {
         }
 
         for (i, line) in composed_lines.iter().enumerate() {
-            // Only truncate if there are explicit width constraints (fixed_width)
+            // Only truncate if there are explicit width constraints (fixed_width) AND wrapping is disabled
             let line_width = get_display_width(&line);
-            let display_line = if self.config.width.fixed_width.is_some() && line_width > available_content_width {
+            let should_truncate = self.config.width.fixed_width.is_some()
+                && !self.config.width.enable_wrapping
+                && line_width > available_content_width;
+            let display_line = if should_truncate {
                 truncate_with_ellipsis(&line, available_content_width)
             } else {
                 line.to_string()
@@ -349,8 +352,36 @@ impl<'a> Body<'a> {
     fn compose_content_lines(&self) -> Vec<String> {
         use crate::expand_variables;
 
-        if self.config.width.enable_wrapping {
-            // WRAPPING MODE: Use word-wrapping for content
+        if self.config.width.fixed_width.is_none() {
+            // AUTO WIDTH: Default wrapping at terminal boundaries, remove hints
+            use crate::parser::wrap_text_at_word_boundaries;
+            use crate::width_plugin::get_terminal_width;
+
+            let mut composed_lines: Vec<String> = Vec::new();
+
+            if let Some(title_text) = &self.config.title {
+                composed_lines.push(expand_variables(title_text));
+            }
+
+            // For auto width, wrap at terminal width minus padding and borders
+            let terminal_width = get_terminal_width();
+            let available_width = terminal_width.saturating_sub(2 * self.config.width.h_padding + 2);
+
+            // Clean hints from text for auto width mode (but preserve #NL# as newlines)
+            let cleaned_text = self.config.text.replace("#W#", " ").replace("#T#", "");
+            // Normalize whitespace within lines but preserve #NL# markers
+            let lines: Vec<&str> = cleaned_text.lines().collect();
+            let normalized_lines: Vec<String> = lines.iter()
+                .map(|line| line.split_whitespace().collect::<Vec<_>>().join(" "))
+                .collect();
+            let cleaned_text = normalized_lines.join("\n").replace("#NL#", "\n");
+
+            let wrapped_lines = wrap_text_at_word_boundaries(&cleaned_text, available_width);
+            composed_lines.extend(wrapped_lines);
+
+            composed_lines
+        } else if self.config.width.enable_wrapping {
+            // FIXED WIDTH + WRAPPING: Use hint-aware wrapping within fixed width
             use crate::parser::wrap_text_at_word_boundaries;
 
             let mut composed_lines: Vec<String> = Vec::new();
@@ -370,7 +401,7 @@ impl<'a> Body<'a> {
 
             composed_lines
         } else {
-            // ORIGINAL MODE: Keep exact original logic to preserve icon positioning
+            // FIXED WIDTH WITHOUT WRAPPING: Original truncation mode
             let lines: Vec<&str> = self.config.text.lines().collect();
             let mut composed_lines: Vec<String> = Vec::new();
 

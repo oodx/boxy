@@ -23,25 +23,21 @@ pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usi
         },
         None => {
             // Auto-size but constrain to terminal width
-            let lines: Vec<&str> = text.lines().collect();
-            let content_max_width = if enable_wrapping {
-                // When wrapping is enabled, process wrap markers first to get accurate width
-                lines.iter()
-                    .map(|line| {
-                        // Process wrap markers to get the actual content that will be displayed
-                        let clean_line = line.replace("#W#", " ").replace("#T#", "");
-                        let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
-                        get_display_width(&clean_line)
-                    })
-                    .max()
-                    .unwrap_or(0)
-            } else {
-                // Normal mode: just calculate width as-is
-                lines.iter()
-                    .map(|line| get_display_width(line))
-                    .max()
-                    .unwrap_or(0)
-            };
+            // First process #NL# markers to split into actual lines
+            let text_with_newlines = text.replace("#NL#", "\n");
+            let lines: Vec<&str> = text_with_newlines.lines().collect();
+
+            // For auto-width, ALWAYS process wrap markers to get accurate width
+            // since hints will be removed/processed during rendering
+            let content_max_width = lines.iter()
+                .map(|line| {
+                    // Process wrap markers to get the actual content that will be displayed
+                    let clean_line = line.replace("#W#", " ").replace("#T#", "");
+                    let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
+                    get_display_width(&clean_line)
+                })
+                .max()
+                .unwrap_or(0);
             let ideal_width = content_max_width + 2 * h_padding + 2; // +2 for borders
             
             if ideal_width > terminal_width {
