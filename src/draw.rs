@@ -32,7 +32,8 @@ pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usi
             let content_max_width = lines.iter()
                 .map(|line| {
                     // Process wrap markers to get the actual content that will be displayed
-                    let clean_line = line.replace("#W#", " ").replace("#T#", "");
+                    // Both #W# and #T# should normalize to spaces for consistent width calculation
+                    let clean_line = line.replace("#W#", " ").replace("#T#", " ");
                     let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
                     get_display_width(&clean_line)
                 })

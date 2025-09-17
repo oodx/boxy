@@ -368,7 +368,8 @@ impl<'a> Body<'a> {
             let available_width = terminal_width.saturating_sub(2 * self.config.width.h_padding + 2);
 
             // Clean hints from text for auto width mode (but preserve #NL# as newlines)
-            let cleaned_text = self.config.text.replace("#W#", " ").replace("#T#", "");
+            // Both #W# and #T# should normalize to spaces for consistent width calculation
+            let cleaned_text = self.config.text.replace("#W#", " ").replace("#T#", " ");
             // Normalize whitespace within lines but preserve #NL# markers
             let lines: Vec<&str> = cleaned_text.lines().collect();
             let normalized_lines: Vec<String> = lines.iter()
