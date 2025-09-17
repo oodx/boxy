@@ -180,6 +180,100 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
     }
 }
 
+/// Handle engine subcommands: init, import, export, list, debug, etc.
+pub fn handle_engine_command(args: &[String], jynx: &JynxPlugin) {
+    if args.is_empty() {
+        eprintln!("Engine command requires an action. Usage: {} engine <action>", NAME);
+        eprintln!("Available actions: init, import <name>, export <name>, list, debug, status, edit <name>, help");
+        std::process::exit(1);
+    }
+
+    match args[0].as_str() {
+        "init" => {
+            handle_engine_init();
+        }
+        "list" => {
+            match ThemeEngine::new() {
+                Ok(theme_engine) => {
+                    let themes = theme_engine.list_themes();
+                    if themes.is_empty() {
+                        println!("No themes available.");
+                        return;
+                    }
+
+                    // Build theme list content
+                    let mut theme_content = String::new();
+                    theme_content.push_str(&format!("{} {} - Available Themes\n", NAME, VERSION));
+                    theme_content.push('\n');
+
+                    for (name, description) in themes {
+                        theme_content.push_str(&format!("  {} - {}\n", name, description));
+                    }
+
+                    theme_content.push('\n');
+                    theme_content.push_str(&format!("Usage: {} --theme <theme_name>\n", NAME));
+
+                    // Use jynx for enhanced theme list display
+                    if jynx.is_active() {
+                        jynx_println(&theme_content, "theme_list", jynx);
+                    } else {
+                        print!("{}", theme_content);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: Failed to load theme engine: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        "import" => {
+            if args.len() < 2 {
+                eprintln!("Error: Engine import requires a name. Usage: {} engine import <name>", NAME);
+                std::process::exit(1);
+            }
+            handle_engine_import(&args[1]);
+        }
+        "export" => {
+            if args.len() < 2 {
+                eprintln!("Error: Engine export requires a name. Usage: {} engine export <name>", NAME);
+                std::process::exit(1);
+            }
+            handle_engine_export(&args[1]);
+        }
+        "edit" => {
+            if args.len() < 2 {
+                eprintln!("Error: Engine edit requires a name. Usage: {} engine edit <name>", NAME);
+                std::process::exit(1);
+            }
+            handle_engine_edit(&args[1]);
+        }
+        "debug" => {
+            match ThemeEngine::new() {
+                Ok(theme_engine) => {
+                    theme_engine.print_theme_hierarchy();
+                }
+                Err(e) => {
+                    eprintln!("Error: Failed to load theme engine: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        "status" => {
+            handle_engine_status();
+        }
+        "help" => {
+            print_engine_help();
+        }
+        _ => {
+            let action = &args[0];
+            eprintln!("Unknown engine action: {}", action);
+            eprintln!("Available actions: init, import, export, list, debug, status, edit, help");
+            eprintln!("Use '{} engine help' for more information", NAME);
+            std::process::exit(1);
+        }
+    }
+}
+
 
 /// Validate theme name
 pub fn validate_theme_name(name: &str) -> Result<(), String> {

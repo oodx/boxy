@@ -156,6 +156,14 @@ fn run_boxy_application() -> Result<(), AppError> {
         handle_theme_command(&args[2..], &theme_jynx);
         return Ok(());
     }
+
+    if args.len() >= 2 && args[1] == "engine" {
+        // Initialize jynx for engine commands
+        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
+        let engine_jynx = JynxPlugin::new(no_color);
+        handle_engine_command(&args[2..], &engine_jynx);
+        return Ok(());
+    }
     
     // Handle migrate-commands subcommand
     // if args.len() >= 2 && args[1] == "migrate-commands" {
@@ -167,7 +175,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     // }    
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" );
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "engine" );
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return Ok(());
