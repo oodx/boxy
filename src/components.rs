@@ -352,7 +352,6 @@ impl<'a> Body<'a> {
         if self.config.width.enable_wrapping {
             // WRAPPING MODE: Use word-wrapping for content
             use crate::parser::wrap_text_at_word_boundaries;
-            use crate::width_plugin::get_terminal_width;
 
             let mut composed_lines: Vec<String> = Vec::new();
 
@@ -361,8 +360,10 @@ impl<'a> Body<'a> {
             }
 
             // Calculate max content width available for wrapping
-            let terminal_width = get_terminal_width();
-            let available_width = terminal_width.saturating_sub(2 * self.config.width.h_padding + 2); // Account for borders and padding
+            // Use the same width calculation as the main box
+            use crate::draw::calculate_box_width;
+            let final_width = calculate_box_width(&self.config.text, self.config.width.h_padding, self.config.width.fixed_width, true);
+            let available_width = final_width.saturating_sub(2); // Account for borders
 
             let wrapped_lines = wrap_text_at_word_boundaries(&self.config.text, available_width);
             composed_lines.extend(wrapped_lines);

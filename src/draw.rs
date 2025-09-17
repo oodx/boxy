@@ -9,7 +9,7 @@ use crate::components::{Header, Footer, Status, Body};
 // RSB-compliant helper functions for draw_box decomposition
 
 /// Calculate optimal box width based on content and terminal constraints
-fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
+pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
     let terminal_width = get_terminal_width();
     
     let box_width = match fixed_width {

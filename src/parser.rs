@@ -172,7 +172,7 @@ fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
     let mut current_line = String::new();
     let mut current_width = 0;
 
-    // Use the cleaned line for normal wrapping
+    // Use the cleaned line for normal wrapping (hints already processed/removed)
     let words: Vec<&str> = clean_line.split_whitespace().collect();
 
     for (i, word) in words.iter().enumerate() {

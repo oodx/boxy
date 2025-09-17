@@ -81,3 +81,7 @@ echo "Short line" | $BOXY --wrap
 echo "Text with #W# ideal wrap point for testing" | $BOXY --wrap
 echo "Remove this part #T# keep this content" | $BOXY --wrap
 echo "Word wrapping with theme" | $BOXY --theme success --wrap
+
+# Long string wrap hint tests (ensure hints trigger properly)
+echo "This is a very long line with #W# a hint marker that should trigger wrap at this point when line exceeds terminal width" | $BOXY --wrap --width 40
+echo "This is a super long line that has #T# some additional content that should be wrapped after ellipsis when line is too long" | $BOXY --wrap --width 35
