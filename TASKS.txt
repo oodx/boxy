@@ -172,8 +172,8 @@ Update help menus, create tests, document new API
 ## PRIORITIZED EXECUTION ORDER
 
 ### SPRINT 1 (Critical Path - 16 pts)
-1. ENGINE-008: Migrate and fix engine init [3 pts] - CREATE MISSING DIRECTORY
-2. ENGINE-001: Create engine subcommand [3 pts] - ESTABLISH NAMESPACE
+1. ENGINE-001: Create engine subcommand [3 pts] - ESTABLISH NAMESPACE (FOUNDATION)
+2. ENGINE-008: Migrate and fix engine init [3 pts] - CREATE MISSING DIRECTORY
 3. ENGINE-007: Fix global loading [5 pts] - ENSURE THEMES LOAD
 4. ENGINE-004: Fix import command [5 pts]
 
@@ -215,8 +215,10 @@ Update help menus, create tests, document new API
 
 ## NOTES
 
-- ENGINE-008 must run first to create the missing global directory
-- ENGINE-007 depends on ENGINE-008 completing successfully
+- ENGINE-001 must run first to establish the `boxy engine` namespace (FOUNDATION)
+- ENGINE-008 depends on ENGINE-001 creating the namespace
+- ENGINE-007 depends on ENGINE-008 creating the global directory
+- China's technical review identified critical dependency order issue and corrected it
 - Import/Export need to be fixed together for consistency
 - Debug command will be essential for troubleshooting issues
 - Consider adding `boxy engine doctor` as future enhancement
