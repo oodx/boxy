@@ -10,8 +10,7 @@ use crate::{ validate_color, validate_width};
 
 use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};
 
-// RSB framework imports  
-use rsb::param;
+// Note: RSB integration deferred until proper alignment
 
 
 /// Validate theme file before import
@@ -469,8 +468,8 @@ pub fn save_theme_to_file(path: &PathBuf, name: &str, theme: &BoxyTheme) -> Resu
             version: "1.0.0".to_string(),
             description: format!("Custom theme: {}", name),
             author: {
-                let user = param!("USER");
-                if user.is_empty() { "boxy".to_string() } else { user }
+                let user = std::env::var("USER").unwrap_or_else(|_| "boxy".to_string());
+                user
             },
             created: chrono::Utc::now().format("%Y-%m-%d").to_string(),
             updated: chrono::Utc::now().format("%Y-%m-%d").to_string(),

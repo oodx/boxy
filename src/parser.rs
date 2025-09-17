@@ -3,8 +3,7 @@
 use crate::{HashMap, Regex};
 use crate::width_plugin::*;
 
-// RSB framework imports
-use rsb::param;
+// Note: RSB integration deferred until proper alignment
 
 
 
@@ -28,7 +27,7 @@ pub fn expand_variables(text: &str) -> String {
     let var_regex = Regex::new(r"\$([A-Za-z_][A-Za-z0-9_]*)").unwrap();
     for cap in var_regex.captures_iter(text) {
         if let Some(var_name) = cap.get(1) {
-            let value = param!(var_name.as_str());
+            let value = std::env::var(var_name.as_str()).unwrap_or_default();
             if !value.is_empty() {
                 result = result.replace(&cap[0], &value);
             }

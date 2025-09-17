@@ -7,8 +7,7 @@ use std::fs;
 use std::path::PathBuf;
 use crate::colors::*;
 
-// RSB framework imports
-use rsb::param; //RSB is not loaded correctly, this wont work!
+// Note: RSB integration deferred until proper alignment
 
 pub fn get_home_dir() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/".to_string())

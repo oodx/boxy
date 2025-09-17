@@ -1,6 +1,6 @@
 
 
-use rsb::prelude::*;
+// Note: RSB integration deferred until proper alignment
 use crate::{ BOX_CHARS };
 use crate::{ get_display_width, get_terminal_width, get_color_code };
 use crate::config::BoxyConfig;
@@ -41,8 +41,8 @@ macro_rules! box_width {
             }
         };
 
-        // Get minimum width from environment variable (RSB-compliant)
-        let min_width_str = param!("BOXY_MIN_WIDTH", default: "5");
+        // Get minimum width from environment variable
+        let min_width_str = std::env::var("BOXY_MIN_WIDTH").unwrap_or_else(|_| "5".to_string());
         let min_width: usize = min_width_str.parse().unwrap_or(5);
 
         // Ensure minimum viable box size (user configurable via BOXY_MIN_WIDTH)
