@@ -510,6 +510,7 @@ impl ThemeEngine {
     }
 
     /// Get theme hierarchy showing all sources considered during loading
+    #[allow(dead_code)]
     pub fn get_theme_hierarchy(&self) -> Vec<String> {
         self.theme_hierarchy.clone()
     }

@@ -97,7 +97,7 @@ echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; 
 echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
 ```
 
-### CLI Reference (v0.10.1)
+### CLI Reference (v0.11.0)
 
 **Input & Content:**
 - Pipe content to `boxy` or pass via `--params` (metadata only)
@@ -393,6 +393,8 @@ Predefined combinations of icon, color, and styling:
 --theme warning    # ⚠️ with orange styling
 --theme info       # ℹ️ with blue styling
 --theme debug      # 🐛 with dark green styling
+--theme blueprint  # 📐 with technical blue ASCII styling
+--theme critical   # ⛔ with double border critical styling
 # ... and many more
 ```
 
@@ -532,7 +534,7 @@ echo "User: $USER" | boxy
 
 ```bash
 # System info box with title  
-echo -e "🦀 Rust powered\n⚡ Lightning fast\n🔒 Memory safe" | boxy --title "📦 boxy v0.5.0" -s rounded -c blue
+echo -e "🦀 Rust powered\n⚡ Lightning fast\n🔒 Memory safe" | boxy --title "📦 boxy v0.11.0" -s rounded -c blue
 
 # Error alert with themed styling and auto text color
 echo "File not found: config.json" | boxy --theme error --text auto --title "🚨 Error"

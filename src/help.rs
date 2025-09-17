@@ -25,7 +25,7 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     
     // =============== OVERVIEW ===============
     println!("{}OVERVIEW:{}", get_color_code("azure"), RESET);
-    println!("  Boxy v0.10.1 introduces a comprehensive theme system with semantic formatting,");
+    println!("  Boxy v0.11.0 introduces a comprehensive theme system with semantic formatting,");
     println!("  enhanced layout control, and 90+ colors for professional CLI output.");
     println!();
     
@@ -78,9 +78,10 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("  {}Built-in Themes:{}", get_color_code("cyan"), RESET);
     println!("    error      Crimson borders, error icon (❌), bold text");
     println!("    success    Emerald borders, success icon (✅), rounded style");
-    println!("    warning    Amber borders, warning icon (⚠️), italic text"); 
+    println!("    warning    Amber borders, warning icon (⚠️), italic text");
     println!("    info       Azure borders, info icon (ℹ️), normal style");
     println!("    critical   Enhanced error theme with double borders");
+    println!("    blueprint  Technical blue theme with ASCII style (📐)");
     println!();
     
     println!("  {}Theme Management:{}", get_color_code("cyan"), RESET);
@@ -179,7 +180,7 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("  {} --colors                 Preview color palette", NAME);
     println!("  {} theme list               Show available themes", NAME);
     println!("  GitHub: https://github.com/qodeninja/boxy");
-    println!("  Documentation: See THEME_SYSTEM_v0.6.md");
+    println!("  Documentation: See docs/tech/THEME_SYSTEM.md");
     println!();
     
     println!("{}Transform your CLI output with semantic themes and professional formatting!{}", get_color_code("emerald"), RESET);

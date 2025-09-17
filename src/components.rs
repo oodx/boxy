@@ -296,7 +296,7 @@ impl<'a> Body<'a> {
             }}
         }
 
-        let content_max_width = max_width!(composed_lines);
+        let _content_max_width = max_width!(composed_lines);
 
         // PARALLEL SOLUTION: Calculate proper inner content width including title/status
         let inner_content_target_width = inner_target_width!(inner_width, self.config.width.h_padding);
@@ -550,6 +550,7 @@ impl<'a> Body<'a> {
 /// PARALLEL SOLUTION: Calculate proper inner content target width
 /// This helper function determines the correct width for padding content lines
 /// without breaking the existing width calculation logic
+#[allow(dead_code)]
 fn calculate_inner_content_target_width(
     inner_width: usize,
     _composed_lines: &[String],

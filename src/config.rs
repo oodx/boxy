@@ -157,6 +157,7 @@ pub struct BoxyConfig {
     pub colors: BoxColors,
     pub width: WidthConfig,
     // Optional fixed height; only honored when BOXY_MULTIPLEX_MODE is enabled
+    #[allow(dead_code)]
     pub fixed_height: Option<usize>,
     pub padding: PaddingConfig,
     
