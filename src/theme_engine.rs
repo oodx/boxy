@@ -251,6 +251,7 @@ impl ThemeEngine {
     
     /// Load theme files from XDG+ directories and project themes directory
     fn load_theme_files(&mut self) -> Result<(), String> {
+      
         // Create XDG+ directory structure if it doesn't exist
         let themes_dir = self.xdg_base_dir.join("themes");
         if !themes_dir.exists() {
