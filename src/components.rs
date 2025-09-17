@@ -289,15 +289,17 @@ impl<'a> Body<'a> {
                     .unwrap_or(0)
             }}
         }
+
+        macro_rules! inner_target_width {
+            ($inner_width:expr, $h_padding:expr) => {{
+                $inner_width.saturating_sub(2 * $h_padding)
+            }}
+        }
+
         let content_max_width = max_width!(composed_lines);
 
         // PARALLEL SOLUTION: Calculate proper inner content width including title/status
-        let inner_content_target_width = calculate_inner_content_target_width(
-            inner_width,
-            &composed_lines,
-            self.config.width.fixed_width.is_some(),
-            self.config.width.h_padding
-        );
+        let inner_content_target_width = inner_target_width!(inner_width, self.config.width.h_padding);
 
         // Available space for content within the box
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);

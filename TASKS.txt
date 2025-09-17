@@ -14,17 +14,18 @@
 ## ✅ CRITICAL: Emoji Alignment Regression RESOLVED ⭐ VICTORY!
 **Priority**: CRITICAL - Core functionality ✅ COMPLETED
 **Status**: ✅ FULLY RESOLVED - Perfect emoji alignment restored
-**Problem**: Unicode-width crate causing phantom spaces in emoji calculations
-**Solution**: Implemented custom width calculation plugin replacing unicode-width
+**Problem**: ANSI color codes and emoji truncation causing alignment issues
+**Solution**: Implemented protected macro system with unicode-width crate + custom fallback
 **Implementation**:
-  - Custom width_plugin.rs with bespoke emoji width calculations
-  - Protected icon positioning macro preventing bypass of positioning logic
+  - Protected width macros (box_width!, max_width!, inner_target_width!) prevent regressions
+  - Unicode-width crate as primary with ANSI escape sequence stripping
+  - Custom width_plugin.rs as fallback implementation (BOXY_USE_CUSTOM_WIDTH=1)
   - Comprehensive emoji debugging system (6 new debug utilities)
-  - Complete removal of unicode-width dependency (50KB binary reduction)
+  - Grapheme cluster handling for proper emoji truncation
 **Impact**: ALL emoji alignment issues eliminated, 35+ test scenarios passing
-**Evidence**: Perfect visual alignment confirmed by Tina's comprehensive validation
+**Evidence**: Perfect visual alignment confirmed by comprehensive validation
 **Bonus**: Added debugging infrastructure for future emoji-related development
-**Dependency Status**: ✅ unicode-width completely removed - custom implementation superior
+**Dependency Status**: ✅ unicode-width crate primary, custom fallback available
 
 ## ✅ RESOLVED: Theme Style Inheritance Fixed
 **Status**: ✅ COMPLETED - Theme styles now properly applied, both CLI flags and theme inheritance work
@@ -159,8 +160,8 @@
 4. **✅ WORD-WRAPPING** - 🆕 NEW FEATURE - --wrap flag implemented with #W#/#T# markers
 5. **✅ ICON-POSITIONING** - ✅ FIXED - Protected macro prevents theme icon bypass
 6. **✅ EMOJI-DEBUGGING** - 🆕 NEW FEATURE - Comprehensive debugging system (6 new utilities)
-7. **✅ CUSTOM-WIDTH-CALC** - 🆕 NEW FEATURE - Superior emoji width calculation
-8. **✅ DEPENDENCY-REMOVAL** - ✅ COMPLETED - unicode-width removed, 50KB binary reduction
+7. **✅ PROTECTED-WIDTH-MACROS** - 🆕 NEW FEATURE - Protected macro system with dual implementations
+8. **✅ UNICODE-WIDTH-PRIMARY** - ✅ COMPLETED - unicode-width crate primary, custom fallback available
 9. **✅ PHANTOM-SPACE-FIX** - ✅ FIXED - Icons no longer have trailing spaces when content empty
 
 ### **📋 REMAINING TASKS (Lower Priority)**

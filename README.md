@@ -1,10 +1,10 @@
 # boxy 📦
 
-A fast command-line utility that draws Unicode boxes around text with proper emoji/Unicode width handling.
+A fast command-line utility that draws Unicode boxes around text with proper emoji/Unicode width handling using the unicode-width crate.
 
 ## Features
 
-- ✨ Custom Unicode/emoji width calculation system (no external dependencies)
+- ✨ Unicode-width crate for accurate emoji/Unicode width calculation (with custom fallback available)
 - 🎨 Multiple box styles (normal, rounded, double, heavy, ascii)
 - 🌈 Colored borders and text with predefined color schemes
 - 🎨 Text color control with auto-matching and explicit colors
@@ -150,7 +150,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `BOXY_THEME=<name>` - Set default theme (overridden by --theme)
 - `BOXY_MIN_WIDTH=<N>` - Set minimum box width (default: 5)
 - `BOXY_MULTIPLEX_MODE=<mode>` - Control multiplex behavior
-- `BOXY_USE_CUSTOM_WIDTH=1` - Use custom width calculation (debug utility)
+- `BOXY_USE_CUSTOM_WIDTH=1` - Use custom width calculation fallback (instead of unicode-width crate)
 - `HOME` - Used for theme hierarchy and configuration paths
 - `USER` - Used in theme variable expansion
 
@@ -501,7 +501,7 @@ echo "Short" | boxy  # Box will be at least 20 characters wide
 # Enable multiplex mode features
 export BOXY_MULTIPLEX_MODE=enabled
 
-# Enable custom width calculation (debug utility)
+# Use custom width calculation fallback (instead of unicode-width crate)
 export BOXY_USE_CUSTOM_WIDTH=1
 ```
 
@@ -609,7 +609,7 @@ box "Long message with#W#intelligent wrapping" --width 20 --wrap
 ## Why boxy?
 
 Unlike bash-based box drawing tools, boxy correctly handles:
-- **Custom emoji width calculation** (🚀 = 2 columns) - no external dependencies
+- **Unicode-width crate emoji calculation** (🚀 = 2 columns) with custom fallback
 - **Intelligent text wrapping** with explicit markers and smart word boundaries
 - **Multiple wrapping modes** for different use cases (auto, fixed+wrap, fixed+truncate)
 - Unicode variation selectors (ℹ️ vs ℹ)
@@ -619,12 +619,22 @@ Unlike bash-based box drawing tools, boxy correctly handles:
 - ANSI color preservation in pipeline modes
 - **Comprehensive emoji debugging** for development and troubleshooting
 
-### Custom Width Calculation System
-Boxy implements its own Unicode width calculation system, removing the dependency on external crates like `unicode-width`. This provides:
-- More accurate emoji width detection
-- Better handling of complex Unicode sequences
-- Reduced binary size and dependencies
+### Width Calculation System
+Boxy uses the unicode-width crate as its primary width calculation engine, providing:
+- Accurate emoji width detection with proper Unicode handling
+- Better handling of complex Unicode sequences and grapheme clusters
+- Protected macro system preventing width calculation regressions
+- Custom fallback implementation available via BOXY_USE_CUSTOM_WIDTH=1
+- ANSI escape sequence stripping for proper terminal color support
 - Custom debugging capabilities for width issues
+
+#### Protected Width Macros
+Three protected macros ensure stable width calculations:
+- `box_width!` - Main box width calculation (src/draw.rs)
+- `max_width!` - Content maximum width calculation (src/components.rs)
+- `inner_target_width!` - Inner content target width calculation (src/components.rs)
+
+These macros abstract the width calculation implementation and prevent regressions.
 
 ## Known Issues & Solutions
 
