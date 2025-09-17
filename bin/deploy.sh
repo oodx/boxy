@@ -2,8 +2,13 @@
 set -e
 
 # Configuration
-INSTALL_DIR="$HOME/.local/bin/odx"
+LIB_DIR="$HOME/.local/lib/odx/boxy"
+BIN_DIR="$HOME/.local/bin/odx"
 BINARY_NAME="boxy"
+
+lib_file="$LIB_DIR/$BINARY_NAME"
+bin_file="$BIN_DIR/$BINARY_NAME"
+
 # Resolve repository root from bin/
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOYABLE="${BINARY_NAME}"
@@ -34,28 +39,38 @@ if [ ! -f "$ROOT_DIR/target/release/${DEPLOYABLE}" ]; then
     exit 1
 fi
 
-echo "📦 Deploying to $INSTALL_DIR..."
-mkdir -p "$INSTALL_DIR"
+echo "📦 Building boxy lib at $LIB_DIR..."
+mkdir -p "$BIN_DIR" "$LIB_DIR"
 
-if ! cp "$ROOT_DIR/target/release/${DEPLOYABLE}" "$INSTALL_DIR/$BINARY_NAME"; then
-    echo "❌ Failed to copy binary to $INSTALL_DIR"
+if [ -f "$lib_file" ]; then 
+	echo "📦 Removing previous boxy lib"
+	rm "$lib_file"
+fi
+
+if ! cp "$ROOT_DIR/target/release/${DEPLOYABLE}" "$lib_file"; then
+    echo "❌ Failed to copy binary to $lib_file"
     exit 1
 fi
 
-if ! chmod +x "$INSTALL_DIR/$BINARY_NAME"; then
-    echo "❌ Failed to make binary executable"
-    exit 1
+if ! chmod +x "$lib_file"; then
+	echo "❌ Failed to make binary executable"
+	exit 1
+fi
+
+if ! ln -s "$lib_file" "$bin_file"; then
+	echo "❌ Failed to make link boxy lib to odx bin"
+	exit 1
 fi
 
 # Verify deployment
-if [ ! -x "$INSTALL_DIR/$BINARY_NAME" ]; then
-    echo "❌ Binary is not executable at $INSTALL_DIR/$BINARY_NAME"
+if [ ! -x "$bin_file" ]; then
+    echo "❌ Binary is not executable at $bin_file"
     exit 1
 fi
 
 # Test the binary
 echo "🧪 Testing binary..."
-if ! echo "Test" | "$INSTALL_DIR/$BINARY_NAME" > /dev/null 2>&1; then
+if ! echo "Test" | "$bin_file" > /dev/null 2>&1; then
     echo "❌ Binary test failed!"
     exit 1
 fi
@@ -63,15 +78,13 @@ fi
 echo ""
 echo "╔════════════════════════════════════════════════╗"
 echo "║          DEPLOYMENT SUCCESSFUL!                ║"
-echo "╠════════════════════════════════════════════════╣"
-echo "║  Deployed: boxy v$VERSION                      ║"
-echo "║  Location: $INSTALL_DIR/$BINARY_NAME           ║"
-echo "║  Features: Theme System, 90+ Colors, Headers   ║"
 echo "╚════════════════════════════════════════════════╝"
+echo "  Deployed: boxy v$VERSION                       "
+echo "  Location: $bin_file                            "
 echo ""
 echo "💡 To use in your bash scripts:"
-echo "   box() {"
-echo "       echo \"\$1\" | \"$INSTALL_DIR/$BINARY_NAME\""
+echo "   boxy_print() {"
+echo "       echo \"\$1\" | \"$bin_file\""
 echo "   }"
 echo ""
 echo "🎨 Quick test of boxy v$VERSION theme system:"
