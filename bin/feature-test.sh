@@ -127,7 +127,7 @@ test_header "5. THEME SYSTEM"
 # ═══════════════════════════════════════════════════════════════════════════════════
 
 test_section "5.1 Basic themes"
-for theme in success error warning info; do
+for theme in success error warning info blueprint; do
     test_case "Theme: $theme"
     echo "Testing $theme theme" | $BOXY_BIN --theme $theme
 done
@@ -139,8 +139,8 @@ for theme in base base_rounded base_double base_heavy; do
 done
 
 test_section "5.3 Themes with width issues"
-test_case "Success theme with long title (regression test)"
-echo "Content" | $BOXY_BIN --theme success --title "Very long title that previously caused width issues"
+test_case "Blueprint theme with long title (regression test)"
+echo "Content" | $BOXY_BIN --theme blueprint --title "Very long title that previously caused width issues"
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 test_header "6. EMOJI AND UNICODE"
@@ -222,10 +222,10 @@ test_header "10. REGRESSION TESTS"
 
 test_section "10.1 Known issue regression tests"
 test_case "Showcase scenario (title longer than content)"
-echo "Test showcase" | $BOXY_BIN --theme success --title "Test Theme: success"
+echo "Test showcase" | $BOXY_BIN --theme blueprint --title "Test Theme: blueprint"
 
 test_case "Complex showcase scenario"
-echo "Lorem ipsum" | $BOXY_BIN --theme magic --title "Theme Demonstration: magic" --status "Showcase v1.0"
+echo "Lorem ipsum" | $BOXY_BIN --theme blueprint --title "Theme Demonstration: blueprint" --status "Showcase v1.0"
 
 test_section "10.2 Width calculation validation"
 test_case "Auto-width with long title"

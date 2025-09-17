@@ -18,18 +18,14 @@ echo "========================================="
 
 # 1. THE PERFECT BOX - Everything together with dividers and padding
 echo -e "\n🎪 THE PERFECT BOX:"
-cat << 'EOF' | $BOXY --theme success \
+cat << 'EOF' | $BOXY --theme blueprint \
                     --title "🚀 Project Dashboard" \
                     --header "CI/CD Pipeline Status" \
                     --footer "Build #142 - $(date '+%Y-%m-%d %H:%M')" \
                     --status "sc:All systems operational ✅" \
                     --width 60 \
                     --pad ab \
-                    --layout "dt,ds,stn,ssn" \
-                    --title-color emerald \
-                    --status-color cyan \
-                    --header-color blue \
-                    --footer-color purple
+                    --layout "dt,ds,stn,ssn"
 ✅ Tests: 147 passed, 0 failed
 📦 Build: Success in 2m 34s  
 🌐 Deploy: Production ready
@@ -70,8 +66,8 @@ echo -e "Full showcase" | $BOXY --title "All Features" --status "Complete" --lay
 
 # 5. LAYOUT MASTERY
 echo -e "\n🎨 LAYOUT MASTERY:"
-cat << 'EOF' | $BOXY --style double \
-                    --color violet \
+cat << 'EOF' | $BOXY --theme blueprint \
+                    --style double \
                     --title "📋 Sprint Review" \
                     --header "Team Velocity Metrics" \
                     --footer "Next sprint starts Monday" \
@@ -141,7 +137,7 @@ echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer depend
 # 6. EMOJI AND UNICODE SHOWCASE
 echo -e "\n🎭 EMOJI & UNICODE SHOWCASE:"
 cat << 'EOF' | $BOXY --style rounded \
-                    --color violet \
+                    --color light_blue \
                     --title "🌍 Global Status" \
                     --width 45 \
                     --text auto
@@ -173,19 +169,14 @@ echo "This is a very long message that demonstrates boxy's intelligent text trun
 
 # 10. COMPLEX REAL-WORLD SCENARIO
 echo -e "\n🏢 REAL-WORLD SCENARIO:"
-cat << 'EOF' | $BOXY --theme success \
+cat << 'EOF' | $BOXY --theme blueprint \
                     --title "🎉 Release v2.4.0 Deployed" \
                     --header "Production Deployment Summary" \
                     --footer "Next release: v2.5.0 (Oct 15)" \
                     --status "sc:🎯 Zero downtime deployment ✨" \
                     --width 65 \
                     --pad ab \
-                    --layout "dt,ds,stn,ssn" \
-                    --title-color gold \
-                    --status-color emerald \
-                    --header-color blue \
-                    --footer-color purple \
-                    --text auto
+                    --layout "dt,ds,stn,ssn"
 🚀 DEPLOYMENT COMPLETED SUCCESSFULLY
 
 📋 Release Notes:
