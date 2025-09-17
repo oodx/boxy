@@ -197,7 +197,7 @@ impl ThemeEngine {
         
         //= env::var("BOXY_THEME")// boxy isnt using RSB correctly this wont work param!("HOME");
         let home = if home.is_empty() { "/tmp".to_string() } else { home };
-        PathBuf::from(home).join(".local/etc/odx/boxy")
+        PathBuf::from(home).join(".local/etc/rsb/boxy")
     }
     
     /// Load built-in themes as fallback (converted from current themes.rs)
