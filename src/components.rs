@@ -273,11 +273,17 @@ impl<'a> Body<'a> {
         let composed_lines = self.compose_content_lines();
         let pad = " ".repeat(self.config.width.h_padding);
 
-        // Calculate the actual max content width (same logic as calculate_box_width)
-        let content_max_width = composed_lines.iter()
-            .map(|line| get_display_width(line))
-            .max()
-            .unwrap_or(0);
+        // PROTECTED: Calculate the actual max content width - DO NOT MODIFY
+        // This macro preserves the exact working logic for content width calculation
+        macro_rules! max_width {
+            ($lines:expr) => {{
+                $lines.iter()
+                    .map(|line| get_display_width(line))
+                    .max()
+                    .unwrap_or(0)
+            }}
+        }
+        let content_max_width = max_width!(composed_lines);
 
         // Available space for content within the box
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);

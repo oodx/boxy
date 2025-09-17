@@ -10,7 +10,7 @@ use crate::components::{Header, Footer, Status, Body};
 
 /// PROTECTED: Working width calculation logic - DO NOT MODIFY
 /// This macro preserves the exact working logic that was broken by showcase changes
-macro_rules! calculate_working_box_width {
+macro_rules! box_width {
     ($text:expr, $h_padding:expr, $fixed_width:expr, $enable_wrapping:expr) => {{
         let terminal_width = get_terminal_width();
 
@@ -64,7 +64,7 @@ macro_rules! calculate_working_box_width {
 /// Calculate optimal box width based on content and terminal constraints
 /// Uses protected macro to preserve working logic
 pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
-    calculate_working_box_width!(text, h_padding, fixed_width, enable_wrapping)
+    box_width!(text, h_padding, fixed_width, enable_wrapping)
 }
 
 // Helper functions have been replaced by component architecture
