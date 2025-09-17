@@ -8,7 +8,7 @@ use strip_ansi_escapes;
 
 /// Calculate display width using our custom implementation
 pub fn get_unicode_width(text: &str) -> usize {
-    crate::width_plugin::get_display_width_custom(text)
+    crate::width_plugin::get_display_width(text)
 }
 
 /// Calculate "naive" width (just character count)
@@ -24,17 +24,9 @@ pub fn get_byte_count(text: &str) -> usize {
 /// Estimate terminal width based on emoji patterns
 /// This is our custom heuristic for better emoji width calculation
 pub fn get_estimated_terminal_width(text: &str) -> usize {
-    // For compound emojis, treat the whole grapheme cluster as one unit
-    // This is a more accurate approach than char-by-char calculation
-
-    // Simple approach: use unicode-width but with special handling for common compound emojis
-    let unicode_width = get_unicode_width(text);
-
-    // Override for known problematic compound emojis
-    match text {
-        "ℹ️" => 2, // Info emoji should be 2 width, not 3
-        _ => unicode_width,
-    }
+    // Use our custom width calculation directly
+    // This handles variation selectors and emoji width correctly
+    get_unicode_width(text)
 }
 
 /// Heuristic to detect if a character is likely an emoji
@@ -139,7 +131,7 @@ pub fn compare_chars(chars: &[&str]) {
 
     // Calculate actual display widths for each text sample for proper alignment
     let text_display_widths: Vec<usize> = chars.iter()
-        .map(|&text| get_estimated_terminal_width(text) + 2) // +2 for quotes
+        .map(|&text| get_unicode_width(text) + 2) // +2 for quotes, using our fixed width calculation
         .collect();
 
     // Find the maximum width needed for the text column (minimum 6 for "Text" header)

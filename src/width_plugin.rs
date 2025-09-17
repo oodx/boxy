@@ -95,6 +95,9 @@ pub fn get_display_width_custom(text: &str) -> usize {
     let mut chars = clean_str.chars().peekable();
 
     while let Some(ch) = chars.next() {
+        // Check if next char is a variation selector for special handling
+        let next_is_emoji_selector = chars.peek() == Some(&'\u{FE0F}');
+
         width += match ch {
             // ASCII characters are always 1 width
             c if c.is_ascii() => 1,
@@ -106,12 +109,35 @@ pub fn get_display_width_custom(text: &str) -> usize {
             '\u{FEFF}'   // Zero Width No-Break Space
             => 0,
 
-            // Variation selectors: if previous char was emoji, treat the combo as width 2
+            // Variation selectors: these modify display but don't add width
             '\u{FE0E}' | // Variation Selector-15 (text style)
             '\u{FE0F}' => { // Variation Selector-16 (emoji style)
-                // For compound emojis like ℹ️, ensure total width is 2
-                // This is a simplified heuristic - the combo should be width 2 total
-                if width > 0 { 1 } else { 0 } // Add 1 to make emoji+selector = 2 total
+                // Variation selectors are zero-width modifiers
+                // They change how the previous character is displayed but don't add width
+                0
+            },
+
+            // Special case: characters that become emoji with variation selector
+            '\u{2049}' | // ⁉ exclamation question mark
+            '\u{203C}' | // ‼ double exclamation mark
+            '\u{00A9}' | // © copyright
+            '\u{00AE}'   // ® registered
+            if next_is_emoji_selector => {
+                // These become width 2 emoji when followed by FE0F
+                // Skip the variation selector since we're handling it here
+                chars.next();
+                2
+            },
+
+            // Special case: ℹ️ has inconsistent width across terminals
+            // Most terminals render it as width 1, Kitty as width 2
+            // We follow the majority behavior for better compatibility
+            '\u{2139}' if next_is_emoji_selector => {
+                // Skip the variation selector
+                chars.next();
+                // Despite Unicode spec saying emoji presentation should be width 2,
+                // most terminals (Terminal.app, etc.) render ℹ️ as width 1
+                1
             },
 
             // Common double-width emoji ranges
@@ -149,14 +175,22 @@ pub fn get_display_width_custom(text: &str) -> usize {
     width
 }
 
+/// Compare our custom width with unicode-width library
+pub fn compare_width_methods(text: &str) -> (usize, usize) {
+    let custom = get_display_width_custom(text);
+    let standard = unicode_width::UnicodeWidthStr::width(text);
+    (custom, standard)
+}
+
 /// Legacy function - now redirects to custom implementation
 /// (kept for compatibility with comparison tools)
 pub fn get_display_width_unicode_crate(text: &str) -> usize {
-    // Fallback to custom implementation since unicode-width dependency removed
-    get_display_width_custom(text)
+    // Now uses standard unicode-width library for comparison
+    unicode_width::UnicodeWidthStr::width(text)
 }
 
-/// Main width function - now uses our custom implementation by default
+/// Main width function - test with standard library
 pub fn get_display_width(text: &str) -> usize {
-    get_display_width_custom(text)
+    // Test: use standard unicode-width library instead of custom
+    unicode_width::UnicodeWidthStr::width(text)
 }

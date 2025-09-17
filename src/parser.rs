@@ -217,33 +217,48 @@ pub fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
     if max_width == 0 {
         return String::new();
     }
-    
+
     let text_width = get_display_width(text);
     if text_width <= max_width {
         return text.to_string();
     }
-    
+
     // Unicode ellipsis character
     const ELLIPSIS: &str = "…";
     const ELLIPSIS_WIDTH: usize = 1;
-    
+
     if max_width <= ELLIPSIS_WIDTH {
         return ELLIPSIS.to_string();
     }
-    
+
     let target_width = max_width - ELLIPSIS_WIDTH;
     let mut result = String::new();
     let mut current_width = 0;
-    
-    for ch in text.chars() {
-        let ch_width = get_display_width(&ch.to_string());
-        if current_width + ch_width > target_width {
+
+    // Process character by character, but handle multi-codepoint sequences properly
+    let mut chars = text.chars().peekable();
+    while let Some(ch) = chars.next() {
+        // Build the complete grapheme cluster (handle variation selectors, etc.)
+        let mut grapheme = String::new();
+        grapheme.push(ch);
+
+        // Check for variation selectors or other combining characters
+        while let Some(&next_ch) = chars.peek() {
+            if matches!(next_ch, '\u{FE0E}' | '\u{FE0F}' | '\u{200D}') {
+                grapheme.push(chars.next().unwrap());
+            } else {
+                break;
+            }
+        }
+
+        let grapheme_width = get_display_width(&grapheme);
+        if current_width + grapheme_width > target_width {
             break;
         }
-        result.push(ch);
-        current_width += ch_width;
+        result.push_str(&grapheme);
+        current_width += grapheme_width;
     }
-    
+
     result.push_str(ELLIPSIS);
     result
 }

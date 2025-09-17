@@ -514,6 +514,11 @@ impl ThemeEngine {
         self.theme_hierarchy.clone()
     }
 
+    /// Get file trail showing individual files found in each directory
+    pub fn get_file_trail(&self) -> Vec<String> {
+        self.file_trail.clone()
+    }
+
     /// Print theme hierarchy for debugging
     pub fn print_theme_hierarchy(&self) {
         println!("🏗️ Theme Loading Hierarchy (priority order - highest first):");
