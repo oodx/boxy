@@ -192,12 +192,12 @@ impl ThemeEngine {
     
     /// Get XDG+ base directory following jynx architecture
     fn get_xdg_base_dir() -> PathBuf {
-        // Follow jynx XDG+ pattern: ~/.local/etc/rsb/boxy/
+        // Follow jynx XDG+ pattern: ~/.local/etc/odx/boxy/ (ODX for proper utils/apps)
         let home = get_home_dir();
-        
+
         //= env::var("BOXY_THEME")// boxy isnt using RSB correctly this wont work param!("HOME");
         let home = if home.is_empty() { "/tmp".to_string() } else { home };
-        PathBuf::from(home).join(".local/etc/rsb/boxy")
+        PathBuf::from(home).join(".local/etc/odx/boxy")
     }
     
     /// Load built-in themes as fallback (converted from current themes.rs)

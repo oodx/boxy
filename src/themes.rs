@@ -1166,7 +1166,7 @@ pub fn handle_engine_init() {
         }
     };
 
-    let global_themes_dir = PathBuf::from(home).join(".local/etc/rsb/boxy/themes");
+    let global_themes_dir = PathBuf::from(home).join(".local/etc/odx/boxy/themes");
 
     println!("🏗️ Initializing Boxy engine global directory...");
     println!();
