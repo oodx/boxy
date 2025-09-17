@@ -158,8 +158,24 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
 /// Handle engine subcommands: init, import, export, list, debug, etc.
 pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
     if args.is_empty() {
-        eprintln!("Engine command requires an action. Usage: {} engine <action>", NAME);
-        eprintln!("Available actions: init, import <name>, export <name>, list, debug, status, edit <name>, help");
+        eprintln!("❌ Engine command requires an action");
+        eprintln!();
+        eprintln!("📖 Usage: {} engine <ACTION>", NAME);
+        eprintln!();
+        eprintln!("🔧 Available actions:");
+        eprintln!("   init              Initialize theme system and create default themes");
+        eprintln!("   import <name>     Import boxy_<name>.yml from current directory");
+        eprintln!("   export <name>     Export theme to boxy_<name>.yml file");
+        eprintln!("   list              Visual catalog of all available themes");
+        eprintln!("   debug             Show theme loading hierarchy and diagnostics");
+        eprintln!("   status            Quick engine health check");
+        eprintln!("   edit <name>       Edit a theme configuration file");
+        eprintln!("   help              Show detailed help information");
+        eprintln!();
+        eprintln!("💡 Examples:");
+        eprintln!("   {} engine status         # Check system health", NAME);
+        eprintln!("   {} engine list           # Browse available themes", NAME);
+        eprintln!("   {} engine init           # Set up theme system", NAME);
         std::process::exit(1);
     }
 
@@ -180,7 +196,20 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         }
         "import" => {
             if args.len() < 2 {
-                eprintln!("Error: Engine import requires a name. Usage: {} engine import <name> [--overwrite]", NAME);
+                eprintln!("❌ Engine import requires a theme name");
+                eprintln!();
+                eprintln!("📖 Usage: {} engine import <NAME> [--overwrite]", NAME);
+                eprintln!();
+                eprintln!("🔍 What this does:");
+                eprintln!("   • Looks for 'boxy_<NAME>.yml' in current directory");
+                eprintln!("   • Copies to global themes directory");
+                eprintln!("   • Validates YAML structure before importing");
+                eprintln!();
+                eprintln!("💡 Examples:");
+                eprintln!("   {} engine import my_theme        # Import boxy_my_theme.yml", NAME);
+                eprintln!("   {} engine import work --overwrite # Force overwrite existing", NAME);
+                eprintln!();
+                eprintln!("🔧 Need help? {} engine help", NAME);
                 std::process::exit(1);
             }
             let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
@@ -188,7 +217,20 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         }
         "export" => {
             if args.len() < 2 {
-                eprintln!("Error: Engine export requires a name. Usage: {} engine export <name> [--overwrite]", NAME);
+                eprintln!("❌ Engine export requires a theme name");
+                eprintln!();
+                eprintln!("📖 Usage: {} engine export <NAME> [--overwrite]", NAME);
+                eprintln!();
+                eprintln!("🔍 What this does:");
+                eprintln!("   • Finds 'boxy_<NAME>.yml' in global themes directory");
+                eprintln!("   • Copies to current directory as 'boxy_<NAME>.yml'");
+                eprintln!("   • Creates backup (.bak) if overwriting existing file");
+                eprintln!();
+                eprintln!("💡 Examples:");
+                eprintln!("   {} engine export default           # Export boxy_default.yml", NAME);
+                eprintln!("   {} engine export custom --overwrite # Force overwrite", NAME);
+                eprintln!();
+                eprintln!("🔧 Available themes: {} engine list", NAME);
                 std::process::exit(1);
             }
             let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
@@ -220,9 +262,20 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         }
         _ => {
             let action = &args[0];
-            eprintln!("Unknown engine action: {}", action);
-            eprintln!("Available actions: init, import, export, list, debug, status, edit, help");
-            eprintln!("Use '{} engine help' for more information", NAME);
+            eprintln!("❌ Unknown engine action: '{}'", action);
+            eprintln!();
+            eprintln!("🔧 Available actions:");
+            eprintln!("   init      Initialize theme system");
+            eprintln!("   import    Import theme configuration");
+            eprintln!("   export    Export theme configuration");
+            eprintln!("   list      Show visual theme catalog");
+            eprintln!("   debug     Show detailed diagnostics");
+            eprintln!("   status    Quick health check");
+            eprintln!("   edit      Edit theme configuration");
+            eprintln!("   help      Show detailed help");
+            eprintln!();
+            eprintln!("💡 Get help: {} engine help", NAME);
+            eprintln!("🔍 Check status: {} engine status", NAME);
             std::process::exit(1);
         }
     }
@@ -1184,8 +1237,21 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool) {
 
     // Check if local file exists
     if !local_file.exists() {
-        eprintln!("Error: Local theme config not found: {}", local_file.display());
-        eprintln!("Expected file: boxy_{}.yml in current directory", name);
+        eprintln!("❌ Local theme config not found: {}", local_file.display());
+        eprintln!();
+        eprintln!("🔍 Expected file: boxy_{}.yml in current directory", name);
+        eprintln!();
+        eprintln!("💡 To fix this:");
+        eprintln!("   1. Ensure the file exists: boxy_{}.yml", name);
+        eprintln!("   2. Check filename spelling and ensure boxy_ prefix");
+        eprintln!("   3. Verify you're in the correct directory");
+        eprintln!();
+        eprintln!("📂 Current directory: {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        eprintln!();
+        eprintln!("🔧 Alternative commands:");
+        eprintln!("   • boxy engine export {}    # Export from global themes", name);
+        eprintln!("   • boxy engine list         # See available themes");
+        eprintln!("   • boxy engine init         # Create default themes");
         std::process::exit(1);
     }
 
@@ -1263,30 +1329,54 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool) {
 
     // Check if global file exists
     if !global_file.exists() {
-        eprintln!("Error: Global theme config not found: {}", global_file.display());
-        eprintln!("Expected file: boxy_{}.yml in global themes directory", name);
+        eprintln!("❌ Global theme config not found: boxy_{}.yml", name);
         eprintln!();
-        eprintln!("💡 Available themes:");
-        if let Ok(entries) = fs::read_dir(&global_themes_dir) {
-            for entry in entries.flatten() {
-                if let Some(file_name) = entry.file_name().to_str() {
-                    if file_name.starts_with("boxy_") && file_name.ends_with(".yml") {
-                        let theme_name = file_name.strip_prefix("boxy_").unwrap().strip_suffix(".yml").unwrap();
-                        eprintln!("  • {}", theme_name);
-                    }
-                }
+        eprintln!("🔍 Looked in: {}", global_themes_dir.display());
+        eprintln!();
+
+        let available_themes: Vec<String> = if let Ok(entries) = fs::read_dir(&global_themes_dir) {
+            entries
+                .flatten()
+                .filter_map(|entry| entry.file_name().to_str().map(|s| s.to_string()))
+                .filter(|name| name.starts_with("boxy_") && name.ends_with(".yml"))
+                .map(|name| name.strip_prefix("boxy_").unwrap().strip_suffix(".yml").unwrap().to_string())
+                .collect()
+        } else {
+            vec![]
+        };
+
+        if available_themes.is_empty() {
+            eprintln!("📝 No theme configs found in global directory.");
+            eprintln!();
+            eprintln!("💡 To fix this:");
+            eprintln!("   • boxy engine init              # Create default themes");
+            eprintln!("   • boxy engine import <name>     # Import from local directory");
+            eprintln!("   • boxy engine status            # Check system health");
+        } else {
+            eprintln!("📚 Available themes ({} total):", available_themes.len());
+            for theme in &available_themes {
+                eprintln!("   • {}", theme);
             }
+            eprintln!();
+            eprintln!("💡 Use one of these instead:");
+            eprintln!("   {} engine export {}", NAME, available_themes[0]);
         }
         eprintln!();
-        eprintln!("Use `{} engine list` to see all available themes", NAME);
+        eprintln!("🔧 Need help? {} engine list", NAME);
         std::process::exit(1);
     }
 
     // Check if local file exists and handle overwrite
     if local_file.exists() && !force_overwrite {
-        eprintln!("Error: Theme config already exists in local directory: {}", local_file.display());
-        eprintln!("Use --overwrite flag to replace existing config:");
-        eprintln!("  {} engine export {} --overwrite", NAME, name);
+        eprintln!("⚠️  Theme config already exists: {}", local_file.display());
+        eprintln!();
+        eprintln!("💡 To replace the existing file:");
+        eprintln!("   {} engine export {} --overwrite", NAME, name);
+        eprintln!();
+        eprintln!("🔒 This will:");
+        eprintln!("   • Create backup: boxy_{}.yml.bak", name);
+        eprintln!("   • Replace existing file with global version");
+        eprintln!("   • Preserve your current file as backup");
         std::process::exit(1);
     }
 

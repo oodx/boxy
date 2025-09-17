@@ -545,18 +545,50 @@ fn run_boxy_application() -> Result<(), AppError> {
                             theme_name = None;
                         }
                     } else {
-                        // For CLI themes, show error and exit
-                        eprintln!("Unknown theme: {}. Available themes:", theme_name_str);
+                        // For CLI themes, show enhanced error with hierarchy explanation and suggestions
+                        eprintln!("❌ Theme '{}' not found", theme_name_str);
+                        eprintln!();
+
                         let theme_list = theme_engine.list_themes();
-                        let theme_names: Vec<String> = theme_list.iter().map(|(name, _)| name.clone()).collect();
-                        eprintln!("  {}", theme_names.join(", "));
-                        return Err(format!("Unknown theme: {}", theme_name_str));
+                        if theme_list.is_empty() {
+                            eprintln!("📝 No themes are currently loaded.");
+                            eprintln!();
+                            eprintln!("💡 To fix this:");
+                            eprintln!("   1. Initialize default themes: boxy engine init");
+                            eprintln!("   2. Import custom themes: boxy engine import <name>");
+                            eprintln!("   3. Check system status: boxy engine debug");
+                        } else {
+                            let theme_names: Vec<String> = theme_list.iter().map(|(name, _)| name.clone()).collect();
+                            eprintln!("📚 Available themes ({} total):", theme_names.len());
+                            for (i, name) in theme_names.iter().enumerate() {
+                                if i < 8 { // Show first 8 themes inline
+                                    eprintln!("   • {}", name);
+                                }
+                            }
+                            if theme_names.len() > 8 {
+                                eprintln!("   ... and {} more", theme_names.len() - 8);
+                                eprintln!();
+                                eprintln!("💡 View all themes: boxy engine list");
+                            }
+                        }
+                        eprintln!();
+                        eprintln!("🔧 Need help?");
+                        eprintln!("   • boxy engine debug    # Show theme loading hierarchy");
+                        eprintln!("   • boxy engine status   # Check engine health");
+                        eprintln!("   • boxy --help          # View all options");
+
+                        return Err(format!("Theme '{}' not found", theme_name_str));
                     }
                 }
             }
             Err(e) => {
-                eprintln!("Warning: Failed to load theme engine: {}", e);
-                eprintln!("Continuing without theme...");
+                eprintln!("⚠️  Warning: Failed to load theme engine: {}", e);
+                eprintln!("   Continuing with default styling...");
+                eprintln!();
+                eprintln!("💡 To fix theme engine issues:");
+                eprintln!("   • boxy engine init     # Initialize default themes");
+                eprintln!("   • boxy engine debug    # Diagnose loading problems");
+                eprintln!("   • boxy engine status   # Check system health");
             }
         }
     }
