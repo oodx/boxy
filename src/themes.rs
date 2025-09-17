@@ -286,7 +286,7 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
             if args.len() < 2 {
                 eprintln!("❌ Engine import requires a theme name");
                 eprintln!();
-                eprintln!("📖 Usage: {} engine import <NAME> [--overwrite]", NAME);
+                eprintln!("📖 Usage: {} engine import <NAME> [--overwrite] [--dry-run]", NAME);
                 eprintln!();
                 eprintln!("🔍 What this does:");
                 eprintln!("   • Looks for 'boxy_<NAME>.yml' in current directory");
@@ -296,18 +296,20 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
                 eprintln!("💡 Examples:");
                 eprintln!("   {} engine import my_theme        # Import boxy_my_theme.yml", NAME);
                 eprintln!("   {} engine import work --overwrite # Force overwrite existing", NAME);
+                eprintln!("   {} engine import test --dry-run   # Preview import without changes", NAME);
                 eprintln!();
                 eprintln!("🔧 Need help? {} engine help", NAME);
                 std::process::exit(1);
             }
             let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
-            handle_engine_import(&args[1], force_overwrite);
+            let dry_run = args.contains(&"--dry-run".to_string());
+            handle_engine_import(&args[1], force_overwrite, dry_run);
         }
         "export" => {
             if args.len() < 2 {
                 eprintln!("❌ Engine export requires a theme name");
                 eprintln!();
-                eprintln!("📖 Usage: {} engine export <NAME> [--overwrite]", NAME);
+                eprintln!("📖 Usage: {} engine export <NAME> [--overwrite] [--dry-run]", NAME);
                 eprintln!();
                 eprintln!("🔍 What this does:");
                 eprintln!("   • Finds 'boxy_<NAME>.yml' in global themes directory");
@@ -317,12 +319,14 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
                 eprintln!("💡 Examples:");
                 eprintln!("   {} engine export default           # Export boxy_default.yml", NAME);
                 eprintln!("   {} engine export custom --overwrite # Force overwrite", NAME);
+                eprintln!("   {} engine export theme --dry-run    # Preview export without changes", NAME);
                 eprintln!();
                 eprintln!("🔧 Available themes: {} engine list", NAME);
                 std::process::exit(1);
             }
             let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
-            handle_engine_export(&args[1], force_overwrite);
+            let dry_run = args.contains(&"--dry-run".to_string());
+            handle_engine_export(&args[1], force_overwrite, dry_run);
         }
         "edit" => {
             if args.len() < 2 {
@@ -1323,7 +1327,7 @@ pub fn handle_engine_init() {
 }
 
 /// Handle `boxy engine import <name>` command - imports boxy_<name>.yml to global location
-pub fn handle_engine_import(name: &str, force_overwrite: bool) {
+pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
     use std::fs;
     use std::path::PathBuf;
 
@@ -1340,7 +1344,12 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool) {
     let local_file = PathBuf::from(format!("boxy_{}.yml", name));
     let global_file = global_themes_dir.join(format!("boxy_{}.yml", name));
 
-    println!("📥 Importing theme config: {}", name);
+    if dry_run {
+        println!("🔍 DRY RUN - Previewing import of theme config: {}", name);
+        println!("   (No changes will be made)");
+    } else {
+        println!("📥 Importing theme config: {}", name);
+    }
     println!();
 
     // Check if local file exists
@@ -1364,18 +1373,32 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool) {
     }
 
     // Ensure global directory exists
-    if let Err(e) = fs::create_dir_all(&global_themes_dir) {
-        eprintln!("Error: Failed to create global themes directory: {}", e);
-        eprintln!("Path: {}", global_themes_dir.display());
-        std::process::exit(1);
+    if dry_run {
+        println!("📁 Would create directory: {}", global_themes_dir.display());
+    } else {
+        if let Err(e) = fs::create_dir_all(&global_themes_dir) {
+            eprintln!("Error: Failed to create global themes directory: {}", e);
+            eprintln!("Path: {}", global_themes_dir.display());
+            std::process::exit(1);
+        }
     }
 
     // Check if target file exists and handle overwrite
-    if global_file.exists() && !force_overwrite {
+    if global_file.exists() && !force_overwrite && !dry_run {
         eprintln!("Error: Theme config already exists in global directory: {}", global_file.display());
         eprintln!("Use --overwrite flag to replace existing config:");
         eprintln!("  {} engine import {} --overwrite", NAME, name);
         std::process::exit(1);
+    }
+
+    // Preview file existence for dry run
+    if dry_run && global_file.exists() {
+        println!("⚠️  Target file already exists: {}", global_file.display());
+        if force_overwrite {
+            println!("   Would overwrite existing file");
+        } else {
+            println!("   Would fail without --overwrite flag");
+        }
     }
 
     // Validate the theme file before importing
@@ -1389,22 +1412,41 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool) {
     // Create backup if overwriting
     if global_file.exists() {
         let backup_file = global_themes_dir.join(format!("boxy_{}.yml.bak", name));
-        if let Err(e) = fs::copy(&global_file, &backup_file) {
-            eprintln!("Warning: Failed to create backup: {}", e);
+        if dry_run {
+            println!("📋 Would create backup: {}", backup_file.display());
         } else {
-            println!("📋 Created backup: {}", backup_file.display());
+            if let Err(e) = fs::copy(&global_file, &backup_file) {
+                eprintln!("Warning: Failed to create backup: {}", e);
+            } else {
+                println!("📋 Created backup: {}", backup_file.display());
+            }
         }
     }
 
     // Copy the file
-    if let Err(e) = fs::copy(&local_file, &global_file) {
-        eprintln!("Error: Failed to import theme config: {}", e);
-        eprintln!("Source: {}", local_file.display());
-        eprintln!("Target: {}", global_file.display());
-        std::process::exit(1);
+    if dry_run {
+        println!("📄 Would copy: {} → {}", local_file.display(), global_file.display());
+        println!();
+        println!("🎯 DRY RUN SUMMARY:");
+        println!("   Source:      {}", local_file.display());
+        println!("   Target:      {}", global_file.display());
+        println!("   Directory:   {}", global_themes_dir.display());
+        if global_file.exists() {
+            println!("   Action:      Overwrite existing file");
+        } else {
+            println!("   Action:      Create new file");
+        }
+        println!();
+        println!("💡 To execute: Remove --dry-run flag");
+    } else {
+        if let Err(e) = fs::copy(&local_file, &global_file) {
+            eprintln!("Error: Failed to import theme config: {}", e);
+            eprintln!("Source: {}", local_file.display());
+            eprintln!("Target: {}", global_file.display());
+            std::process::exit(1);
+        }
+        println!("✅ Successfully imported: {} → {}", local_file.display(), global_file.display());
     }
-
-    println!("✅ Successfully imported: {} → {}", local_file.display(), global_file.display());
     println!();
     println!("🎯 Import complete!");
     println!();
@@ -1415,7 +1457,7 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool) {
 }
 
 /// Handle `boxy engine export <name>` command - exports boxy_<name>.yml from global to local
-pub fn handle_engine_export(name: &str, force_overwrite: bool) {
+pub fn handle_engine_export(name: &str, force_overwrite: bool, dry_run: bool) {
     use std::fs;
     use std::path::PathBuf;
 
@@ -1432,7 +1474,12 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool) {
     let global_file = global_themes_dir.join(format!("boxy_{}.yml", name));
     let local_file = PathBuf::from(format!("boxy_{}.yml", name));
 
-    println!("📤 Exporting theme config: {}", name);
+    if dry_run {
+        println!("🔍 DRY RUN - Previewing export of theme config: {}", name);
+        println!("   (No changes will be made)");
+    } else {
+        println!("📤 Exporting theme config: {}", name);
+    }
     println!();
 
     // Check if global file exists
@@ -1475,7 +1522,7 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool) {
     }
 
     // Check if local file exists and handle overwrite
-    if local_file.exists() && !force_overwrite {
+    if local_file.exists() && !force_overwrite && !dry_run {
         eprintln!("⚠️  Theme config already exists: {}", local_file.display());
         eprintln!();
         eprintln!("💡 To replace the existing file:");
@@ -1486,6 +1533,16 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool) {
         eprintln!("   • Replace existing file with global version");
         eprintln!("   • Preserve your current file as backup");
         std::process::exit(1);
+    }
+
+    // Preview file existence for dry run
+    if dry_run && local_file.exists() {
+        println!("⚠️  Target file already exists: {}", local_file.display());
+        if force_overwrite {
+            println!("   Would overwrite existing file");
+        } else {
+            println!("   Would fail without --overwrite flag");
+        }
     }
 
     // Validate the global theme file before exporting
@@ -1500,22 +1557,41 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool) {
     // Create backup if overwriting
     if local_file.exists() {
         let backup_file = PathBuf::from(format!("boxy_{}.yml.bak", name));
-        if let Err(e) = fs::copy(&local_file, &backup_file) {
-            eprintln!("Warning: Failed to create backup: {}", e);
+        if dry_run {
+            println!("📋 Would create backup: {}", backup_file.display());
         } else {
-            println!("📋 Created backup: {}", backup_file.display());
+            if let Err(e) = fs::copy(&local_file, &backup_file) {
+                eprintln!("Warning: Failed to create backup: {}", e);
+            } else {
+                println!("📋 Created backup: {}", backup_file.display());
+            }
         }
     }
 
     // Copy the file
-    if let Err(e) = fs::copy(&global_file, &local_file) {
-        eprintln!("Error: Failed to export theme config: {}", e);
-        eprintln!("Source: {}", global_file.display());
-        eprintln!("Target: {}", local_file.display());
-        std::process::exit(1);
+    if dry_run {
+        println!("📄 Would copy: {} → {}", global_file.display(), local_file.display());
+        println!();
+        println!("🎯 DRY RUN SUMMARY:");
+        println!("   Source:      {}", global_file.display());
+        println!("   Target:      {}", local_file.display());
+        println!("   Directory:   {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        if local_file.exists() {
+            println!("   Action:      Overwrite existing file");
+        } else {
+            println!("   Action:      Create new file");
+        }
+        println!();
+        println!("💡 To execute: Remove --dry-run flag");
+    } else {
+        if let Err(e) = fs::copy(&global_file, &local_file) {
+            eprintln!("Error: Failed to export theme config: {}", e);
+            eprintln!("Source: {}", global_file.display());
+            eprintln!("Target: {}", local_file.display());
+            std::process::exit(1);
+        }
+        println!("✅ Successfully exported: {} → {}", global_file.display(), local_file.display());
     }
-
-    println!("✅ Successfully exported: {} → {}", global_file.display(), local_file.display());
     println!();
     println!("🎯 Export complete!");
     println!();
@@ -1736,6 +1812,10 @@ pub fn print_engine_help() {
     println!("    edit <name>       Edit a theme config file");
     println!("    help              Show this help message");
     println!();
+    println!("OPTIONS:");
+    println!("    --overwrite       Force overwrite existing files");
+    println!("    --dry-run         Preview operations without making changes");
+    println!();
     println!("DESCRIPTION:");
     println!("    Engine commands manage theme configuration files (boxy_*.yml).");
     println!("    These are separate from individual theme usage commands.");
@@ -1746,7 +1826,9 @@ pub fn print_engine_help() {
     println!("    {} engine debug                  # Debug theme loading", NAME);
     println!("    {} engine validate theme.yml     # Validate theme file", NAME);
     println!("    {} engine import myproject       # Import boxy_myproject.yml", NAME);
+    println!("    {} engine import test --dry-run  # Preview import without changes", NAME);
     println!("    {} engine export default         # Export boxy_default.yml", NAME);
+    println!("    {} engine export theme --dry-run # Preview export without changes", NAME);
 }
 
 /// Generate default engine configuration with essential built-in themes
