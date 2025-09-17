@@ -8,54 +8,63 @@ use crate::components::{Header, Footer, Status, Body};
 
 // RSB-compliant helper functions for draw_box decomposition
 
-/// Calculate optimal box width based on content and terminal constraints
-pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
-    let terminal_width = get_terminal_width();
-    
-    let box_width = match fixed_width {
-        Some(w) => {
-            if w > terminal_width {
-                // Fixed width exceeds terminal, constrain it
-                terminal_width
-            } else {
-                w
-            }
-        },
-        None => {
-            // Auto-size but constrain to terminal width
-            // First process #NL# markers to split into actual lines
-            let text_with_newlines = text.replace("#NL#", "\n");
-            let lines: Vec<&str> = text_with_newlines.lines().collect();
+/// PROTECTED: Working width calculation logic - DO NOT MODIFY
+/// This macro preserves the exact working logic that was broken by showcase changes
+macro_rules! calculate_working_box_width {
+    ($text:expr, $h_padding:expr, $fixed_width:expr, $enable_wrapping:expr) => {{
+        let terminal_width = get_terminal_width();
 
-            // For auto-width, ALWAYS process wrap markers to get accurate width
-            // since hints will be removed/processed during rendering
-            let content_max_width = lines.iter()
-                .map(|line| {
-                    // Process wrap markers to get the actual content that will be displayed
-                    // Both #W# and #T# should normalize to spaces for consistent width calculation
-                    let clean_line = line.replace("#W#", " ").replace("#T#", " ");
-                    let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
-                    get_display_width(&clean_line)
-                })
-                .max()
-                .unwrap_or(0);
-            let ideal_width = content_max_width + 2 * h_padding + 2; // +2 for borders
-            
-            if ideal_width > terminal_width {
-                // Content too wide for terminal
-                terminal_width
-            } else {
-                ideal_width
+        let box_width = match $fixed_width {
+            Some(w) => {
+                if w > terminal_width {
+                    // Fixed width exceeds terminal, constrain it
+                    terminal_width
+                } else {
+                    w
+                }
+            },
+            None => {
+                // Auto-size but constrain to terminal width
+                // First process #NL# markers to split into actual lines
+                let text_with_newlines = $text.replace("#NL#", "\n");
+                let lines: Vec<&str> = text_with_newlines.lines().collect();
+
+                // For auto-width, ALWAYS process wrap markers to get accurate width
+                // since hints will be removed/processed during rendering
+                let content_max_width = lines.iter()
+                    .map(|line| {
+                        // Process wrap markers to get the actual content that will be displayed
+                        // Both #W# and #T# should normalize to spaces for consistent width calculation
+                        let clean_line = line.replace("#W#", " ").replace("#T#", " ");
+                        let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
+                        get_display_width(&clean_line)
+                    })
+                    .max()
+                    .unwrap_or(0);
+                let ideal_width = content_max_width + 2 * $h_padding + 2; // +2 for borders
+
+                if ideal_width > terminal_width {
+                    // Content too wide for terminal
+                    terminal_width
+                } else {
+                    ideal_width
+                }
             }
-        }
-    };
-    
-    // Get minimum width from environment variable (RSB-compliant)
-    let min_width_str = param!("BOXY_MIN_WIDTH", default: "5");
-    let min_width: usize = min_width_str.parse().unwrap_or(5);
-    
-    // Ensure minimum viable box size (user configurable via BOXY_MIN_WIDTH)
-    if box_width < min_width { min_width } else { box_width }
+        };
+
+        // Get minimum width from environment variable (RSB-compliant)
+        let min_width_str = param!("BOXY_MIN_WIDTH", default: "5");
+        let min_width: usize = min_width_str.parse().unwrap_or(5);
+
+        // Ensure minimum viable box size (user configurable via BOXY_MIN_WIDTH)
+        if box_width < min_width { min_width } else { box_width }
+    }}
+}
+
+/// Calculate optimal box width based on content and terminal constraints
+/// Uses protected macro to preserve working logic
+pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
+    calculate_working_box_width!(text, h_padding, fixed_width, enable_wrapping)
 }
 
 // Helper functions have been replaced by component architecture

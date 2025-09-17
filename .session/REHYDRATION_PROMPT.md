@@ -1,151 +1,181 @@
 # BOXY SESSION REHYDRATION PROMPT
 **Generated**: 2025-09-16
-**Session**: Theme System Regression Fixes + Word-Wrapping Implementation
-**Status**: Awaiting Visual UAT Confirmation on Icon Positioning
+**Session**: Showcase Command Implementation + Width Bug Discovery
+**Status**: Showcase Complete, Width Calculation Bug Identified
 
 ## 🎯 PROJECT CONTEXT
-I'm working on the **boxy** Rust project (box drawing utility) located at `/home/xnull/repos/code/rust/oodx/boxy`. We've successfully implemented major regression fixes and a new word-wrapping feature.
+I'm working on the **boxy** Rust project (box drawing utility) located at `/home/xnull/repos/code/rust/oodx/boxy`. We've successfully implemented a comprehensive showcase command with full documentation updates, but discovered a critical width calculation bug affecting box rendering.
 
 ## 📋 SESSION STATUS
-**Previous Session**: SESSION_01 - Theme system regression analysis completed
-**Current Status**: Implementation phase complete, awaiting final UAT validation
-**Critical Issues**: 2 major regressions FIXED, word-wrapping feature IMPLEMENTED
+**Previous Sessions**:
+- SESSION_01: Theme system regression analysis
+- SESSION_02: Emoji width alignment fixes
+- SESSION_03: Previous status archive
+**Current Status**: Showcase implementation complete, width bug needs fixing
+**Critical Issues**: Width calculation doesn't account for title/status length causing box overflow
 
 ## 🔧 MAJOR ACCOMPLISHMENTS THIS SESSION
 
-### ✅ **REGR-002: Theme Style Inheritance - FIXED**
-- **Problem**: Themes specified `style: "rounded"` but rendered with straight corners `┌┐└┘`
-- **Root Cause**: Theme application code in `src/main.rs:469-515` missing style inheritance
-- **Solution**: Added style matching logic + fixed conflicting theme in `theme_template.yml`
-- **Validation**: `success` theme now shows rounded corners `╭╮╰╯` ✅
+### ✅ **Showcase Command Implementation - COMPLETE**
+- **Feature**: `boxy showcase` command programmatically demonstrates all themes with lorem ipsum
+- **Files Modified**: `src/help.rs`, `src/main.rs`, `src/themes.rs`
+- **Key Functions**: `handle_showcase_command()`, `create_showcase_config()`
+- **Integration**: Proper Jynx color system integration with no_color handling
+- **Status**: Fully implemented and saved in `showcase-feature` branch
 
-### ✅ **REGR-007: Text Truncation Issues - FIXED**
-- **Problem**: Text truncated prematurely instead of box expanding to fit content
-- **Solution**: Modified truncation logic in `components.rs` to only truncate with explicit width constraints
-- **Validation**: Content now expands boxes properly ✅
+### ✅ **Comprehensive Documentation Updates - COMPLETE**
+- **Analysis**: China agent performed audit revealing critical gaps
+- **README.md Updates**:
+  - Updated CLI Reference from v0.9 to v0.10.1
+  - Added Jynx Integration section
+  - Expanded color palette to show all 90+ colors
+  - Added theme management commands documentation
+  - Added width utility command documentation
+  - Added comprehensive Environment Variables section
+  - Added Theme Showcase section
+- **help.rs Updates**: Added showcase command, fixed version mismatch
 
-### ✅ **NEW FEATURE: Word-Wrapping System - IMPLEMENTED**
-- **Flag**: `--wrap` enables intelligent word-wrapping at terminal boundaries
-- **Hint Markers**:
-  - `#W#` - Ideal wrap point (removed from display)
-  - `#T#` - Truncate before marker, wrap content after
-- **Implementation**: Complete word-wrapping function in `parser.rs`
-- **Validation**: Working correctly per testing ✅
-
-### 🔄 **CURRENT ISSUE: Icon Positioning Regression**
-- **Problem**: Potential icon spacing/alignment issues in Windows Terminal
-- **Status**: Addressed by preserving original logic for non-wrap mode
-- **Next Step**: **REQUIRES VISUAL UAT CONFIRMATION**
+### 🔄 **CRITICAL WIDTH CALCULATION BUG - IDENTIFIED**
+- **Problem**: Titles longer than content cause box border overflow (see `issues.png`)
+- **Location**: `calculate_box_width()` function in `src/draw.rs:12-59`
+- **Scope**: Affects both showcase and normal CLI when titles/status exceed content width
+- **Root Cause**: Width calculation doesn't account for title/status length
+- **Status**: **NEEDS IMMEDIATE FIX**
 
 ## 📁 KEY FILES TO READ IMMEDIATELY
 
 ### **1. Session Documentation**
 ```
-.session/SESSION_01_theme-system-regression-analysis.md
-.session/CURRENT_STATUS.md
+.session/SESSION_04_showcase-implementation-and-docs.md - Complete session details
+.session/CURRENT_STATUS.md - Quick status overview
 ```
 
-### **2. Task Lists & Roadmaps**
+### **2. Critical Implementation Files**
 ```
-TASKS.txt - Complete regression task list with status updates
-.eggs/egg.99.golden-session-summary.txt - Comprehensive session summary
-.eggs/red_egg.2.word-wrapping-functionality-validation.txt - Test validation report
-```
-
-### **3. Critical Implementation Files**
-```
-src/main.rs (lines 469-515) - Theme application code with style inheritance fix
-src/parser.rs - Word-wrapping functions (wrap_text_at_word_boundaries)
-src/components.rs - Modified truncation logic and compose_content_lines
-src/config.rs - Updated WidthConfig with enable_wrapping field
-themes/default.yml - Theme inheritance definitions
+src/draw.rs (lines 12-59) - calculate_box_width() function with width bug
+src/themes.rs - Showcase implementation (handle_showcase_command)
+src/main.rs - Showcase command parsing integration
+src/help.rs - Updated help menu with showcase command
 ```
 
-### **4. Test Files**
+### **3. Visual References**
 ```
-tests/misc/sanity-test.sh - Minimal test suite
-bin/test.sh - Test runner
+issues.png - Visual representation of broken boxes in showcase
+```
+
+### **4. Branch Management**
+```
+showcase-feature - Contains all showcase work (complete implementation)
+main - Current branch with working wrap logic (preserved)
 ```
 
 ## 🔍 IMMEDIATE VALIDATION COMMANDS
 
-### **Test Current State:**
+### **Test Current Issues:**
 ```bash
-cargo build --release
+# See the width calculation bug in showcase
+cargo run showcase
 
-# Test theme inheritance fix
-echo "Test theme bug" | ./target/release/boxy --theme success  # Should show ╭╮╰╯
+# Test normal CLI with long title (should also show bug)
+cargo run -- "short text" --title "very long title that exceeds content width"
 
-# Test word-wrapping
-echo "This is a very long line that should be wrapped at word boundaries when the wrap flag is enabled" | ./target/release/boxy --theme success --wrap
+# Verify working wrap logic in main
+echo "This is a very long line that should wrap properly" | cargo run
 
-# Test hint markers
-echo "Text with #W# ideal wrap point" | ./target/release/boxy --wrap
-echo "Remove this #T# keep this part" | ./target/release/boxy --wrap
+# Check git branches
+git branch -a
+```
 
-# CRITICAL: Test for icon regression
-./bin/test.sh run minimal
+### **Compare Configs:**
+```bash
+# Working pattern (from normal CLI)
+echo "test" | cargo run -- --title "long title"
+
+# Broken pattern (showcase uses same but still broken)
+cargo run showcase
 ```
 
 ## 🤖 HELPFUL AGENTS USED
 
-- **#china** (summary chicken) - Documentation and analysis
-- **#tina** (testing chicken) - Bug validation and test creation
-- **#lucas** (blue knight) - Implementation work when needed
+- **#china** (summary chicken) - Comprehensive documentation audit and analysis
+- **#krex** (korrector) - Focused debugging help for width calculation issues
+- **General agents** - Various implementation support
 
 ## 📊 CURRENT TASK STATUS
 
-### **COMPLETED (High Priority)**
-- ✅ REGR-002: Theme style inheritance fix
-- ✅ REGR-007: Text truncation and box sizing fix
-- ✅ Word-wrapping implementation with --wrap flag
-- ✅ #W# and #T# hint markers
-- ✅ Prevent template files from loading (skip files with 'template'/'tmpl')
+### **COMPLETED**
+- ✅ Showcase command implementation (`boxy showcase`)
+- ✅ Comprehensive documentation updates (README, help menu)
+- ✅ Theme integration with proper color handling
+- ✅ Git branch management (showcase-feature created)
+- ✅ Session documentation and preservation
 
-### **IN PROGRESS**
-- 🔄 Visual UAT confirmation on icon positioning
+### **CRITICAL ISSUE - NEEDS IMMEDIATE ATTENTION**
+- 🚨 **Width calculation bug in `src/draw.rs:12-59`**
+- 🚨 **Titles longer than content overflow box borders**
+- 🚨 **Affects both showcase and normal CLI**
 
 ### **PENDING (Lower Priority)**
-- REGR-003: Comprehensive style inheritance testing
-- REGR-004: Update theme engine tests
-- REGR-005: Theme validation enhancement
-- REGR-006: Integration testing protocol
-- REGR-008: Enhance test coverage
+- Merge showcase-feature branch once width bug is fixed
+- Additional showcase refinements
+- Performance optimizations
 
 ## 🚨 CRITICAL CONTEXT
 
-### **Icon Positioning is FRAGILE**
-- Icon rendering has "weird grapheme issues" especially in Windows Terminal
-- There was a "very particular pattern for icon appending that solved this"
-- Comments in `src/main.rs:545-564` warn about breaking icon logic
-- **MUST use visual UAT testing** - you cannot verify icon issues programmatically
+### **Width Calculation Bug Details**
+- **Function**: `calculate_box_width()` in `src/draw.rs:12-59`
+- **Problem**: Only considers content width, ignores title/status length
+- **Expected**: Box should expand to accommodate longest element (content, title, or status)
+- **Current**: Titles overflow beyond box borders when longer than content
+- **Visual**: See `issues.png` for clear demonstration
 
-### **Key Implementation Notes**
-- Theme template file had conflicting success theme definition (fixed)
-- Original truncation logic was too aggressive (fixed)
-- Word-wrapping only applies when `--wrap` flag is used
-- Default behavior preserved for backward compatibility
+### **Key Technical Concepts**
+- **Auto-wrapping**: Always enabled by default in boxy
+- **--wrap flag**: Enables hint processing (`#W#`, `#T#`, `#NL#`), not wrapping itself
+- **resolve_box_config()**: Proper config pattern (used by showcase after fix)
+- **BoxyConfig::default()**: Different behavior, caused initial issues
+
+### **Configuration Patterns**
+- Showcase now uses same `resolve_box_config()` pattern as normal CLI
+- Theme integration works correctly with Jynx color system
+- RSB framework usage with `param!` macro for environment variables
 
 ## 🔄 HOW TO CONTINUE
 
 ### **IMMEDIATE NEXT STEPS:**
-1. **READ** the session documentation and task files listed above
-2. **RUN** the validation commands to understand current state
-3. **VISUAL UAT TEST**: `./bin/test.sh run minimal` and examine icon positioning
-4. **If UAT passes**: Mark session complete and move to lower-priority tasks
-5. **If UAT fails**: Debug icon positioning in `components.rs` compose_content_lines function
+1. **READ** `src/draw.rs` to understand `calculate_box_width()` function
+2. **ANALYZE** how width calculation should account for title/status length
+3. **FIX** width calculation to expand box for longest element
+4. **TEST** fix with both showcase and normal CLI
+5. **VERIFY** no regression in existing wrap logic
+
+### **Width Bug Fix Strategy:**
+```rust
+// Current logic only considers content width
+// Need to also check title and status length
+// Box width = max(content_width, title_width, status_width) + padding + borders
+```
+
+### **Testing Approach:**
+- Test with titles longer than content
+- Test with status longer than content
+- Test with content longer than title/status
+- Verify showcase works correctly
+- Ensure normal CLI unaffected
 
 ### **Session Continuation Pattern:**
-- Use TodoWrite tool for task tracking
-- Test any changes with visual UAT before proceeding
-- Focus on preserving icon positioning logic (very fragile)
+- Use TodoWrite tool for task tracking if fixing multiple issues
+- Focus on width calculation bug as highest priority
+- Preserve working wrap logic from main branch
 - Document any changes in session files
 
 ## 🎯 SUCCESS CRITERIA
-- ✅ Theme styles work correctly (success = rounded, error = heavy, etc.)
-- ✅ Text expands boxes instead of truncating inappropriately
-- ✅ Word-wrapping works with --wrap flag
-- 🔄 Icon positioning passes visual UAT (PENDING)
-- ✅ Backward compatibility maintained
+- ✅ Showcase command fully implemented and documented
+- ✅ Comprehensive documentation updates complete
+- ✅ Git branch management working correctly
+- 🔄 **Width calculation accounts for title/status length (CRITICAL)**
+- 🔄 **Boxes expand properly for longest element (CRITICAL)**
+- 🔄 **No overflow of titles beyond box borders (CRITICAL)**
+- 🔄 **Both showcase and normal CLI work correctly (CRITICAL)**
 
-**The project is in excellent shape - we just need final visual confirmation that icon positioning works correctly!**
+**The showcase feature is complete and preserved in showcase-feature branch. The critical blocking issue is the width calculation bug that needs immediate attention!**
