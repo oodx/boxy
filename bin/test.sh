@@ -68,6 +68,7 @@ declare -A TESTS=(
     ["ceremony-01"]="misc/ceremony-01.sh"
     ["boxy-demo"]="misc/ux.sh"
     ["minimal"]="misc/sanity-test.sh"
+    ["features"]="../bin/feature-test.sh"
     ["ceremony"]="uat/ceremony.sh"
     ["uat"]="misc/uat-ceremonies.sh"
 )

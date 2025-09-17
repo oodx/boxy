@@ -8,10 +8,10 @@ use crate::components::{Header, Footer, Status, Body};
 
 // RSB-compliant helper functions for draw_box decomposition
 
-/// PROTECTED: Working width calculation logic - DO NOT MODIFY
-/// This macro preserves the exact working logic that was broken by showcase changes
+/// PROTECTED: Original working width calculation logic - DO NOT MODIFY
+/// This macro preserves the exact SIMPLE logic that was working before showcase changes
 macro_rules! box_width {
-    ($text:expr, $h_padding:expr, $fixed_width:expr, $enable_wrapping:expr) => {{
+    ($text:expr, $h_padding:expr, $fixed_width:expr) => {{
         let terminal_width = get_terminal_width();
 
         let box_width = match $fixed_width {
@@ -24,21 +24,10 @@ macro_rules! box_width {
                 }
             },
             None => {
-                // Auto-size but constrain to terminal width
-                // First process #NL# markers to split into actual lines
-                let text_with_newlines = $text.replace("#NL#", "\n");
-                let lines: Vec<&str> = text_with_newlines.lines().collect();
-
-                // For auto-width, ALWAYS process wrap markers to get accurate width
-                // since hints will be removed/processed during rendering
+                // Auto-size but constrain to terminal width - SIMPLE VERSION
+                let lines: Vec<&str> = $text.lines().collect();
                 let content_max_width = lines.iter()
-                    .map(|line| {
-                        // Process wrap markers to get the actual content that will be displayed
-                        // Both #W# and #T# should normalize to spaces for consistent width calculation
-                        let clean_line = line.replace("#W#", " ").replace("#T#", " ");
-                        let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
-                        get_display_width(&clean_line)
-                    })
+                    .map(|line| get_display_width(line))
                     .max()
                     .unwrap_or(0);
                 let ideal_width = content_max_width + 2 * $h_padding + 2; // +2 for borders
@@ -63,16 +52,26 @@ macro_rules! box_width {
 
 /// Calculate optimal box width based on content and terminal constraints
 /// Uses protected macro to preserve working logic
-pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
-    box_width!(text, h_padding, fixed_width, enable_wrapping)
+pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, _enable_wrapping: bool) -> usize {
+    box_width!(text, h_padding, fixed_width)
 }
 
 // Helper functions have been replaced by component architecture
 
 
 pub fn draw_box(config: BoxyConfig) {
-    // Use RSB-compliant helper for width calculation
-    let final_width = calculate_box_width(&config.text, config.width.h_padding, config.width.fixed_width, config.width.enable_wrapping);
+    // Calculate width considering ALL content (text, title, status)
+    let mut all_content = config.text.clone();
+    if let Some(title) = &config.title {
+        all_content.push('\n');
+        all_content.push_str(title);
+    }
+    if let Some(status_bar) = &config.status_bar {
+        all_content.push('\n');
+        all_content.push_str(status_bar);
+    }
+
+    let final_width = calculate_box_width(&all_content, config.width.h_padding, config.width.fixed_width, config.width.enable_wrapping);
     let inner_width = final_width.saturating_sub(2); // Account for borders
     let color_code = get_color_code(&config.colors.box_color);
     
