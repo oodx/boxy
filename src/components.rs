@@ -189,21 +189,27 @@ impl<'a> Status<'a> {
         };
 
         let final_width = get_display_width(&status_display);
+
+        // DEBUG: Show width info for status
+        // let debug_prefix = format!("[w:{:2} t:{:2}] ", final_width, available_content_width);
+        let debug_prefix = "";
+
         let (left_pad_inner, right_pad_inner) = match alignment.as_str() {
             "center" => {
-                let space = available_content_width.saturating_sub(final_width);
+                let space = available_content_width.saturating_sub(final_width + debug_prefix.len());
                 let lp = space / 2;
                 (lp, space.saturating_sub(lp))
             }
             "right" => {
-                let space = available_content_width.saturating_sub(final_width);
+                let space = available_content_width.saturating_sub(final_width + debug_prefix.len());
                 (space, 0)
             }
-            _ => (0, available_content_width.saturating_sub(final_width)),
+            _ => (0, available_content_width.saturating_sub(final_width + debug_prefix.len())),
         };
 
         let status_line = format!(
-            "{}{}{}",
+            "{}{}{}{}",
+            debug_prefix,
             " ".repeat(left_pad_inner),
             status_display,
             " ".repeat(right_pad_inner)
@@ -285,6 +291,14 @@ impl<'a> Body<'a> {
         }
         let content_max_width = max_width!(composed_lines);
 
+        // PARALLEL SOLUTION: Calculate proper inner content width including title/status
+        let inner_content_target_width = calculate_inner_content_target_width(
+            inner_width,
+            &composed_lines,
+            self.config.width.fixed_width.is_some(),
+            self.config.width.h_padding
+        );
+
         // Available space for content within the box
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
 
@@ -309,13 +323,13 @@ impl<'a> Body<'a> {
             };
 
             let width = get_display_width(&display_line);
-            // FIXED: Pad to the max content width, not available width
-            let target_width = if self.config.width.fixed_width.is_some() {
-                available_content_width
-            } else {
-                content_max_width
-            };
+            // IMPROVED: Use parallel solution for better inner content width calculation
+            let target_width = inner_content_target_width;
             let spaces = " ".repeat(target_width.saturating_sub(width));
+
+            // DEBUG: Show line width info
+            // let debug_prefix = format!("[w:{:2} t:{:2}] ", width, target_width);
+            let debug_prefix = "";
             
             // CRITICAL: Preserve existing icon handling logic (lines 128-170 from original draw.rs)
             if i == 0 && self.config.icon.is_some() {
@@ -329,9 +343,11 @@ impl<'a> Body<'a> {
                     title_color_code,
                 ));
             } else {
+                // DEBUG: Prepend width info to the display line
+                let debug_display = format!("{}{}", debug_prefix, display_line);
                 lines.push(self.render_regular_line(
                     i,
-                    &display_line,
+                    &debug_display,
                     &spaces,
                     color_code,
                     &pad,
@@ -527,4 +543,17 @@ impl<'a> Body<'a> {
             pad, colored_display_line, spaces, pad,
             format!("{}{}{}", color_code, self.config.style.vertical, RESET))
     }
+}
+
+/// PARALLEL SOLUTION: Calculate proper inner content target width
+/// This helper function determines the correct width for padding content lines
+/// without breaking the existing width calculation logic
+fn calculate_inner_content_target_width(
+    inner_width: usize,
+    _composed_lines: &[String],
+    _is_fixed_width: bool,
+    h_padding: usize
+) -> usize {
+    // The target width for content should be the inner width minus padding on both sides
+    inner_width.saturating_sub(2 * h_padding)
 }
