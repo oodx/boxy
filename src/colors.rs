@@ -2,6 +2,8 @@
 // Complete 90+ semantic color palette for rich theme support
 // Version: boxy v0.6.0+ (inherits jynx proven architecture)
 
+// Note: Using simple ANSI stripping instead of regex for efficiency
+
 pub const RESET: &str = "\x1B[0m";
 
 
@@ -214,11 +216,41 @@ pub fn get_color_categories() -> Vec<(&'static str, Vec<&'static str>)> {
 
 /// Generate colored help text for CLI display
 fn pad_cell(s: &str, width: usize) -> String {
-    // Visible width approximation: count plain chars (ANSI not included here)
-    let len = s.chars().count();
-    if len >= width { return s.to_string(); }
-    let pad = " ".repeat(width - len);
+    // Strip ANSI escape sequences to get actual visible width
+    let visible_text = strip_ansi_codes(s);
+    let visible_len = visible_text.chars().count();
+
+    if visible_len >= width {
+        return s.to_string();
+    }
+
+    let pad = " ".repeat(width - visible_len);
     format!("{}{}", s, pad)
+}
+
+/// Strip ANSI escape sequences from text for accurate width calculation
+fn strip_ansi_codes(text: &str) -> String {
+    let mut result = String::new();
+    let mut in_escape = false;
+    let mut chars = text.chars();
+
+    while let Some(ch) = chars.next() {
+        if ch == '\x1B' {
+            in_escape = true;
+            continue;
+        }
+
+        if in_escape {
+            if ch.is_alphabetic() {
+                in_escape = false;
+            }
+            continue;
+        }
+
+        result.push(ch);
+    }
+
+    result
 }
 
 pub fn generate_color_help() -> String {
@@ -226,7 +258,7 @@ pub fn generate_color_help() -> String {
     help.push_str("COLORS:\n\n");
 
     let cols = 3usize;
-    let cell_w = 22usize; // fits name nicely in most terminals
+    let cell_w = 20usize; // Optimized for even column spacing
 
     for (category, colors) in get_color_categories() {
         help.push_str(&format!("{}:\n", category));
