@@ -273,14 +273,24 @@ impl<'a> Body<'a> {
         let composed_lines = self.compose_content_lines();
         let pad = " ".repeat(self.config.width.h_padding);
 
+        // Calculate the actual max content width (same logic as calculate_box_width)
+        let content_max_width = composed_lines.iter()
+            .map(|line| get_display_width(line))
+            .max()
+            .unwrap_or(0);
+
+        // Available space for content within the box
+        let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
+
+        // Debug: uncomment to see width calculations
+        // eprintln!("DEBUG: content_max_width={}, available_content_width={}", content_max_width, available_content_width);
+
         // Optional padding blank line before title
         if self.config.padding.pad_before_title && self.config.title.is_some() {
             lines.push(self.render_padding_line(inner_width, color_code, &pad));
         }
 
         for (i, line) in composed_lines.iter().enumerate() {
-            let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
-            
             // Only truncate if there are explicit width constraints (fixed_width)
             let line_width = get_display_width(&line);
             let display_line = if self.config.width.fixed_width.is_some() && line_width > available_content_width {
@@ -288,9 +298,15 @@ impl<'a> Body<'a> {
             } else {
                 line.to_string()
             };
-            
+
             let width = get_display_width(&display_line);
-            let spaces = " ".repeat(available_content_width.saturating_sub(width));
+            // FIXED: Pad to the max content width, not available width
+            let target_width = if self.config.width.fixed_width.is_some() {
+                available_content_width
+            } else {
+                content_max_width
+            };
+            let spaces = " ".repeat(target_width.saturating_sub(width));
             
             // CRITICAL: Preserve existing icon handling logic (lines 128-170 from original draw.rs)
             if i == 0 && self.config.icon.is_some() {

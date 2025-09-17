@@ -97,10 +97,46 @@ Team Notes: Excellent progress this sprint!
 Great collaboration between frontend and backend teams.
 EOF
 
-# 5. COLORFUL COMMAND OUTPUTS  
+# 5. COLORFUL COMMAND OUTPUTS
 echo -e "\n🌈 COLORFUL COMMAND OUTPUTS:"
 echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
     $BOXY --color cyan --title "📦 Package Manager"
+
+# Test variations with ANSI colors and different features
+echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
+    $BOXY --color red --title "📦 With Status" --status "Build complete"
+
+echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
+    $BOXY --color green --title "📦 With Header" --header "Command Output"
+
+echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
+    $BOXY --color blue --title "📦 With Dividers" --layout "dt,ds"
+
+echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
+    $BOXY --color purple --title "📦 All Features" --header "Header" --status "Status" --layout "dt,ds"
+
+echo -e "\033[32m✓ npm install\033[0m completed\n\033[33m⚠ 3 vulnerabilities\033[0m found\n\033[31m✗ peer dependency\033[0m missing" | \
+    $BOXY --color yellow
+
+# Problem child: Mixed symbol width alignment test
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color orange --title "🔍 Alignment Test"
+
+# Test variations to isolate the padding issue
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color red --title "🔍 With Status" --status "Test status"
+
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color green --title "🔍 With Header" --header "Test header"
+
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color blue --title "🔍 With Dividers" --layout "dt,ds"
+
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color purple --title "🔍 All Features" --header "Header" --status "Status" --layout "dt,ds"
+
+echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer dependency missing" | \
+    $BOXY --color yellow
 
 # 6. EMOJI AND UNICODE SHOWCASE
 echo -e "\n🎭 EMOJI & UNICODE SHOWCASE:"

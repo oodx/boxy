@@ -13,6 +13,9 @@ fi
 # Mixed content
 echo -e "Wide emojis (2 cols): 🚀🌟🔥\nNarrow symbols (1 col): ✨❤️\nMixed: Orange text 🚀 and ✨" | $BOXY
 
+# Problem child: Mixed emoji widths and symbols (regression test for alignment issues)
+echo -e "📦 Package Manager\n✅ npm install completed\n⚠️3 vulnerabilities found\n✗ peer dependency missing" | $BOXY --color cyan
+
 # Your test case
 echo -e "Red text\nGreen text\nBlue text with emoji 🚀\nNormal text\nMixed red and green 🌟" | $BOXY
 
@@ -40,6 +43,9 @@ echo -e "🎉 Party\n🚀 Time" | $BOXY -s rounded -c cyan
 
 # New width feature
 echo "This is a long message that will be truncated" | $BOXY --width 20
+
+# Truncation with emoji regression test (ℹ️ alignment issue)
+echo -e "📐 Auto-truncation\nℹ️ This is a very long message that should be truncated properly now" | $BOXY --width 30
 
 # Theme examples - now working with fixed YAML loading
 echo "Build failed!" | $BOXY --theme error

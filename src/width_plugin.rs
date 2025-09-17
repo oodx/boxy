@@ -189,8 +189,10 @@ pub fn get_display_width_unicode_crate(text: &str) -> usize {
     unicode_width::UnicodeWidthStr::width(text)
 }
 
-/// Main width function - test with standard library
+/// Main width function - strips ANSI codes then calculates width
 pub fn get_display_width(text: &str) -> usize {
-    // Test: use standard unicode-width library instead of custom
-    unicode_width::UnicodeWidthStr::width(text)
+    // Strip ANSI escape codes first, then use unicode-width
+    let clean = strip_ansi_escapes::strip(text);
+    let clean_str = String::from_utf8_lossy(&clean);
+    unicode_width::UnicodeWidthStr::width(&*clean_str)
 }
