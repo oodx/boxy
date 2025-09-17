@@ -1,6 +1,6 @@
 [package]
 name = "boxy"
-version = "0.14.0"
+version = "0.14.1"
 edition = "2024"
 authors = ["qodeninja <1043235+qodeninja@users.noreply.github.com>"]
 description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"

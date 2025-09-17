@@ -13,40 +13,127 @@ use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, Them
 // Note: RSB integration deferred until proper alignment
 
 
-/// Validate theme file before import
+/// Enhanced validation for theme files before import (ENGINE-014)
 pub fn validate_theme_file(path: &PathBuf) -> Result<(), String> {
-    // Read and parse the theme file
+    validate_theme_file_with_duplicate_check(path, true)
+}
+
+/// Comprehensive theme file validation with optional duplicate checking
+pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates: bool) -> Result<(), String> {
+    // Enhanced YAML structure validation
     let content = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read theme file: {}", e))?;
-    
-    let theme_file: ThemeFile = serde_yaml::from_str(&content)
+
+    // Pre-validate YAML structure
+    if content.trim().is_empty() {
+        return Err("Theme file is empty".to_string());
+    }
+
+    let yaml_value: serde_yaml::Value = serde_yaml::from_str(&content)
         .map_err(|e| format!("Invalid YAML format: {}", e))?;
-    
-    // Validate each theme in the file
+
+    // Validate top-level structure
+    if !yaml_value.is_mapping() {
+        return Err("Theme file must be a YAML mapping (key-value structure)".to_string());
+    }
+
+    let theme_file: ThemeFile = serde_yaml::from_str(&content)
+        .map_err(|e| format!("Failed to parse theme file structure: {}", e))?;
+
     let temp_engine = ThemeEngine::new()
         .map_err(|e| format!("Failed to initialize validator: {}", e))?;
-    
+
     let mut validation_errors = Vec::new();
-    
-    for (theme_name, theme) in &theme_file.themes {
-        if let Err(e) = temp_engine.validate_theme(theme) {
-            validation_errors.push(format!("Theme '{}': {}", theme_name, e));
-        }
-    }
-    
-    // Validate metadata
+    let mut warnings = Vec::new();
+
+    // Enhanced metadata validation
     if theme_file.metadata.name.is_empty() {
         validation_errors.push("Missing or empty metadata.name".to_string());
     }
-    
+
     if theme_file.metadata.version.is_empty() {
         validation_errors.push("Missing or empty metadata.version".to_string());
     }
-    
-    if !validation_errors.is_empty() {
-        return Err(format!("Validation errors:\n  {}", validation_errors.join("\n  ")));
+
+    // Validate metadata.version format (basic semantic versioning check)
+    if !theme_file.metadata.version.is_empty() {
+        let version_regex = regex::Regex::new(r"^\d+\.\d+\.\d+").unwrap();
+        if !version_regex.is_match(&theme_file.metadata.version) {
+            warnings.push(format!("Version '{}' doesn't follow semantic versioning (e.g., '1.0.0')", theme_file.metadata.version));
+        }
     }
-    
+
+    // Check for empty themes section
+    if theme_file.themes.is_empty() {
+        validation_errors.push("No themes defined in file - 'themes' section is empty".to_string());
+    }
+
+    // Enhanced theme validation with required properties checking
+    for (theme_name, theme) in &theme_file.themes {
+        // Validate theme name
+        if theme_name.is_empty() {
+            validation_errors.push("Empty theme name found".to_string());
+            continue;
+        }
+
+        // Check for reserved theme names
+        let reserved_names = vec!["none", "auto", "default", "base", "template"];
+        if reserved_names.contains(&theme_name.as_str()) {
+            warnings.push(format!("Theme '{}' uses a reserved name - may conflict with built-in themes", theme_name));
+        }
+
+        // Required properties validation
+        let mut missing_required = Vec::new();
+
+        // Color is required (unless it's a template/base theme)
+        if theme.color.is_empty() && !theme_name.contains("template") && !theme_name.contains("base") {
+            missing_required.push("color");
+        }
+
+        // Style is required
+        if theme.style.is_empty() {
+            missing_required.push("style");
+        }
+
+        if !missing_required.is_empty() {
+            validation_errors.push(format!("Theme '{}': Missing required properties: {}",
+                                          theme_name, missing_required.join(", ")));
+        }
+
+        // Validate theme using engine validator
+        if let Err(e) = temp_engine.validate_theme(theme) {
+            validation_errors.push(format!("Theme '{}': {}", theme_name, e));
+        }
+
+        // Additional validation checks
+        // Note: Description validation would go here if BoxyTheme had a description field
+        // Currently BoxyTheme stores description in metadata at the file level
+    }
+
+    // Duplicate theme names detection across existing configs
+    if check_duplicates {
+        if let Ok(engine) = ThemeEngine::new() {
+            for theme_name in theme_file.themes.keys() {
+                if engine.get_theme(theme_name).is_some() {
+                    warnings.push(format!("Theme '{}' already exists in loaded configurations - will be overridden", theme_name));
+                }
+            }
+        }
+    }
+
+    // Report errors and warnings
+    if !validation_errors.is_empty() {
+        return Err(format!("❌ Validation errors:\n  • {}", validation_errors.join("\n  • ")));
+    }
+
+    if !warnings.is_empty() {
+        eprintln!("⚠️  Validation warnings:");
+        for warning in &warnings {
+            eprintln!("  • {}", warning);
+        }
+        eprintln!();
+    }
+
     Ok(())
 }
 
@@ -169,6 +256,7 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         eprintln!("   list              Visual catalog of all available themes");
         eprintln!("   debug             Show theme loading hierarchy and diagnostics");
         eprintln!("   status            Quick engine health check");
+        eprintln!("   validate <file>   Comprehensive theme file validation");
         eprintln!("   edit <name>       Edit a theme configuration file");
         eprintln!("   help              Show detailed help information");
         eprintln!();
@@ -257,6 +345,25 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         "status" => {
             handle_engine_status();
         }
+        "validate" => {
+            if args.len() < 2 {
+                eprintln!("❌ Engine validate requires a theme file path");
+                eprintln!();
+                eprintln!("📖 Usage: {} engine validate <FILE>", NAME);
+                eprintln!();
+                eprintln!("🔍 What this does:");
+                eprintln!("   • Validates YAML structure and theme definitions");
+                eprintln!("   • Checks for required properties and valid values");
+                eprintln!("   • Detects duplicate theme names across configs");
+                eprintln!("   • Reports warnings for potential issues");
+                eprintln!();
+                eprintln!("💡 Examples:");
+                eprintln!("   {} engine validate boxy_custom.yml", NAME);
+                eprintln!("   {} engine validate themes/my_theme.yml", NAME);
+                std::process::exit(1);
+            }
+            handle_engine_validate(&args[1]);
+        }
         "help" | "--help" => {
             print_engine_help();
         }
@@ -271,6 +378,7 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
             eprintln!("   list      Show visual theme catalog");
             eprintln!("   debug     Show detailed diagnostics");
             eprintln!("   status    Quick health check");
+            eprintln!("   validate  Comprehensive theme file validation");
             eprintln!("   edit      Edit theme configuration");
             eprintln!("   help      Show detailed help");
             eprintln!();
@@ -1426,6 +1534,60 @@ pub fn handle_engine_edit(name: &str) {
     std::process::exit(1);
 }
 
+/// Handle `boxy engine validate <file>` command - comprehensive theme file validation
+pub fn handle_engine_validate(file_path: &str) {
+    use std::path::PathBuf;
+
+    println!("{} {} - Theme File Validation", NAME, VERSION);
+    println!();
+
+    let path = PathBuf::from(file_path);
+
+    // Check if file exists
+    if !path.exists() {
+        eprintln!("❌ File not found: {}", path.display());
+        eprintln!();
+        eprintln!("💡 Please check:");
+        eprintln!("   • File path spelling: {}", file_path);
+        eprintln!("   • File exists in current directory: {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        eprintln!("   • File has correct extension (.yml or .yaml)");
+        std::process::exit(1);
+    }
+
+    println!("🔍 Validating: {}", path.display());
+    println!();
+
+    // Perform comprehensive validation
+    match validate_theme_file_with_duplicate_check(&path, true) {
+        Ok(()) => {
+            println!("✅ Validation passed!");
+            println!();
+            println!("🎯 Summary:");
+            println!("   • YAML structure: Valid");
+            println!("   • Theme definitions: Valid");
+            println!("   • Required properties: Present");
+            println!("   • Duplicate detection: Complete");
+            println!();
+            println!("💡 File is ready for import:");
+            println!("   {} engine import <name>", NAME);
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            eprintln!();
+            eprintln!("🔧 To fix validation issues:");
+            eprintln!("   • Check YAML syntax with an online validator");
+            eprintln!("   • Ensure all required properties are present");
+            eprintln!("   • Verify color and style values are valid");
+            eprintln!("   • Review theme names for conflicts");
+            eprintln!();
+            eprintln!("📚 Examples:");
+            eprintln!("   {} engine list          # See available themes", NAME);
+            eprintln!("   {} engine debug         # Check system status", NAME);
+            std::process::exit(1);
+        }
+    }
+}
+
 /// Handle `boxy engine status` command - shows engine health
 pub fn handle_engine_status() {
     use crate::theme_engine::ThemeEngine;
@@ -1570,6 +1732,7 @@ pub fn print_engine_help() {
     println!("    list              List all available themes from all configs");
     println!("    debug             Show loading hierarchy and engine diagnostics");
     println!("    status            Show engine health and statistics");
+    println!("    validate <file>   Comprehensive theme file validation");
     println!("    edit <name>       Edit a theme config file");
     println!("    help              Show this help message");
     println!();
@@ -1581,6 +1744,7 @@ pub fn print_engine_help() {
     println!("    {} engine init                   # Set up global theme system", NAME);
     println!("    {} engine list                   # Show all available themes", NAME);
     println!("    {} engine debug                  # Debug theme loading", NAME);
+    println!("    {} engine validate theme.yml     # Validate theme file", NAME);
     println!("    {} engine import myproject       # Import boxy_myproject.yml", NAME);
     println!("    {} engine export default         # Export boxy_default.yml", NAME);
 }
