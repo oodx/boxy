@@ -228,10 +228,11 @@ pub fn handle_engine_command(args: &[String], jynx: &JynxPlugin) {
         }
         "import" => {
             if args.len() < 2 {
-                eprintln!("Error: Engine import requires a name. Usage: {} engine import <name>", NAME);
+                eprintln!("Error: Engine import requires a name. Usage: {} engine import <name> [--overwrite]", NAME);
                 std::process::exit(1);
             }
-            handle_engine_import(&args[1]);
+            let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
+            handle_engine_import(&args[1], force_overwrite);
         }
         "export" => {
             if args.len() < 2 {
@@ -1208,12 +1209,82 @@ pub fn handle_engine_init() {
 }
 
 /// Handle `boxy engine import <name>` command - imports boxy_<name>.yml to global location
-pub fn handle_engine_import(name: &str) {
-    // TODO: Rename from theme import, implement proper file operations
-    eprintln!("Error: Engine import command not yet fully implemented.");
-    eprintln!("This will import boxy_{}.yml from local to global themes directory.", name);
-    eprintln!("Coming in ENGINE-004 implementation.");
-    std::process::exit(1);
+pub fn handle_engine_import(name: &str, force_overwrite: bool) {
+    use std::fs;
+    use std::path::PathBuf;
+
+    // Determine paths
+    let home = match std::env::var("HOME") {
+        Ok(h) => h,
+        Err(_) => {
+            eprintln!("Error: Cannot determine home directory (HOME environment variable not set)");
+            std::process::exit(1);
+        }
+    };
+
+    let global_themes_dir = PathBuf::from(home).join(".local/etc/odx/boxy/themes");
+    let local_file = PathBuf::from(format!("boxy_{}.yml", name));
+    let global_file = global_themes_dir.join(format!("boxy_{}.yml", name));
+
+    println!("📥 Importing theme config: {}", name);
+    println!();
+
+    // Check if local file exists
+    if !local_file.exists() {
+        eprintln!("Error: Local theme config not found: {}", local_file.display());
+        eprintln!("Expected file: boxy_{}.yml in current directory", name);
+        std::process::exit(1);
+    }
+
+    // Ensure global directory exists
+    if let Err(e) = fs::create_dir_all(&global_themes_dir) {
+        eprintln!("Error: Failed to create global themes directory: {}", e);
+        eprintln!("Path: {}", global_themes_dir.display());
+        std::process::exit(1);
+    }
+
+    // Check if target file exists and handle overwrite
+    if global_file.exists() && !force_overwrite {
+        eprintln!("Error: Theme config already exists in global directory: {}", global_file.display());
+        eprintln!("Use --overwrite flag to replace existing config:");
+        eprintln!("  {} engine import {} --overwrite", NAME, name);
+        std::process::exit(1);
+    }
+
+    // Validate the theme file before importing
+    println!("🔍 Validating theme config...");
+    if let Err(e) = validate_theme_file(&local_file) {
+        eprintln!("Error: Theme config validation failed: {}", e);
+        eprintln!("Please fix the issues in {} before importing", local_file.display());
+        std::process::exit(1);
+    }
+
+    // Create backup if overwriting
+    if global_file.exists() {
+        let backup_file = global_themes_dir.join(format!("boxy_{}.yml.bak", name));
+        if let Err(e) = fs::copy(&global_file, &backup_file) {
+            eprintln!("Warning: Failed to create backup: {}", e);
+        } else {
+            println!("📋 Created backup: {}", backup_file.display());
+        }
+    }
+
+    // Copy the file
+    if let Err(e) = fs::copy(&local_file, &global_file) {
+        eprintln!("Error: Failed to import theme config: {}", e);
+        eprintln!("Source: {}", local_file.display());
+        eprintln!("Target: {}", global_file.display());
+        std::process::exit(1);
+    }
+
+    println!("✅ Successfully imported: {} → {}", local_file.display(), global_file.display());
+    println!();
+    println!("🎯 Import complete!");
+    println!();
+    println!("📋 Next steps:");
+    println!("  • Use `{} engine list` to see the imported themes", NAME);
+    println!("  • Use `{} engine debug` to verify theme loading", NAME);
+    println!("  • Use `{} --theme <theme_name>` to test imported themes", NAME);
 }
 
 /// Handle `boxy engine export <name>` command - exports boxy_<name>.yml from global to local
