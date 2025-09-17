@@ -297,7 +297,7 @@ fn run_boxy_application() -> Result<(), AppError> {
                     }
                 }
             }
-            "--theme" => {
+            "--theme" | "--use" => {
                 if i + 1 < args.len() {
                     theme_name = Some(args[i + 1].clone());
                     theme_from_env = false; // CLI theme overrides environment

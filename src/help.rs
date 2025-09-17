@@ -61,6 +61,7 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     
     println!("  {}Theme System:{}", get_color_code("cyan"), RESET);
     println!("    --theme <THEME>            Apply semantic theme (error, success, warning, info)");
+    println!("    --use <THEME>              Alias for --theme");
     println!();
     
     println!("  {}Utility:{}", get_color_code("cyan"), RESET);

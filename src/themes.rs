@@ -1338,11 +1338,98 @@ pub fn handle_engine_edit(name: &str) {
 
 /// Handle `boxy engine status` command - shows engine health
 pub fn handle_engine_status() {
-    // TODO: Implement engine status check
-    eprintln!("Error: Engine status command not yet implemented.");
-    eprintln!("This will show engine health, config count, themes count, etc.");
-    eprintln!("Coming in ENGINE-012 implementation.");
-    std::process::exit(1);
+    use crate::theme_engine::ThemeEngine;
+
+    println!("{} {} - Engine Status", NAME, VERSION);
+    println!();
+
+    // Initialize theme engine
+    let engine = match ThemeEngine::new() {
+        Ok(engine) => engine,
+        Err(e) => {
+            println!("❌ Engine Status: CRITICAL ERROR");
+            println!("   Failed to initialize theme engine: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get global directory status
+    let global_dir = engine.get_themes_directory();
+    let global_exists = global_dir.exists();
+
+    // Count config files and themes using engine stats
+    let mut config_count = 0;
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+
+    // Check global directory for config files
+    if global_exists {
+        if let Ok(entries) = std::fs::read_dir(&global_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
+                    if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                        // ENGINE-006: Only count boxy_ prefixed files
+                        if filename.starts_with("boxy_") &&
+                           !filename.contains("template") && !filename.contains("tmpl") {
+                            config_count += 1;
+                        }
+                    }
+                }
+            }
+        } else {
+            errors.push("Cannot read global themes directory".to_string());
+        }
+    } else {
+        warnings.push("Global themes directory does not exist".to_string());
+    }
+
+    // Get total theme count from loaded engine
+    let total_themes = engine.list_themes().len();
+
+    // Display status
+    if errors.is_empty() && warnings.is_empty() {
+        println!("✅ Engine Status: HEALTHY");
+    } else if !errors.is_empty() {
+        println!("❌ Engine Status: ERRORS DETECTED");
+    } else {
+        println!("⚠️  Engine Status: WARNINGS");
+    }
+
+    println!();
+    println!("📊 Configuration Summary:");
+    println!("   Global Directory: {}", global_dir.display());
+    println!("   Directory Exists: {}", if global_exists { "✅ Yes" } else { "❌ No" });
+    println!("   Config Files:     {} boxy_*.yml files", config_count);
+    println!("   Total Themes:     {} themes available", total_themes);
+
+    if !warnings.is_empty() {
+        println!();
+        println!("⚠️  Warnings:");
+        for warning in &warnings {
+            println!("   • {}", warning);
+        }
+        println!();
+        println!("💡 To fix: Run `{} engine init` to create default themes", NAME);
+    }
+
+    if !errors.is_empty() {
+        println!();
+        println!("❌ Errors:");
+        for error in &errors {
+            println!("   • {}", error);
+        }
+        println!();
+        println!("💡 To fix: Use `{} engine debug` for detailed diagnostics", NAME);
+    }
+
+    if errors.is_empty() && warnings.is_empty() {
+        println!();
+        println!("🎯 Quick Actions:");
+        println!("   {} engine list     # Visual theme catalog", NAME);
+        println!("   {} engine debug    # Detailed diagnostics", NAME);
+        println!("   {} --use <theme>   # Apply a theme", NAME);
+    }
 }
 
 /// Print theme help (ENGINE-002: Separate help menus)

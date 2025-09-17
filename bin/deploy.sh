@@ -4,6 +4,7 @@ set -e
 # Configuration
 LIB_DIR="$HOME/.local/lib/odx/boxylib"
 BIN_DIR="$HOME/.local/bin/odx"
+THEMES_DIR="$HOME/.local/etc/odx/boxy/themes"
 BINARY_NAME="boxy"
 
 lib_file="$LIB_DIR/$BINARY_NAME"
@@ -22,7 +23,7 @@ echo "║             BOXY DEPLOYMENT CEREMONY           ║"
 echo "╠════════════════════════════════════════════════╣"
 echo "║ Package: $BINARY_NAME                          ║"
 echo "║ Version: v$VERSION (Theme System + 90+ Colors) ║"
-echo "║ Target:  $INSTALL_DIR/$BINARY_NAME             ║"
+echo "║ Target:  $bin_file             ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
 
@@ -78,6 +79,22 @@ if ! echo "Test" | "$bin_file" > /dev/null 2>&1; then
     exit 1
 fi
 
+# Deploy default themes (ENGINE-009)
+echo "🎨 Deploying theme system..."
+mkdir -p "$THEMES_DIR"
+
+# Only deploy default themes if they don't exist (preserve user customizations)
+if [ ! -f "$THEMES_DIR/boxy_default.yml" ]; then
+    echo "📋 Initializing default themes..."
+    if ! "$bin_file" engine init > /dev/null 2>&1; then
+        echo "⚠️  Warning: Could not initialize default themes (continuing anyway)"
+    else
+        echo "✅ Default themes deployed to $THEMES_DIR"
+    fi
+else
+    echo "✅ Theme system ready (existing themes preserved)"
+fi
+
 echo ""
 echo "╔════════════════════════════════════════════════╗"
 echo "║          DEPLOYMENT SUCCESSFUL!                ║"
@@ -96,6 +113,8 @@ echo "Deploy successful!" | ${BINARY_NAME} --theme success --header "🚀 Boxy v
 
 echo ""
 echo "📖 Explore features:"
-echo "   $INSTALL_DIR/$BINARY_NAME --colors    # View 90+ color palette"
-echo "   $INSTALL_DIR/$BINARY_NAME theme list  # Theme management"
-echo "   $ROOT_DIR/bin/ux.sh                   # Feature demonstration"
+echo "   $BINARY_NAME --colors          # View 90+ color palette"
+echo "   $BINARY_NAME engine list       # Visual theme catalog"
+echo "   $BINARY_NAME engine debug      # Theme system diagnostics"
+echo "   $BINARY_NAME --help            # Full command reference"
+echo "   $ROOT_DIR/bin/ux.sh            # Feature demonstration"
