@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-LIB_DIR="$HOME/.local/lib/odx/boxy"
+LIB_DIR="$HOME/.local/lib/odx/boxylib"
 BIN_DIR="$HOME/.local/bin/odx"
 BINARY_NAME="boxy"
 
@@ -45,6 +45,9 @@ mkdir -p "$BIN_DIR" "$LIB_DIR"
 if [ -f "$lib_file" ]; then 
 	echo "📦 Removing previous boxy lib"
 	rm "$lib_file"
+	rm "$bin_file"
+	#ls "$lib_file";
+	#ls "$bin_file";
 fi
 
 if ! cp "$ROOT_DIR/target/release/${DEPLOYABLE}" "$lib_file"; then
@@ -88,7 +91,9 @@ echo "       echo \"\$1\" | \"$bin_file\""
 echo "   }"
 echo ""
 echo "🎨 Quick test of boxy v$VERSION theme system:"
-echo "Deploy successful!" | "$INSTALL_DIR/$BINARY_NAME" --theme success --header "🚀 Boxy v$VERSION"
+
+echo "Deploy successful!" | ${BINARY_NAME} --theme success --header "🚀 Boxy v$VERSION"
+
 echo ""
 echo "📖 Explore features:"
 echo "   $INSTALL_DIR/$BINARY_NAME --colors    # View 90+ color palette"

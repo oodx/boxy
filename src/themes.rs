@@ -13,46 +13,6 @@ use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, Them
 // RSB framework imports  
 use rsb::param;
 
-// todo: incomplete needs proper refactor (dup from main)
-// pub fn handle_theme_enigne(theme_name:&str){
-
-//   // Apply theme if specified - using new theme engine
-//   if let Some(theme_name_str) = theme_name {
-//       match ThemeEngine::new() {
-//         Ok(theme_engine) => {
-//           if let Some(boxy_theme) = theme_engine.get_theme(theme_name_str) {
-//               // Theme overrides defaults but explicit flags override theme
-//               if color == "none" {
-//                   color = Box::leak(boxy_theme.color.clone().into_boxed_str());
-//               }
-//               // Prefer to use theme icon as icon decoration (first content line), not a separate line
-//               if icon.is_none() {
-//                   if let Some(icon_str) = &boxy_theme.icon {
-//                       icon = Some(icon_str.clone());
-//                   } else if let Some(title_str) = &boxy_theme.title {
-//                       let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
-//                       if !emoji_part.trim().is_empty() { icon = Some(emoji_part.trim().to_string()); }
-//                   }
-//               }
-//               if fixed_width.is_none() {
-//                   fixed_width = boxy_theme.width;
-//               }
-//           } else {
-//               eprintln!("Unknown theme: {}. Available themes:", theme_name_str);
-//               let theme_list = theme_engine.list_themes();
-//               let theme_names: Vec<String> = theme_list.iter().map(|(name, _)| name.clone()).collect();
-//               eprintln!("  {}", theme_names.join(", "));
-//               std::process::exit(1);
-//           }
-//         }
-//         Err(e) => {
-//             eprintln!("Warning: Failed to load theme engine: {}", e);
-//             eprintln!("Continuing without theme...");
-//         }
-//       }
-//   }
-    
-// }
 
 /// Validate theme file before import
 pub fn validate_theme_file(path: &PathBuf) -> Result<(), String> {
@@ -247,6 +207,7 @@ pub fn validate_theme_name(name: &str) -> Result<(), String> {
     Ok(())
 }
 
+// TODO: WHAT IS THIS??
 /// Interactive theme creation utility
 pub fn create_theme_interactively(name: &str) -> BoxyTheme {
     println!("Configure theme '{}' (press Enter for default):", name);

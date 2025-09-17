@@ -8,7 +8,19 @@ use std::path::PathBuf;
 use crate::colors::*;
 
 // RSB framework imports
-use rsb::param;
+use rsb::param; //RSB is not loaded correctly, this wont work!
+
+pub fn get_home_dir() -> String {
+    std::env::var("HOME").unwrap_or_else(|_| "/".to_string())
+}
+
+/// Gets the current working directory.
+pub fn get_current_dir() -> String {
+    std::env::current_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| ".".to_string())
+}
+
 
 /// Main theme engine - manages all theme operations
 pub struct ThemeEngine {
@@ -181,9 +193,11 @@ impl ThemeEngine {
     /// Get XDG+ base directory following jynx architecture
     fn get_xdg_base_dir() -> PathBuf {
         // Follow jynx XDG+ pattern: ~/.local/etc/rsb/boxy/
-        let home = param!("HOME");
+        let home = get_home_dir();
+        
+        //= env::var("BOXY_THEME")// boxy isnt using RSB correctly this wont work param!("HOME");
         let home = if home.is_empty() { "/tmp".to_string() } else { home };
-        PathBuf::from(home).join(".local/etc/rsb/boxy")
+        PathBuf::from(home).join(".local/etc/odx/boxy")
     }
     
     /// Load built-in themes as fallback (converted from current themes.rs)

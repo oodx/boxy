@@ -431,28 +431,7 @@ fn run_boxy_application() -> Result<(), AppError> {
         }
     }
     
-    // Check for deprecated pattern combinations with enhanced suggestions
-    // if icon.is_some() && title.is_some() {
-    //     let icon_str = icon.as_deref().unwrap_or("📦");
-    //     let title_str = title.as_deref().unwrap_or("Title");
-    //     // deprecation_warnings.push(format!(
-    //     //     "Using --icon with --title may cause layout conflicts.\n       → Try: --title \"{} {}\"",
-    //     //     icon_str, title_str
-    //     // ));
-    // }
-    
 
-    
-    // Suggest header/title distinction for external-looking titles
-    // if title.is_some() && !icon.is_some() {
-    //     let title_text = title.as_deref().unwrap_or("");
-    //     // if title_text.len() > 20 || title_text.to_lowercase().contains("app") || title_text.to_lowercase().contains("system") {
-    //     //     auto_suggestions.push(format!(
-    //     //         "Consider using --header for application names: --header \"{}\"", title_text
-    //     //     ));
-    //     // }
-    // }
-    
 
     
     // PRIORITY 3: Read from stdin only if no subcommands were processed
@@ -670,5 +649,3 @@ fn run_boxy_application() -> Result<(), AppError> {
 //   pad_body_below: bool
 // )
 
-
-// Commented-out duplicate theme logic removed - using active version above
