@@ -7,7 +7,7 @@ SHELL := /bin/bash
 -include conf/makefile-semv.mk
 -include conf/makefile-project.mk
 
-.PHONY: lint-sh lint test deploy install help
+.PHONY: lint-sh lint test deploy install help build feature-test showcase debug-emoji
 
 lint-sh:
 	bash bin/lint-sh
@@ -15,9 +15,23 @@ lint-sh:
 # Alias target
 lint: lint-sh
 
-# Simple test alias to keep muscle memory
+# Build targets
+build:
+	cargo build --release
+
+# Test targets
 test:
 	bash bin/test.sh list
+
+feature-test: build
+	bash bin/feature-test.sh
+
+# Demo targets
+showcase: build
+	bash bin/showcase.sh
+
+debug-emoji: build
+	bash bin/debug_emoji.sh
 
 # Deployment wrappers (delegate to existing script)
 DEPLOY := bin/deploy.sh
@@ -48,12 +62,16 @@ deploy-tag: guard.bug-off
 
 help:
 	@echo "Targets:"; \
-	echo "  lint-sh    - Lint shell scripts (bash -n, shellcheck if present)"; \
-	echo "  lint       - Alias for lint-sh"; \
-	echo "  test       - List available tests"; \
-	echo "  deploy     - Run bin/deploy.sh"; \
-	echo "  deploy-tag - Deploy from a specific tag (TAG=vX.Y.Z)"; \
-	echo "  install    - Alias for deploy"; \
-	if [ -f makefile-semv.mk ]; then echo "  semv.*    - Version operations (see makefile-semv.mk)"; fi; \
-	if [ -f makefile-bug.mk ]; then echo "  bug.*     - Bug mode lock (on/off/status)"; fi; \
-	if [ -f makefile-project.mk ]; then echo "  project:* - Project-specific targets"; fi
+	echo "  build        - Build release binary (cargo build --release)"; \
+	echo "  lint-sh      - Lint shell scripts (bash -n, shellcheck if present)"; \
+	echo "  lint         - Alias for lint-sh"; \
+	echo "  test         - List available tests"; \
+	echo "  feature-test - Run comprehensive feature test suite"; \
+	echo "  showcase     - Run showcase demo"; \
+	echo "  debug-emoji  - Run emoji debugging utilities"; \
+	echo "  deploy       - Run bin/deploy.sh"; \
+	echo "  deploy-tag   - Deploy from a specific tag (TAG=vX.Y.Z)"; \
+	echo "  install      - Alias for deploy"; \
+	if [ -f makefile-semv.mk ]; then echo "  semv.*      - Version operations (see makefile-semv.mk)"; fi; \
+	if [ -f makefile-bug.mk ]; then echo "  bug.*       - Bug mode lock (on/off/status)"; fi; \
+	if [ -f makefile-project.mk ]; then echo "  project:*   - Project-specific targets"; fi
