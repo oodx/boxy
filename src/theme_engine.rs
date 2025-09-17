@@ -298,7 +298,8 @@ impl ThemeEngine {
         Ok(())
     }
 
-    /// Find the first boxy*.yaml file in the current directory (alphabetically sorted)
+    /// Find the first boxy_*.yaml file in the current directory (alphabetically sorted)
+    /// ENGINE-006: Enforce boxy_ prefix for engine files
     fn find_local_boxy_file(&self) -> Result<Option<PathBuf>, String> {
         let current_dir = PathBuf::from(".");
         let entries = match fs::read_dir(&current_dir) {
@@ -308,14 +309,19 @@ impl ThemeEngine {
 
         let mut boxy_files = Vec::new();
 
-        // Collect all boxy*.yaml files
+        // Collect all boxy_*.yaml files (with underscore prefix)
         for entry in entries {
             let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
             let path = entry.path();
 
             if path.is_file() {
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
-                    if filename.starts_with("boxy") && (filename.ends_with(".yaml") || filename.ends_with(".yml")) {
+                    // ENGINE-006: Enforce boxy_ prefix (with underscore)
+                    if filename.starts_with("boxy_") && (filename.ends_with(".yaml") || filename.ends_with(".yml")) {
+                        // Skip template files
+                        if filename.contains("template") || filename.contains("tmpl") {
+                            continue;
+                        }
                         boxy_files.push(path);
                     }
                 }
@@ -343,8 +349,13 @@ impl ThemeEngine {
         for entry in entries {
             let path = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?.path();
             if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
-                // Skip template files
+                // ENGINE-006: Enforce boxy_ prefix for engine files
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    // Skip files that don't start with boxy_
+                    if !filename.starts_with("boxy_") {
+                        continue;
+                    }
+                    // Skip template files
                     if filename.contains("template") || filename.contains("tmpl") {
                         continue;
                     }
@@ -552,7 +563,12 @@ impl ThemeEngine {
                         .filter_map(|e| e.ok())
                         .filter(|e| {
                             e.file_name().to_str()
-                                .map(|name| name.ends_with(".yml") || name.ends_with(".yaml"))
+                                .map(|name| {
+                                    // ENGINE-006: Enforce boxy_ prefix for engine files
+                                    name.starts_with("boxy_") &&
+                                    (name.ends_with(".yml") || name.ends_with(".yaml")) &&
+                                    !name.contains("template") && !name.contains("tmpl")
+                                })
                                 .unwrap_or(false)
                         })
                         .collect();

@@ -143,32 +143,8 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
             }
             handle_theme_dryrun(&args[1]);
         }
-        "help" => {
-            println!("{} {} - Theme Management", NAME, VERSION);
-            println!();
-            println!("USAGE:");
-            println!("    {} theme <action> [options]", NAME);
-            println!();
-            println!("ACTIONS:");
-            println!("    list              List all available themes");
-            println!("    show <theme>      Show detailed theme information");
-            println!("    hierarchy         Show theme loading hierarchy and sources");
-            println!("    dryrun <theme>    Test theme application with sample content");
-            println!("    init              Initialize local .themes/boxy-custom.yaml template");
-            println!("    create <name>     Create a new theme interactively");
-            println!("    import <path>     Import theme from file");
-            println!("    export <name>     Export theme to file");
-            println!("    edit <name>       Edit existing theme");
-            println!("    help              Show this help message");
-            println!();
-            println!("EXAMPLES:");
-            println!("    {} theme list", NAME);
-            println!("    {} theme show error", NAME);
-            println!("    {} theme hierarchy", NAME);
-            println!("    {} theme dryrun error", NAME);
-            println!("    {} theme init", NAME);
-            println!("    {} theme create my_theme", NAME);
-            println!("    {} theme export error > error.yml", NAME);
+        "help" | "--help" => {
+            print_theme_help();
         }
         action => {
             eprintln!("Unknown theme action: {}", action);
@@ -239,7 +215,7 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
         "status" => {
             handle_engine_status();
         }
-        "help" => {
+        "help" | "--help" => {
             print_engine_help();
         }
         _ => {
@@ -1369,7 +1345,41 @@ pub fn handle_engine_status() {
     std::process::exit(1);
 }
 
-/// Print engine help
+/// Print theme help (ENGINE-002: Separate help menus)
+pub fn print_theme_help() {
+    println!("{} {} - Theme Usage Commands", NAME, VERSION);
+    println!();
+    println!("USAGE:");
+    println!("    {} theme <COMMAND> [OPTIONS]", NAME);
+    println!();
+    println!("COMMANDS:");
+    println!("    show <name>       Show properties of a specific theme");
+    println!("    dryrun <name>     Test theme with sample content");
+    println!("    create <name>     Create new theme within a config file");
+    println!("    list              List all available themes (legacy)");
+    println!("    hierarchy         Show theme loading hierarchy (legacy)");
+    println!("    init              Initialize local .themes/ directory (legacy)");
+    println!("    import <path>     Import theme from file (legacy)");
+    println!("    export <name>     Export theme to file (legacy)");
+    println!("    edit <name>       Edit existing theme (legacy)");
+    println!("    help              Show this help message");
+    println!();
+    println!("MODERN WORKFLOW:");
+    println!("    For theme file management, use `{} engine` commands:", NAME);
+    println!("    • {} engine list      # Visual theme catalog", NAME);
+    println!("    • {} engine debug     # Theme loading diagnostics", NAME);
+    println!("    • {} engine import    # Import theme config files", NAME);
+    println!("    • {} engine export    # Export theme config files", NAME);
+    println!();
+    println!("EXAMPLES:");
+    println!("    {} theme show error           # Display error theme properties", NAME);
+    println!("    {} theme dryrun success       # Test success theme", NAME);
+    println!("    {} theme create my_style      # Create new theme", NAME);
+    println!();
+    println!("💡 TIP: Use `{} engine --help` for config file management", NAME);
+}
+
+/// Print engine help (ENGINE-002: Separate help menus)
 pub fn print_engine_help() {
     println!("{} {} - Engine Commands Help", NAME, VERSION);
     println!();
