@@ -84,13 +84,21 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("    blueprint  Technical blue theme with ASCII style (📐)");
     println!();
     
-    println!("  {}Theme Management:{}", get_color_code("cyan"), RESET);
-    println!("    {} theme list                List available themes", NAME);
-    println!("    {} theme show <name>         Show theme details", NAME);
-    println!("    {} theme create <name>       Create new theme interactively", NAME);
-    println!("    {} theme import <file>       Import theme from YAML", NAME);
-    println!("    {} theme export <name>       Export theme to YAML", NAME);
-    println!("    {} theme edit <name>         Edit existing theme", NAME);
+    println!("  {}Engine Management:{}", get_color_code("cyan"), RESET);
+    println!("    {} engine init               Initialize global theme directory", NAME);
+    println!("    {} engine import <name>      Import boxy_<name>.yml to global location", NAME);
+    println!("    {} engine export <name>      Export boxy_<name>.yml from global to local", NAME);
+    println!("    {} engine list               List all available themes from all configs", NAME);
+    println!("    {} engine debug              Show loading hierarchy and diagnostics", NAME);
+    println!("    {} engine status             Show engine health and statistics", NAME);
+    println!("    {} engine edit <name>        Edit a theme config file", NAME);
+    println!("    {} engine help               Show engine commands help", NAME);
+    println!();
+
+    println!("  {}Theme Usage:{}", get_color_code("cyan"), RESET);
+    println!("    {} theme show <name>         Show individual theme properties", NAME);
+    println!("    {} theme dryrun <name>       Test theme with sample content", NAME);
+    println!("    {} theme create <name>       Create new theme within a config", NAME);
     println!("    Env: BOXY_THEME=<name>      Set default theme (overridden by --theme)");
     println!();
     
@@ -288,17 +296,20 @@ pub fn show_usage_examples() {
     println!("  echo \"Content with ANSI\" | {} --theme success | {} --no-boxy=strict", NAME, NAME);
     println!();
     
-    // =============== THEME MANAGEMENT ===============
-    println!("{}THEME MANAGEMENT:{}", get_color_code("coral"), RESET);
-    println!("  # List available themes");
-    println!("  {} theme list", NAME);
+    // =============== ENGINE MANAGEMENT ===============
+    println!("{}ENGINE MANAGEMENT:{}", get_color_code("coral"), RESET);
+    println!("  # Set up global theme system");
+    println!("  {} engine init", NAME);
     println!();
-    println!("  # Create custom theme");
-    println!("  {} theme create my_project_theme", NAME);
+    println!("  # List available themes from all configs");
+    println!("  {} engine list", NAME);
     println!();
-    println!("  # Import/export themes");
-    println!("  {} theme export error > error_theme.yml", NAME);
-    println!("  {} theme import ~/my_theme.yml", NAME);
+    println!("  # Debug theme loading hierarchy");
+    println!("  {} engine debug", NAME);
+    println!();
+    println!("  # Import/export theme config files");
+    println!("  {} engine export default        # Copy global to local", NAME);
+    println!("  {} engine import myproject       # Copy local boxy_myproject.yml to global", NAME);
     println!();
     
     // // =============== MIGRATION ===============

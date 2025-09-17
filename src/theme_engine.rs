@@ -636,24 +636,24 @@ mod tests {
     #[test]
     fn test_theme_properties() {
         let engine = ThemeEngine::new().unwrap();
-        
-        // Test error theme properties
+
+        // Test error theme properties - should reflect hierarchy resolution
+        // In project root: local themes/boxy_default.yml overrides built-in themes
         let error_theme = engine.get_theme("error").unwrap();
-        assert_eq!(error_theme.color, "crimson");
+
+        // Local theme defines error with purple color (themes/boxy_default.yml line 41)
+        // This correctly overrides built-in crimson due to hierarchy precedence
+        assert_eq!(error_theme.color, "purple");
         assert_eq!(error_theme.text_color, "white");
-        assert_eq!(error_theme.style, "heavy");
+        assert_eq!(error_theme.style, "heavy"); // From base_heavy inheritance
         assert_eq!(error_theme.text_style, "bold");
         assert!(error_theme.title.is_some());
-        // Note: icon might be None if it's embedded in title instead
-        assert!(error_theme.icon.is_some() || error_theme.title.is_some());
-        
-        // Test success theme properties
+
+        // Test success theme properties - should also reflect local overrides
         let success_theme = engine.get_theme("success").unwrap();
-        assert_eq!(success_theme.color, "emerald");
+        assert_eq!(success_theme.color, "emerald"); // From local themes/boxy_default.yml
         assert_eq!(success_theme.text_color, "auto");
-        // Note: YAML theme inheritance may result in "normal" style in test context
-        // but works correctly in practice (verified with manual testing)
-        assert!(success_theme.style == "rounded" || success_theme.style == "normal");
+        assert_eq!(success_theme.style, "rounded"); // From base_rounded inheritance
         assert_eq!(success_theme.text_style, "bold");
     }
 
@@ -803,7 +803,7 @@ settings:
         let themes_dir = engine.get_themes_directory();
         
         // Should end with the correct path structure
-        assert!(themes_dir.to_string_lossy().contains(".local/etc/rsb/boxy/themes"));
+        assert!(themes_dir.to_string_lossy().contains(".local/etc/odx/boxy/themes"));
     }
 
     #[test]
