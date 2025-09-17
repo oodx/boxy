@@ -171,18 +171,18 @@ Update help menus, create tests, document new API
 
 ## PRIORITIZED EXECUTION ORDER
 
-### SPRINT 1 (Critical Path - 16 pts)
-1. ENGINE-001: Create engine subcommand [3 pts] - ESTABLISH NAMESPACE (FOUNDATION)
-2. ENGINE-008: Migrate and fix engine init [3 pts] - CREATE MISSING DIRECTORY
-3. ENGINE-007: Fix global loading [5 pts] - ENSURE THEMES LOAD
-4. ENGINE-004: Fix import command [5 pts]
+### SPRINT 1 (Critical Path - 16 pts) ✅ COMPLETE
+1. ENGINE-001: Create engine subcommand [3 pts] ✅ - ESTABLISH NAMESPACE (FOUNDATION)
+2. ENGINE-008: Migrate and fix engine init [3 pts] ✅ - CREATE MISSING DIRECTORY
+3. ENGINE-007: Fix global loading [5 pts] ✅ - ENSURE THEMES LOAD
+4. ENGINE-004: Fix import command [5 pts] ✅
 
-### SPRINT 2 (Core Functionality - 15 pts)
-5. ENGINE-005: Fix export command [3 pts]
-6. ENGINE-010: Implement debug command [5 pts]
-7. ENGINE-011: Enhance list output [3 pts]
-8. ENGINE-002: Separate help menus [2 pts]
-9. ENGINE-006: Enforce boxy_ prefix [2 pts]
+### SPRINT 2 (Core Functionality - 15 pts) 🎯 IN PROGRESS (3/15 pts complete)
+5. ENGINE-005: Fix export command [3 pts] ✅ - COMPLETE WITH VALIDATION & OVERWRITE PROTECTION
+6. ENGINE-010: Implement debug command [5 pts] 🎯 NEXT - Enhanced diagnostics & hierarchy display
+7. ENGINE-011: Enhance list output [3 pts] - Visual theme properties with colors/icons
+8. ENGINE-002: Separate help menus [2 pts] - Dedicated engine vs theme help
+9. ENGINE-006: Enforce boxy_ prefix [2 pts] - File validation and security
 
 ### SPRINT 3 (Polish & Cleanup - 18 pts)
 10. ENGINE-003: Add --use alias [1 pt]
