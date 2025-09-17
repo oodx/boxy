@@ -25,7 +25,7 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     
     // =============== OVERVIEW ===============
     println!("{}OVERVIEW:{}", get_color_code("azure"), RESET);
-    println!("  Boxy v0.9 introduces a comprehensive theme system with semantic formatting,");
+    println!("  Boxy v0.10.1 introduces a comprehensive theme system with semantic formatting,");
     println!("  enhanced layout control, and 90+ colors for professional CLI output.");
     println!();
     

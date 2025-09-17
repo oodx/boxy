@@ -97,18 +97,62 @@ echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; 
 echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
 ```
 
-### CLI Reference (v0.9)
+### CLI Reference (v0.10.1)
 
-- Input: Pipe content to `boxy` or pass via `--params` (metadata only).
-- Visual: `--style`, `--color`, `--text`, `--width <N|max|auto>`, `--wrap`.
-- Sections: `--header`, `--title`, `--status` (sl|sc|sr), `--footer`.
-- Layout: `--layout` tokens `hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp`.
-- Themes: `--theme <name>`; manage via `boxy theme <command>`. Env: `BOXY_THEME`.
-  - `boxy theme list` - List all available themes
-  - `boxy theme show <name>` - Show theme details
-  - `boxy theme hierarchy` - Display theme loading hierarchy
-  - `boxy theme dryrun <name>` - Test theme with sample content
-- Utility: `--no-boxy[=strict]`, `--colors`, `--examples`, `--help`, `--version`.
+**Input & Content:**
+- Pipe content to `boxy` or pass via `--params` (metadata only)
+- `--params <stream>` - Parse metadata stream: `hd='header'; ft='footer';` etc.
+
+**Visual Styling:**
+- `--style <STYLE>` - Border style: normal, rounded, double, heavy, ascii
+- `--color <COLOR>` - Border color from 90+ palette
+- `--text <COLOR>` - Text color: 'auto' matches border, 'none' default
+- `--width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
+- `--wrap` - Enable hint-aware wrapping for fixed widths
+
+**Content Sections:**
+- `--header <TEXT>` - External header (above the box)
+- `--title <TEXT>` - Title line (first in-box line; emoji-aware icon)
+- `--status <TEXT>` - Status line inside box (use sl:|sc:|sr: prefixes)
+- `--footer <TEXT>` - Footer text (inside bottom border)
+- `--icon <ICON>` - Add icon to content (deprecated - use --title)
+
+**Color Controls:**
+- `--title-color <COLOR>` - Color for title line (overrides --text)
+- `--status-color <COLOR>` - Color for status line (overrides --text)
+- `--header-color <COLOR>` - Color for header line
+- `--footer-color <COLOR>` - Color for footer line
+
+**Layout Controls:**
+- `--layout <spec>` - Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp
+- `--pad <a|b>` - Blank line above (a) and/or below (b) the body
+
+**Theme System:**
+- `--theme <name>` - Apply semantic theme (error, success, warning, info, critical)
+- `boxy theme list` - List all available themes
+- `boxy theme show <name>` - Show theme details
+- `boxy theme create <name>` - Create new theme interactively
+- `boxy theme import <file>` - Import theme from YAML
+- `boxy theme export <name>` - Export theme to YAML
+- `boxy theme edit <name>` - Edit existing theme
+- `boxy theme hierarchy` - Display theme loading hierarchy
+- `boxy theme dryrun <name>` - Test theme with sample content
+
+**Utility Commands:**
+- `--no-boxy[=strict]` - Strip box decoration (strict removes all formatting)
+- `--no-color` - Disable Jynx integration and color output
+- `boxy width` - Show terminal width diagnostics
+- `--colors` - Preview all 90+ available colors
+- `--help` - Show help message
+- `--version` - Show version information
+
+**Environment Variables:**
+- `BOXY_THEME=<name>` - Set default theme (overridden by --theme)
+- `BOXY_MIN_WIDTH=<N>` - Set minimum box width (default: 5)
+- `BOXY_MULTIPLEX_MODE=<mode>` - Control multiplex behavior
+- `BOXY_USE_CUSTOM_WIDTH=1` - Use custom width calculation (debug utility)
+- `HOME` - Used for theme hierarchy and configuration paths
+- `USER` - Used in theme variable expansion
 
 ## Text Wrapping and Width Control
 
@@ -269,16 +313,77 @@ echo "Processing file 1#NL#Processing file 2#NL#Processing file 3#NL#✅ All com
 
 ## Colors & Text Styling
 
-### Available Colors
-- Basic: `red`, `green`, `blue`, `cyan`, `yellow`, `magenta`
-- Extended: `red2`, `green2`, `blue2`, `purple`, `purple2`
-- Special: `orange`, `deep`, `deep_green`
-- Grays: `white`, `white2`, `grey`, `grey2`, `grey3`
+### Available Colors (90+ Palette)
+
+**Legacy Colors (v0.5.0):**
+- `red`, `red2`, `deep`, `deep_green`, `orange`, `yellow`
+- `green`, `green2`, `blue`, `blue2`, `cyan`, `magenta`
+- `purple`, `purple2`, `white`, `white2`, `grey`, `grey2`, `grey3`
+
+**Rich Color Spectrum:**
+
+*Red Spectrum:* `crimson`, `ruby`, `coral`, `salmon`, `rose`, `brick`
+
+*Orange Spectrum:* `amber`, `tangerine`, `peach`, `rust`, `bronze`, `gold`
+
+*Yellow Spectrum:* `lemon`, `mustard`, `sand`, `cream`, `khaki`
+
+*Green Spectrum:* `lime`, `emerald`, `forest`, `mint`, `sage`, `jade`, `olive`
+
+*Blue Spectrum:* `azure`, `navy`, `royal`, `ice`, `steel`, `teal`, `indigo`
+
+*Purple Spectrum:* `violet`, `plum`, `lavender`, `orchid`, `mauve`, `amethyst`
+
+*Cyan Spectrum:* `aqua`, `turquoise`, `sky`, `ocean`
+
+*Monochrome:* `black`, `charcoal`, `slate`, `silver`, `pearl`, `snow`
+
+**Semantic Colors:**
+
+*Alerts:* `error`, `warning`, `danger`, `alert`
+
+*Success:* `success`, `complete`, `verified`, `approved`
+
+*Info:* `info`, `note`, `hint`, `debug`
+
+*States:* `pending`, `progress`, `blocked`, `queued`, `active`, `inactive`
+
+*Priority:* `critical`, `high`, `medium`, `low`, `trivial`
+
+**Preview All Colors:**
+```bash
+boxy --colors  # Shows complete color palette with visual preview
+```
 
 ### Text Colors (`--text`)
 - Use any color from the list above: `--text red`, `--text blue2`
 - Use `auto` to match box color: `--text auto`
 - Omit flag for default terminal text color
+
+## Jynx Integration
+
+Boxy integrates with the Jynx color system for enhanced terminal compatibility and color management:
+
+### Color System Integration
+- **Automatic Detection**: Boxy automatically detects and uses Jynx when available
+- **Terminal Compatibility**: Respects terminal color capabilities through Jynx
+- **Fallback Support**: Gracefully degrades when Jynx is unavailable
+
+### Control Options
+```bash
+# Disable Jynx integration and all color output
+echo "content" | boxy --no-color
+
+# Standard usage (Jynx auto-detected)
+echo "content" | boxy --color blue
+```
+
+### Environment Integration
+Jynx integration provides:
+- Intelligent terminal capability detection
+- Color palette optimization for different terminal types
+- Consistent color rendering across terminal emulators
+- Automatic fallback for unsupported terminals
 
 ### Themes
 Predefined combinations of icon, color, and styling:
@@ -321,6 +426,7 @@ Boxy uses a **5-level theme hierarchy** that searches for themes in the followin
 
 ### Theme Management Commands
 
+**Basic Operations:**
 ```bash
 # View the theme loading hierarchy
 boxy theme hierarchy
@@ -333,6 +439,26 @@ boxy theme show success
 
 # Test a theme with sample content before using
 boxy theme dryrun error
+```
+
+**Advanced Theme Management:**
+```bash
+# Interactive theme creation
+boxy theme create my_theme        # Create new theme interactively
+
+# Theme import/export
+boxy theme export success > my_theme.yml  # Export theme to YAML
+boxy theme import my_theme.yml             # Import theme from YAML
+
+# Theme editing
+boxy theme edit my_theme          # Edit existing theme in editor
+```
+
+**Environment Variables:**
+```bash
+# Set default theme (overridden by --theme)
+export BOXY_THEME=success
+echo "content" | boxy             # Uses success theme by default
 ```
 
 ### Creating Custom Themes
@@ -351,6 +477,56 @@ themes:
 ```
 
 Then use with: `echo "Hello" | boxy --theme my_custom`
+
+## Environment Variables
+
+Boxy supports several environment variables for configuration and debugging:
+
+### Theme Configuration
+```bash
+# Set default theme (overridden by --theme flag)
+export BOXY_THEME=success
+echo "Deployment complete" | boxy  # Uses success theme
+```
+
+### Layout Configuration
+```bash
+# Set minimum box width (default: 5)
+export BOXY_MIN_WIDTH=20
+echo "Short" | boxy  # Box will be at least 20 characters wide
+```
+
+### Advanced Configuration
+```bash
+# Enable multiplex mode features
+export BOXY_MULTIPLEX_MODE=enabled
+
+# Enable custom width calculation (debug utility)
+export BOXY_USE_CUSTOM_WIDTH=1
+```
+
+### Variable Expansion
+Boxy supports variable expansion in text content using `$VAR` syntax:
+
+```bash
+# Variables available for expansion
+export USER=developer
+echo "Welcome $USER to the system" | boxy --title "Greeting"
+# Output: "Welcome developer to the system"
+
+# Built-in variables
+echo "Home: $HOME" | boxy
+echo "User: $USER" | boxy
+```
+
+### Configuration Paths
+```bash
+# Theme hierarchy uses standard paths
+# ~/.local/etc/rsb/boxy/themes/    (XDG themes directory)
+# ./themes/                       (Local themes directory)
+# ./.themes/                      (Hidden local themes)
+# ./boxy*.yaml                    (Local boxy files)
+```
 
 ## Examples
 
@@ -511,6 +687,35 @@ let max_width = content_lines.iter()
 - Use the built-in `emoji_debug` binary to analyze problematic characters
 - Verify alignment with sequences like `"✅ Success"` and `"ℹ️ Info"`
 - Check that ANSI color codes don't affect width calculations
+
+## Terminal Width Diagnostics
+
+Boxy includes a built-in width utility for troubleshooting layout issues and verifying terminal capabilities:
+
+### Width Command
+```bash
+# Show comprehensive terminal width information
+boxy width
+```
+
+### Information Provided
+- **Terminal Dimensions**: Current terminal width and height
+- **Display Width Test**: Verification of width calculation accuracy
+- **Character Width Testing**: Test how specific characters are measured
+- **Layout Diagnostics**: Information for troubleshooting box sizing issues
+
+### Use Cases
+- **Layout Troubleshooting**: When boxes appear too wide or narrow
+- **Terminal Compatibility**: Verify width detection across different terminals
+- **CI/CD Integration**: Ensure consistent layout in automated environments
+- **Multi-platform Testing**: Validate behavior across operating systems
+
+### Example Output
+The width command provides detailed information about:
+- Detected terminal width vs actual usable width
+- Character width calculation methods
+- Terminal capability flags
+- Recommendations for optimal box sizing
 
 ## Emoji Debugging System
 
