@@ -1150,3 +1150,79 @@ settings:
 "#.to_string()
 }
 
+// ==================== ENGINE COMMAND HANDLERS ====================
+
+/// Handle `boxy engine init` command - creates global theme directory and default config
+pub fn handle_engine_init() {
+    // TODO: This will be implemented in ENGINE-008
+    eprintln!("Error: Engine init command not yet implemented.");
+    eprintln!("This will create the global theme directory: ~/.local/etc/rsb/boxy/themes/");
+    eprintln!("Coming in ENGINE-008 implementation.");
+    std::process::exit(1);
+}
+
+/// Handle `boxy engine import <name>` command - imports boxy_<name>.yml to global location
+pub fn handle_engine_import(name: &str) {
+    // TODO: Rename from theme import, implement proper file operations
+    eprintln!("Error: Engine import command not yet fully implemented.");
+    eprintln!("This will import boxy_{}.yml from local to global themes directory.", name);
+    eprintln!("Coming in ENGINE-004 implementation.");
+    std::process::exit(1);
+}
+
+/// Handle `boxy engine export <name>` command - exports boxy_<name>.yml from global to local
+pub fn handle_engine_export(name: &str) {
+    // TODO: Rename from theme export, implement proper file operations
+    eprintln!("Error: Engine export command not yet fully implemented.");
+    eprintln!("This will export boxy_{}.yml from global to local directory.", name);
+    eprintln!("Coming in ENGINE-005 implementation.");
+    std::process::exit(1);
+}
+
+/// Handle `boxy engine edit <name>` command - edits a config file
+pub fn handle_engine_edit(name: &str) {
+    // TODO: Move from theme edit, implement proper file operations
+    eprintln!("Error: Engine edit command not yet fully implemented.");
+    eprintln!("This will edit the boxy_{}.yml config file.", name);
+    eprintln!("Coming in ENGINE-015 implementation.");
+    std::process::exit(1);
+}
+
+/// Handle `boxy engine status` command - shows engine health
+pub fn handle_engine_status() {
+    // TODO: Implement engine status check
+    eprintln!("Error: Engine status command not yet implemented.");
+    eprintln!("This will show engine health, config count, themes count, etc.");
+    eprintln!("Coming in ENGINE-012 implementation.");
+    std::process::exit(1);
+}
+
+/// Print engine help
+pub fn print_engine_help() {
+    println!("{} {} - Engine Commands Help", NAME, VERSION);
+    println!();
+    println!("USAGE:");
+    println!("    {} engine <COMMAND>", NAME);
+    println!();
+    println!("COMMANDS:");
+    println!("    init              Initialize global theme directory and defaults");
+    println!("    import <name>     Import boxy_<name>.yml to global location");
+    println!("    export <name>     Export boxy_<name>.yml from global to local");
+    println!("    list              List all available themes from all configs");
+    println!("    debug             Show loading hierarchy and engine diagnostics");
+    println!("    status            Show engine health and statistics");
+    println!("    edit <name>       Edit a theme config file");
+    println!("    help              Show this help message");
+    println!();
+    println!("DESCRIPTION:");
+    println!("    Engine commands manage theme configuration files (boxy_*.yml).");
+    println!("    These are separate from individual theme usage commands.");
+    println!();
+    println!("EXAMPLES:");
+    println!("    {} engine init                   # Set up global theme system", NAME);
+    println!("    {} engine list                   # Show all available themes", NAME);
+    println!("    {} engine debug                  # Debug theme loading", NAME);
+    println!("    {} engine import myproject       # Import boxy_myproject.yml", NAME);
+    println!("    {} engine export default         # Export boxy_default.yml", NAME);
+}
+
