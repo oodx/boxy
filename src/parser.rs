@@ -151,7 +151,66 @@ fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
             }
             return result;
         }
-        // If hint is in wrong position, fall through to normal wrapping
+        // If hint is in wrong position, use word-boundary ellipsis instead
+        // Find the best word boundary for ellipsis
+        let words: Vec<&str> = clean_line.split_whitespace().collect();
+        let mut current_line = String::new();
+        let mut current_width = 0;
+
+        for (i, word) in words.iter().enumerate() {
+            let word_width = get_display_width(word);
+            let space_width = if i > 0 { 1 } else { 0 };
+
+            // Check if adding this word would exceed max width
+            if current_width + space_width + word_width > max_width {
+                // Check if we can fit the word + ellipsis
+                if current_width + space_width + word_width + 1 <= max_width {
+                    // Word + ellipsis fits, add it with ellipsis
+                    if !current_line.is_empty() {
+                        current_line.push(' ');
+                    }
+                    current_line.push_str(word);
+                    let ellipsified = current_line + "…";
+                    let mut result = vec![ellipsified];
+
+                    // Wrap remaining words
+                    if i + 1 < words.len() {
+                        let remaining_words: Vec<&str> = words[i + 1..].to_vec();
+                        let remaining_text = remaining_words.join(" ");
+                        if !remaining_text.is_empty() {
+                            result.extend(wrap_single_line(&remaining_text, max_width));
+                        }
+                    }
+                    return result;
+                } else {
+                    // Word doesn't fit, just trim current line and wrap remaining
+                    if !current_line.is_empty() {
+                        // For #T# hint, always trim (no ellipsis) and wrap remaining content normally
+                        let trimmed = current_line.trim_end().to_string();
+                        let mut result = vec![trimmed];
+
+                        // Wrap remaining words normally
+                        let remaining_words: Vec<&str> = words[i..].to_vec();
+                        let remaining_text = remaining_words.join(" ");
+                        if !remaining_text.is_empty() {
+                            result.extend(wrap_single_line(&remaining_text, max_width));
+                        }
+                        return result;
+                    }
+                }
+            }
+
+            // Add word to current line
+            if !current_line.is_empty() {
+                current_line.push(' ');
+                current_width += 1;
+            }
+            current_line.push_str(word);
+            current_width += word_width;
+        }
+
+        // If we get here, the line fits with ellipsis - shouldn't happen but handle gracefully
+        return vec![clean_line];
     }
 
     if let Some(wrap_pos) = line.find("#W#") {
@@ -184,8 +243,18 @@ fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
         let word_width = get_display_width(word);
         let space_width = if i > 0 { 1 } else { 0 }; // Space before word (except first)
 
-        // Check if adding this word would exceed max width
-        if current_width + space_width + word_width > max_width {
+        // Look ahead to see if we should break early for better semantics
+        let should_break_early = if i + 1 < words.len() {
+            let next_word = words[i + 1];
+            let next_word_width = get_display_width(next_word);
+            // If adding this word + next word would create a very tight fit, break early
+            current_width + space_width + word_width + 1 + next_word_width > max_width + 2
+        } else {
+            false
+        };
+
+        // Check if adding this word would exceed max width or if we should break early
+        if current_width + space_width + word_width > max_width || should_break_early {
             // If current line has content, finalize it
             if !current_line.is_empty() {
                 result.push(current_line.clone());
