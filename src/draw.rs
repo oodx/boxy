@@ -9,7 +9,7 @@ use crate::components::{Header, Footer, Status, Body};
 // RSB-compliant helper functions for draw_box decomposition
 
 /// Calculate optimal box width based on content and terminal constraints
-fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>) -> usize {
+fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, enable_wrapping: bool) -> usize {
     let terminal_width = get_terminal_width();
     
     let box_width = match fixed_width {
@@ -24,10 +24,24 @@ fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>)
         None => {
             // Auto-size but constrain to terminal width
             let lines: Vec<&str> = text.lines().collect();
-            let content_max_width = lines.iter()
-                .map(|line| get_display_width(line))
-                .max()
-                .unwrap_or(0);
+            let content_max_width = if enable_wrapping {
+                // When wrapping is enabled, process wrap markers first to get accurate width
+                lines.iter()
+                    .map(|line| {
+                        // Process wrap markers to get the actual content that will be displayed
+                        let clean_line = line.replace("#W#", " ").replace("#T#", "");
+                        let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" ");
+                        get_display_width(&clean_line)
+                    })
+                    .max()
+                    .unwrap_or(0)
+            } else {
+                // Normal mode: just calculate width as-is
+                lines.iter()
+                    .map(|line| get_display_width(line))
+                    .max()
+                    .unwrap_or(0)
+            };
             let ideal_width = content_max_width + 2 * h_padding + 2; // +2 for borders
             
             if ideal_width > terminal_width {
@@ -52,7 +66,7 @@ fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>)
 
 pub fn draw_box(config: BoxyConfig) {
     // Use RSB-compliant helper for width calculation
-    let final_width = calculate_box_width(&config.text, config.width.h_padding, config.width.fixed_width);
+    let final_width = calculate_box_width(&config.text, config.width.h_padding, config.width.fixed_width, config.width.enable_wrapping);
     let inner_width = final_width.saturating_sub(2); // Account for borders
     let color_code = get_color_code(&config.colors.box_color);
     

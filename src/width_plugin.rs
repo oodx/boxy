@@ -87,6 +87,7 @@ pub fn get_terminal_width() -> usize {
 }
 
 /// Our custom width calculation based on emoji research
+#[allow(dead_code)]
 pub fn get_display_width_custom(text: &str) -> usize {
     let clean = strip_ansi_escapes::strip(text);
     let clean_str = String::from_utf8_lossy(&clean);
@@ -176,6 +177,7 @@ pub fn get_display_width_custom(text: &str) -> usize {
 }
 
 /// Compare our custom width with unicode-width library
+#[allow(dead_code)]
 pub fn compare_width_methods(text: &str) -> (usize, usize) {
     let custom = get_display_width_custom(text);
     let standard = unicode_width::UnicodeWidthStr::width(text);
@@ -184,6 +186,7 @@ pub fn compare_width_methods(text: &str) -> (usize, usize) {
 
 /// Legacy function - now redirects to custom implementation
 /// (kept for compatibility with comparison tools)
+#[allow(dead_code)]
 pub fn get_display_width_unicode_crate(text: &str) -> usize {
     // Now uses standard unicode-width library for comparison
     unicode_width::UnicodeWidthStr::width(text)

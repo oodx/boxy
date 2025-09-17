@@ -284,6 +284,68 @@ Boxy implements its own Unicode width calculation system, removing the dependenc
 - Reduced binary size and dependencies
 - Custom debugging capabilities for width issues
 
+## Known Issues & Solutions
+
+### Emoji & Unicode Alignment Issues
+
+During development, several critical alignment and width calculation issues were identified and resolved. If you encounter similar problems when working with emoji or Unicode content, these solutions may help:
+
+#### 1. **ANSI Color Code Width Issue**
+**Problem**: ANSI escape sequences (color codes) were being counted in width calculations, causing misaligned boxes.
+
+**Solution**: Strip ANSI codes before width calculation using the `strip_ansi_escapes` function. Width calculations should only consider visible characters.
+
+```rust
+// Before width calculation, strip ANSI codes
+let clean_text = strip_ansi_escapes(&text);
+let width = calculate_width(&clean_text);
+```
+
+#### 2. **Emoji Truncation Issue**
+**Problem**: Multi-codepoint emoji (like ℹ️ - information symbol with variation selector) were being split during text truncation, breaking visual alignment and rendering.
+
+**Solution**: Handle emoji as complete grapheme clusters during truncation operations. Never split emoji in the middle of their codepoint sequence.
+
+```rust
+// Use grapheme-aware truncation
+use unicode_segmentation::UnicodeSegmentation;
+let graphemes: Vec<&str> = text.graphemes(true).collect();
+// Truncate by grapheme clusters, not bytes or chars
+```
+
+#### 3. **Mixed Width Padding Issue**
+**Problem**: Lines containing different emoji and symbol widths weren't getting consistent padding, resulting in ragged box edges.
+
+**Solution**:
+- Use unicode-width library for accurate emoji width detection
+- Calculate the maximum content width across all lines
+- Pad all lines to this maximum width for uniform alignment
+- Account for emoji width (typically 2 columns) vs ASCII (1 column)
+
+```rust
+// Calculate max width across all content lines
+let max_width = content_lines.iter()
+    .map(|line| unicode_width::UnicodeWidthStr::width(&strip_ansi_escapes(line)))
+    .max()
+    .unwrap_or(0);
+
+// Pad each line to max_width for uniform alignment
+```
+
+#### 4. **Complex Unicode Sequence Handling**
+**Problem**: Unicode sequences with variation selectors, zero-width joiners, and modifiers weren't handled consistently.
+
+**Solution**:
+- Process text as grapheme clusters rather than individual codepoints
+- Use proper Unicode normalization
+- Test with complex emoji sequences during development
+
+#### Development Tips
+- Always test with mixed emoji and ASCII content
+- Use the built-in `emoji_debug` binary to analyze problematic characters
+- Verify alignment with sequences like `"✅ Success"` and `"ℹ️ Info"`
+- Check that ANSI color codes don't affect width calculations
+
 ## Emoji Debugging System
 
 For developers working with Unicode and emoji, boxy includes comprehensive debugging tools:

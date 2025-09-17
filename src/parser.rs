@@ -115,25 +115,65 @@ pub fn wrap_text_at_word_boundaries(text: &str, max_width: usize) -> Vec<String>
 
 /// Wrap a single line at word boundaries with hint processing
 fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
-    // Handle truncate hints first - #T# means truncate before, wrap after
+    // First, check if line fits without any processing
+    let clean_line = line.replace("#W#", " ").replace("#T#", "");
+    let clean_line = clean_line.split_whitespace().collect::<Vec<_>>().join(" "); // Normalize whitespace
+
+    if get_display_width(&clean_line) <= max_width {
+        return vec![clean_line];
+    }
+
+    // Line is too long, check for hints
+    // Priority: #T# first (ellipsis + wrap), then #W# (wrap point)
+
     if let Some(truncate_pos) = line.find("#T#") {
-        let after_truncate = &line[truncate_pos + 3..]; // Skip the #T# marker
-        return wrap_single_line(after_truncate, max_width);
+        // Use #T# hint: ellipsify at this point, wrap the rest
+        let before_t = &line[..truncate_pos];
+        let after_t = &line[truncate_pos + 3..]; // Skip #T# marker
+
+        // Clean the before part and ellipsify if needed
+        let clean_before = before_t.replace("#W#", " ");
+        let clean_before = clean_before.split_whitespace().collect::<Vec<_>>().join(" ");
+
+        let ellipsified = if get_display_width(&clean_before) > max_width - 1 { // -1 for ellipsis
+            truncate_with_ellipsis(&clean_before, max_width)
+        } else {
+            clean_before.trim_end().to_string() // Remove trailing space when not ellipsifying
+        };
+
+        let mut result = vec![ellipsified];
+        // Wrap the after part recursively, trimming leading whitespace
+        let clean_after = after_t.trim_start();
+        if !clean_after.is_empty() {
+            result.extend(wrap_single_line(clean_after, max_width));
+        }
+        return result;
     }
 
-    // Process wrap hints - #W# marks ideal wrap points
-    let processed_line = line.replace("#W#", ""); // Remove markers for display
+    if let Some(wrap_pos) = line.find("#W#") {
+        // Use #W# hint: split at this point
+        let before_w = &line[..wrap_pos];
+        let after_w = &line[wrap_pos + 3..]; // Skip #W# marker
 
-    if get_display_width(&processed_line) <= max_width {
-        return vec![processed_line];
+        // Clean both parts - trim trailing/leading whitespace when wrapping
+        let clean_before = before_w.split_whitespace().collect::<Vec<_>>().join(" ");
+        let clean_after = after_w.trim_start().split_whitespace().collect::<Vec<_>>().join(" ");
+
+        if get_display_width(&clean_before) <= max_width && !clean_after.is_empty() {
+            let mut result = vec![clean_before.trim_end().to_string()]; // Remove trailing space
+            result.extend(wrap_single_line(&clean_after, max_width));
+            return result;
+        }
+        // If before part is still too long, fall through to normal wrapping
     }
 
+    // No hints worked, fall back to normal word boundary wrapping
     let mut result = Vec::new();
     let mut current_line = String::new();
     let mut current_width = 0;
 
-    // Split into words while preserving spaces
-    let words: Vec<&str> = processed_line.split_whitespace().collect();
+    // Use the cleaned line for normal wrapping
+    let words: Vec<&str> = clean_line.split_whitespace().collect();
 
     for (i, word) in words.iter().enumerate() {
         let word_width = get_display_width(word);

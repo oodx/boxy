@@ -4,25 +4,30 @@
 /// different width calculation methods for terminal applications.
 
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
+#[allow(unused_imports)]
 use strip_ansi_escapes;
 
 /// Calculate display width using our custom implementation
+#[allow(dead_code)]
 pub fn get_unicode_width(text: &str) -> usize {
     crate::width_plugin::get_display_width(text)
 }
 
 /// Calculate "naive" width (just character count)
+#[allow(dead_code)]
 pub fn get_char_count(text: &str) -> usize {
     text.chars().count()
 }
 
 /// Calculate byte length
+#[allow(dead_code)]
 pub fn get_byte_count(text: &str) -> usize {
     text.len()
 }
 
 /// Estimate terminal width based on emoji patterns
 /// This is our custom heuristic for better emoji width calculation
+#[allow(dead_code)]
 pub fn get_estimated_terminal_width(text: &str) -> usize {
     // Use our custom width calculation directly
     // This handles variation selectors and emoji width correctly
@@ -51,6 +56,7 @@ fn is_likely_emoji(ch: char) -> bool {
 
 /// Comprehensive debug information for a character or string
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct EmojiDebugInfo {
     pub text: String,
     pub unicode_width: usize,
@@ -63,6 +69,7 @@ pub struct EmojiDebugInfo {
 }
 
 impl EmojiDebugInfo {
+    #[allow(dead_code)]
     pub fn new(text: &str) -> Self {
         let codepoints: Vec<u32> = text.chars().map(|c| c as u32).collect();
         let unicode_names: Vec<String> = text.chars()
@@ -86,6 +93,7 @@ impl EmojiDebugInfo {
         }
     }
 
+    #[allow(dead_code)]
     pub fn print_debug(&self) {
         println!("🔍 EMOJI DEBUG: '{}'", self.text);
         println!("  Unicode Width: {}", self.unicode_width);
@@ -97,6 +105,7 @@ impl EmojiDebugInfo {
         println!("  Names: {:?}", self.unicode_names);
     }
 
+    #[allow(dead_code)]
     pub fn compare_widths(&self) -> String {
         format!(
             "unicode:{} chars:{} bytes:{} est_term:{}",
@@ -106,6 +115,7 @@ impl EmojiDebugInfo {
 }
 
 /// Simple approximation of Unicode name lookup
+#[allow(dead_code)]
 fn unicode_name(ch: char) -> Option<String> {
     let code = ch as u32;
     match code {
@@ -123,6 +133,7 @@ fn unicode_name(ch: char) -> Option<String> {
 }
 
 /// Compare multiple characters/strings side by side
+#[allow(dead_code)]
 pub fn compare_chars(chars: &[&str]) {
     println!("📊 CHARACTER WIDTH COMPARISON");
 
