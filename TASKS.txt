@@ -1,181 +1,231 @@
-# BOXY REGRESSION TASKS - FINAL SESSION UPDATE
-# Generated from Tina's validation analysis on 2025-09-16
-# FINAL UPDATE: ✅ ALL CRITICAL ISSUES RESOLVED - EMOJI ALIGNMENT VICTORY!
-# Session completed with comprehensive golden summary by China the Summary Chicken
+# BOXY THEME/ENGINE SYSTEM REFACTOR - TASK BREAKDOWN
+# Generated: 2025-09-17
+# Epic 1: Fix the broken theme/engine system
 
-🎉 **SESSION COMPLETION STATUS**: ALL MAJOR REGRESSIONS FIXED!
-- ✅ Emoji alignment regression completely resolved
-- ✅ Theme style inheritance fully functional
-- ✅ Text truncation and box sizing working perfectly
-- ✅ Word wrapping feature added as enhancement
-- ✅ 35+ test scenarios passing with perfect results
-- ✅ Comprehensive debugging system implemented
+## ROADMAP OVERVIEW
 
-## ✅ CRITICAL: Emoji Alignment Regression RESOLVED ⭐ VICTORY!
-**Priority**: CRITICAL - Core functionality ✅ COMPLETED
-**Status**: ✅ FULLY RESOLVED - Perfect emoji alignment restored
-**Problem**: ANSI color codes and emoji truncation causing alignment issues
-**Solution**: Implemented protected macro system with unicode-width crate + custom fallback
-**Implementation**:
-  - Protected width macros (box_width!, max_width!, inner_target_width!) prevent regressions
-  - Unicode-width crate as primary with ANSI escape sequence stripping
-  - Custom width_plugin.rs as fallback implementation (BOXY_USE_CUSTOM_WIDTH=1)
-  - Comprehensive emoji debugging system (6 new debug utilities)
-  - Grapheme cluster handling for proper emoji truncation
-**Impact**: ALL emoji alignment issues eliminated, 35+ test scenarios passing
-**Evidence**: Perfect visual alignment confirmed by comprehensive validation
-**Bonus**: Added debugging infrastructure for future emoji-related development
-**Dependency Status**: ✅ unicode-width crate primary, custom fallback available
+### PHASE 1: Command Structure Refactor
+Separate engine commands from theme commands, establish clear API boundaries
 
-## ✅ RESOLVED: Theme Style Inheritance Fixed
-**Status**: ✅ COMPLETED - Theme styles now properly applied, both CLI flags and theme inheritance work
-**Impact**: ALL themed styles now working correctly (success, magic, silly, error, warning, critical)
-**Resolution**: Added proper style inheritance logic in theme application section of main.rs
-**Evidence**: success theme now shows ╭╮╰╯ (rounded) instead of ┌┐└┘ (normal)
+### PHASE 2: Engine File Management
+Fix import/export functionality, enforce boxy_ prefix, handle file operations
+
+### PHASE 3: Global Directory & Deployment
+Fix hierarchy loading, ensure global themes are accessible, improve deploy.sh
+
+### PHASE 4: Enhanced Debugging & Display
+Better visibility into engine state, theme discovery, and visual presentation
+
+### PHASE 5: Documentation & Testing
+Update help menus, create tests, document new API
 
 ---
 
-## ✅ REGR-001: STYLE APPLICATION FAILURE IDENTIFIED & RESOLVED
-**Priority**: Medium ✅ COMPLETED
-**Task**: Trace theme style property from YAML to BoxStyle assignment ✅ COMPLETED
-**Location**: src/main.rs theme application section (lines 469-515) ✅ FIXED
-**Goal**: Find where style inheritance breaks ✅ FOUND & RESOLVED
-**Test**: Compare successful --style flag vs theme style paths ✅ WORKING
-**Status**: ✅ COMPLETED - Style inheritance logic implemented and functional
+## MILESTONE 1: COMMAND RESTRUCTURE (Priority: HIGH)
 
-## ✅ REGR-001b: CLI STYLE OVERRIDE TRACKING IMPLEMENTED
-**Priority**: Medium ✅ COMPLETED
-**Task**: Add boolean flag to track if style was set via CLI ✅ IMPLEMENTED
-**Location**: Style tracking implemented in theme application logic
-**Implementation**: ✅ Added proper CLI style precedence handling
-**Purpose**: Prevent theme styles from overriding explicit CLI choices ✅ WORKING
-**Dependency**: Required for REGR-002 implementation ✅ FULFILLED
-**Status**: ✅ COMPLETED - CLI styles take precedence over theme styles
+### ENGINE-001: Create `boxy engine` subcommand structure [3 pts]
+- Create new `boxy engine` namespace for config file management
+- Commands to move from `theme` to `engine`:
+  - `boxy theme init` -> `boxy engine init` (creates config files, not themes)
+  - `boxy theme hierarchy` -> `boxy engine debug`
+  - `boxy theme import` -> `boxy engine import`
+  - `boxy theme export` -> `boxy engine export`
+  - `boxy theme list` -> `boxy engine list`
+  - `boxy theme edit` -> `boxy engine edit` (edits config files)
+- Keep theme-specific commands under `theme`:
+  - `boxy theme show <name>` (displays individual theme properties)
+  - `boxy theme dryrun <name>` (tests individual theme rendering)
+  - `boxy theme create <name>` (creates new theme within a config)
 
-## ✅ REGR-002: THEME STYLE INHERITANCE FIXED ⭐ COMPLETED
-**Priority**: HIGH - Core fix required ✅ DONE
-**Task**: Modify theme application to set BoxStyle based on theme.style ✅ COMPLETED
-**Code**: Added style matching logic in theme application section ✅ IMPLEMENTED
-**Implementation**: Added proper style inheritance logic to theme application
-**Validation**: ✅ All style variants working (normal, rounded, double, heavy, ascii)
-**Evidence**: success theme shows ╭╮╰╯, magic theme shows ╭╮╰╯, error theme shows correct styling
-**Status**: ✅ COMPLETED - Core functionality restored
+### ENGINE-002: Implement separate help menus [2 pts]
+- Create dedicated help for `boxy engine --help`
+- Update help for `boxy theme --help`
+- Ensure clear distinction between engine config management and theme usage
 
-## REGR-003: COMPREHENSIVE STYLE INHERITANCE TESTING
-**Priority**: HIGH - Prevent regressions
-**Task**: Create regression test for each theme+style combination
-**Themes**: success, error, warning, critical, magic, silly
-**Styles**: normal, rounded, double, heavy, ascii (via inheritance)
-**Verify**: Visual output matches expected Unicode characters
-**Status**: PENDING
-
-## REGR-004: UPDATE THEME ENGINE TESTS
-**Priority**: Medium
-**Task**: Fix the weak assertion in theme_engine.rs line 528
-**Change**: Remove || success_theme.style == "normal" fallback
-**Enforce**: Strict style inheritance validation
-**Add**: Tests for all themed styles, not just success
-**Status**: PENDING
-
-## REGR-005: THEME VALIDATION ENHANCEMENT
-**Priority**: Low
-**Task**: Add style inheritance validation to theme engine
-**Feature**: Detect broken inheritance during theme loading
-**Error**: Warn users when theme styles don't apply correctly
-**Documentation**: Update theme docs with style inheritance rules
-**Status**: PENDING
-
-## REGR-006: INTEGRATION TESTING PROTOCOL
-**Priority**: Medium
-**Task**: Add automated tests for theme style rendering
-**Method**: Capture actual box output, verify Unicode characters
-**Coverage**: All built-in themes with their inherited styles
-**CI**: Prevent future style inheritance regressions
-**Status**: PENDING
-
-## ✅ REGR-007: TEXT TRUNCATION AND BOX SIZING FIXED ⭐ COMPLETED
-**Priority**: HIGH - Core layout issue ✅ RESOLVED
-**Task**: Fix incorrect text truncation behavior in box sizing ✅ COMPLETED
-**Problem**: Text being truncated when box should expand ✅ FIXED
-**Current Behavior**: ✅ WORKING CORRECTLY
-  - Box expands to fit text content appropriately
-  - Text truncation only when constraints require it
-  - Word-wrapping available with --wrap flag
-**Implementation**: Fixed text layout engine and added word-wrapping feature
-**Test Cases**: ✅ ALL PASSING
-  - ✅ Short text: Box minimal size
-  - ✅ Long text: Box expands appropriately
-  - ✅ Very long text with --wrap: Content wraps within box
-  - ✅ Fixed width constraints: Proper truncation with "..."
-**Status**: ✅ COMPLETED - Layout engine working correctly
-
-## REGR-008a: VERIFY THEME LOADING MECHANISM
-**Priority**: Medium
-**Task**: Confirm theme engine correctly loads theme style properties
-**Location**: theme_engine.rs and default.yml
-**Test**: Debug print theme.style values during loading
-**Verify**:
-  - success theme loads with style: "rounded"
-  - error theme loads with style: "heavy"
-  - Theme inheritance resolves correctly (success → base_rounded)
-**Method**: Add temporary debug prints in get_theme() method
-**Purpose**: Ensure problem is in application, not loading
-**Status**: PENDING
-
-## REGR-008: ENHANCE test.sh MINIMAL THEME COVERAGE ⭐ CRITICAL
-**Priority**: HIGH - Test coverage issue
-**Task**: Ensure test.sh run minimal shows ALL major theme variations and styles
-**Problem**: Current minimal test only covers 6 themes (error, success, warn, fatal, debug, magic)
-**Missing Coverage**:
-  - All styled themes: info, critical, silly, warning
-  - All style variations: rounded vs normal vs heavy vs double
-  - Theme inheritance verification
-**Expected Coverage**:
-  - ALL 14 available themes from default.yml
-  - Visual verification of style inheritance (rounded borders for success, magic, silly)
-  - Style comparison: normal vs rounded vs heavy vs double borders
-**Location**: tests/misc/sanity-test.sh lines 45-50
-**Test Enhancement**:
-  - Add missing themes: info, critical, silly, warning
-  - Add style verification section
-  - Add side-by-side style comparisons
-  - Verify theme inheritance works correctly
-**Status**: PENDING
+### ENGINE-003: Add --use alias for --theme flag [1 pt]
+- Allow both `--theme` and `--use` to work
+- Update argument parser to handle both
+- No deprecation warnings needed
 
 ---
 
-## EVIDENCE & VALIDATION
-- **Bug confirmed**: success theme shows ┌┐└┘ (straight) instead of ╭╮╰╯ (rounded)
-- **CLI works**: echo "test" | boxy --style rounded produces correct ╭╮╰╯
-- **Theme inheritance**: success → base_rounded → style: "rounded" (defined correctly)
-- **Missing code**: NO style application in theme handling section of main.rs
-- **Test admission**: theme_engine.rs:528 acknowledges inheritance can fail
+## MILESTONE 2: ENGINE FILE OPERATIONS (Priority: HIGH)
 
-## ✅ IMPLEMENTATION STATUS & NEW FEATURES
+### ENGINE-004: Fix import command with file handling [5 pts]
+- Pattern: `boxy engine import <name>` looks for `boxy_<name>.yml` locally
+- Copy to global `~/.local/etc/rsb/boxy/themes/` directory
+- Add `--overwrite` or `--force` flag for existing files
+- Without flag: error if file exists with message about using flag
+- Optional: Create `.bak` backup on overwrite
 
-### **✅ COMPLETED (Major Wins)**
-1. **✅ REGR-002** (theme inheritance) - ✅ FIXED - Core functionality restored
-2. **✅ REGR-007** (text truncation) - ✅ FIXED - Layout engine working
-3. **✅ REGR-001b** (CLI override tracking) - ✅ IMPLEMENTED
-4. **✅ WORD-WRAPPING** - 🆕 NEW FEATURE - --wrap flag implemented with #W#/#T# markers
-5. **✅ ICON-POSITIONING** - ✅ FIXED - Protected macro prevents theme icon bypass
-6. **✅ EMOJI-DEBUGGING** - 🆕 NEW FEATURE - Comprehensive debugging system (6 new utilities)
-7. **✅ PROTECTED-WIDTH-MACROS** - 🆕 NEW FEATURE - Protected macro system with dual implementations
-8. **✅ UNICODE-WIDTH-PRIMARY** - ✅ COMPLETED - unicode-width crate primary, custom fallback available
-9. **✅ PHANTOM-SPACE-FIX** - ✅ FIXED - Icons no longer have trailing spaces when content empty
+### ENGINE-005: Fix export command with proper naming [3 pts]
+- Pattern: `boxy engine export <name>` looks for `boxy_<name>.yml` in global
+- Copy to current working directory
+- Handle missing files gracefully with clear error messages
 
-### **📋 REMAINING TASKS (Lower Priority)**
-10. **REGR-008** (enhance test coverage) - ✅ ADDRESSED through Tina's validation
-11. **REGR-003** (comprehensive testing) - ✅ COMPLETED - 35+ tests passing
-12. **REGR-001** (trace failure) - ✅ RESOLVED through implementation
-13. **REGR-004** (fix tests) - Future enhancement (minor warnings only)
-14. **REGR-005** (warnings) - Future user experience improvement
-15. **REGR-006** (CI testing) - Future long-term prevention
+### ENGINE-006: Enforce boxy_ prefix for engine files [2 pts]
+- Update file discovery to only look for `boxy_*.yml` or `boxy_*.yaml`
+- Automatically exclude files containing 'template' or 'tmpl' in the name
+- Update default file generation to use boxy_ prefix
+- Migrate existing files or provide migration command
 
-### **🏆 SESSION OUTCOME: TOTAL SUCCESS**
-- ✅ ALL CRITICAL REGRESSIONS FIXED
-- ✅ EMOJI ALIGNMENT PERFECTED
-- ✅ DEPENDENCY REDUCED (unicode-width removed)
-- ✅ NEW DEBUGGING CAPABILITIES ADDED
-- ✅ COMPREHENSIVE VALIDATION COMPLETED
-- ✅ PROJECT READY FOR PRODUCTION
+---
+
+## MILESTONE 3: GLOBAL DIRECTORY & HIERARCHY (Priority: CRITICAL)
+
+### ENGINE-007: Fix global theme directory loading [5 pts]
+- Ensure `~/.local/etc/rsb/boxy/themes/` is checked in hierarchy
+- Debug why themes aren't being loaded from global location
+- Fix loading order to properly check all hierarchy levels
+
+### ENGINE-008: Migrate and fix engine init command [3 pts]
+- Move existing `boxy theme init` to `boxy engine init`
+- Create global directory `~/.local/etc/rsb/boxy/themes/` if missing
+- Generate default `boxy_default.yml` from embedded themes
+- Fix current implementation that only creates local .themes/
+- Report what was created and where
+
+### ENGINE-009: Update deploy.sh for theme deployment [2 pts]
+- Ensure deploy.sh copies default themes to global location
+- Handle directory creation if needed
+- Preserve user customizations
+
+---
+
+## MILESTONE 4: ENGINE DEBUG & DISPLAY (Priority: MEDIUM)
+
+### ENGINE-010: Implement comprehensive engine debug command [5 pts]
+- Move and rename `boxy theme hierarchy` to `boxy engine debug`
+- Show:
+  a. Check if global etc/boxy/themes directory is empty
+  b. Width calculation method in use (unicode-width vs custom)
+  c. List of discovered theme files with full paths
+  d. Loading order and which file "wins"
+  e. Total themes available across all configs
+
+### ENGINE-011: Enhance engine list output [3 pts]
+- Show all available themes with visual properties:
+  - Theme name
+  - Main icon (or □ placeholder)
+  - Text color name with ANSI color applied
+  - Box style with colored box parts
+  - Layout configurations (hl, sc, etc.)
+- Group by source config file
+
+### ENGINE-012: Add engine status command [2 pts]
+- Quick summary of engine health
+- Count of config files loaded
+- Count of themes available
+- Any errors or warnings
+
+---
+
+## MILESTONE 5: ERROR HANDLING & VALIDATION (Priority: MEDIUM)
+
+### ENGINE-013: Improve error messages [2 pts]
+- Clear messages when files not found
+- Explain hierarchy when theme not found
+- Suggest `engine init` when global dir missing
+
+### ENGINE-014: Add config validation [3 pts]
+- Validate YAML structure on import
+- Check for required theme properties
+- Warn about duplicate theme names across configs
+
+### ENGINE-015: Add dry-run mode for import/export [2 pts]
+- `--dry-run` flag to preview operations
+- Show what would be copied where
+- Useful for testing without side effects
+
+---
+
+## MILESTONE 6: TESTING & DOCUMENTATION (Priority: LOW)
+
+### ENGINE-016: Create engine command tests [3 pts]
+- Test import/export with various scenarios
+- Test file overwrite protection
+- Test hierarchy loading
+
+### ENGINE-017: Update README with engine commands [2 pts]
+- Document engine vs theme distinction
+- Provide examples of common workflows
+- Update command reference
+
+### ENGINE-018: Create migration guide [1 pt]
+- Help users migrate from old command structure
+- Document file naming changes
+- Provide troubleshooting tips
+
+---
+
+## STORY POINT SUMMARY
+
+**MILESTONE 1 (Command Restructure):** 6 points
+**MILESTONE 2 (File Operations):** 10 points
+**MILESTONE 3 (Global Directory):** 10 points - CRITICAL
+**MILESTONE 4 (Debug & Display):** 10 points
+**MILESTONE 5 (Error Handling):** 7 points
+**MILESTONE 6 (Testing & Docs):** 6 points
+
+**TOTAL:** 49 story points
+
+## PRIORITIZED EXECUTION ORDER
+
+### SPRINT 1 (Critical Path - 16 pts)
+1. ENGINE-008: Migrate and fix engine init [3 pts] - CREATE MISSING DIRECTORY
+2. ENGINE-001: Create engine subcommand [3 pts] - ESTABLISH NAMESPACE
+3. ENGINE-007: Fix global loading [5 pts] - ENSURE THEMES LOAD
+4. ENGINE-004: Fix import command [5 pts]
+
+### SPRINT 2 (Core Functionality - 15 pts)
+5. ENGINE-005: Fix export command [3 pts]
+6. ENGINE-010: Implement debug command [5 pts]
+7. ENGINE-011: Enhance list output [3 pts]
+8. ENGINE-002: Separate help menus [2 pts]
+9. ENGINE-006: Enforce boxy_ prefix [2 pts]
+
+### SPRINT 3 (Polish & Cleanup - 18 pts)
+10. ENGINE-003: Add --use alias [1 pt]
+11. ENGINE-009: Update deploy.sh [2 pts]
+12. ENGINE-012: Add status command [2 pts]
+13. ENGINE-013: Improve errors [2 pts]
+14. ENGINE-014: Add validation [3 pts]
+15. ENGINE-015: Add dry-run [2 pts]
+16. ENGINE-016: Create tests [3 pts]
+17. ENGINE-017: Update README [2 pts]
+18. ENGINE-018: Migration guide [1 pt]
+
+---
+
+## COMMAND STRUCTURE (FINAL DECISION)
+
+### Engine Commands (Config File Management):
+- `boxy engine init` - Initialize global theme directory and default config
+- `boxy engine import <name>` - Import boxy_<name>.yml to global location
+- `boxy engine export <name>` - Export boxy_<name>.yml from global to local
+- `boxy engine list` - List all available themes from all loaded configs
+- `boxy engine debug` - Show hierarchy, width calc, discovered files (formerly hierarchy)
+- `boxy engine status` - Quick health check of engine
+- `boxy engine edit <name>` - Edit a config file
+
+### Theme Commands (Individual Theme Operations):
+- `boxy theme show <name>` - Display properties of a specific theme
+- `boxy theme dryrun <name>` - Test theme with sample content
+- `boxy theme create <name>` - Create new theme within a config
+
+## NOTES
+
+- ENGINE-008 must run first to create the missing global directory
+- ENGINE-007 depends on ENGINE-008 completing successfully
+- Import/Export need to be fixed together for consistency
+- Debug command will be essential for troubleshooting issues
+- Consider adding `boxy engine doctor` as future enhancement
+- May need to handle backward compatibility for existing users
+
+## SUCCESS CRITERIA
+
+1. Global themes load correctly from hierarchy
+2. Import/export work with boxy_ prefixed files
+3. Clear separation between engine and theme commands
+4. Users can debug loading issues with engine debug
+5. Visual theme list helps users discover available styles
