@@ -680,7 +680,7 @@ pub fn handle_theme_create(name: &str, jynx: &JynxPlugin) {
             }
             
             println!();
-            let success_msg = format!("✅ Theme '{}' created successfully!\n   Saved to: {}\n\nTest your theme:\n   echo \"Hello World\" | boxy --theme {}", name, theme_file_path.display(), name);
+            let success_msg = format!("✅ Theme '{}' created successfully!\n   Saved to: {}\n\nTest your theme:\n   echo \"Hello World\" | boxy --use {}", name, theme_file_path.display(), name);
             
             if jynx.is_active() {
                 jynx_println(&success_msg, "success", jynx);
@@ -996,7 +996,7 @@ pub fn handle_theme_dryrun(theme_name: &str) {
                     }
                 }
 
-                println!("💡 Use: echo \"your text\" | boxy --theme {}", theme_name);
+                println!("💡 Use: echo \"your text\" | boxy --use {}", theme_name);
             } else {
                 eprintln!("Error: Theme '{}' not found", theme_name);
                 eprintln!("Use 'boxy theme list' to see available themes");
@@ -1062,7 +1062,7 @@ pub fn handle_theme_init() {
     println!("📝 Next steps:");
     println!("  1. Edit {} to customize your themes", target_file.display());
     println!("  2. Test with: {} theme dryrun <theme_name>", NAME);
-    println!("  3. Use with: echo \"text\" | {} --theme <theme_name>", NAME);
+    println!("  3. Use with: echo \"text\" | {} --use <theme_name>", NAME);
     println!();
     println!("💡 The .themes/ directory has the highest priority after individual boxy*.yaml files");
     println!("   Use: {} theme hierarchy to see the complete loading order", NAME);
@@ -1968,8 +1968,8 @@ fn handle_engine_list_enhanced(theme_engine: &ThemeEngine) {
     }
 
     println!("💡 Usage Examples:");
-    println!("  {} --theme error \"Error occurred\"    # Apply error theme", NAME);
-    println!("  {} --theme success \"Task complete\"   # Apply success theme", NAME);
+    println!("  {} --use error \"Error occurred\"      # Apply error theme", NAME);
+    println!("  {} --use success \"Task complete\"     # Apply success theme", NAME);
     println!("  {} engine debug                      # Debug theme loading", NAME);
 }
 
@@ -1987,23 +1987,34 @@ fn display_theme_with_visual_properties(name: &str, theme: &crate::theme_engine:
     };
 
     // Get box drawing characters for the style
-    let (top_left, horizontal, top_right) = get_box_chars_for_style(&theme.style);
+    let (top_left, horizontal, top_right, vertical, bottom_left, bottom_right) = get_box_chars_for_style_full(&theme.style);
 
-    // Build visual preview: colored icon + theme name + colored box parts + layout info
+    // Get layout tokens if present
+    let layout_str = if let Some(ref layout) = theme.layout {
+        format!(" [{}]", layout)
+    } else {
+        String::new()
+    };
+
+    // Build improved visual preview format:
+    // theme_name | icon text(colored) border_type border_demo(colored) layouts
     let visual_preview = format!(
-        "  {}{} {:12}{} {}{}{}{}{} {} {}{}",
+        "  {:14} │ {} {}Text{} {:8} {}{}{}{}{}{}{}{}{}{}",
+        name,
         icon,
         if theme.text_color != "none" { text_color_code } else { "" },
-        name,
         crate::colors::RESET,
+        theme.style,
         color_code,
         top_left,
         horizontal,
-        horizontal,
         top_right,
+        vertical,
+        bottom_left,
+        horizontal,
+        bottom_right,
         crate::colors::RESET,
-        theme.color,
-        theme.style
+        layout_str
     );
 
     println!("{}", visual_preview);
@@ -2035,6 +2046,17 @@ fn get_box_chars_for_style(style: &str) -> (char, char, char) {
         "heavy" => ('┏', '━', '┓'),
         "ascii" => ('+', '-', '+'),
         _ => ('┌', '─', '┐'), // normal
+    }
+}
+
+/// Get all box drawing characters for a complete box preview
+fn get_box_chars_for_style_full(style: &str) -> (char, char, char, char, char, char) {
+    match style {
+        "rounded" => ('╭', '─', '╮', '│', '╰', '╯'),
+        "double" => ('╔', '═', '╗', '║', '╚', '╝'),
+        "heavy" => ('┏', '━', '┓', '┃', '┗', '┛'),
+        "ascii" => ('+', '-', '+', '|', '+', '+'),
+        _ => ('┌', '─', '┐', '│', '└', '┘'), // normal
     }
 }
 
