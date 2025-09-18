@@ -153,3 +153,152 @@ Small overhead (makefile) for large consistency gains across project portfolio.
 ---
 
 *"Perfect width calculations, protected by design, documented with precision."* - Boxy v0.11.0 epitaph
+
+## 🎨 ENGINE System Architecture (v0.14.x)
+
+### The Hierarchy Revolution
+**Breakthrough:** Theme loading hierarchy that allows progressive override without conflict.
+
+```
+Local → Themes Dir → XDG Global → Built-in Fallback
+```
+
+**Key insight:** Users can override ANY theme at ANY level without breaking the system. A local `boxy_custom.yml` trumps everything, but all themes remain accessible.
+
+### Visual Theme Discovery
+**Problem:** Users didn't know what themes were available or what they looked like.
+**Solution:** `engine list` with visual previews:
+```
+theme_name │ icon colored_text style colored_box [layouts]
+```
+
+**Lesson:** Show, don't just tell. Visual previews eliminate guesswork.
+
+### API Clarity Through Aliasing
+**Evolution:** `--theme` → `--use` alias
+- Old: `--theme error` (sounds like you're defining a theme)
+- New: `--use error` (clearly selecting a pre-defined theme)
+- Both work for backwards compatibility
+
+**Principle:** API names should match user mental models.
+
+### Dry-Run as Safety Net
+**Implementation:** `--dry-run` for import/export operations
+- Preview exactly what will happen
+- Essential for CI/CD pipelines
+- Builds user confidence
+
+**Lesson:** Destructive operations need preview modes. Always.
+
+### Validation as Guardian
+**ENGINE-014's comprehensive validation:**
+- Pre-validates YAML structure
+- Separates errors (blocking) from warnings (informational)
+- Smart template/base theme exception handling
+- Professional error messaging with actionable guidance
+
+**Key insight:** Validation isn't just error checking - it's user education.
+
+## 🏛️ Architectural Patterns That Scale
+
+### 1. The Sprint Model Works
+Even for "simple" refactors, sprint planning with story points kept us focused:
+- SPRINT 1: Foundation (16 pts) - namespace, init, global loading
+- SPRINT 3: Polish (18 pts) - validation, dry-run, visual listing
+
+**Lesson:** Structure prevents drift, even in small projects.
+
+### 2. China's Egg System
+Technical review "eggs" became invaluable project memory:
+- Persistent record of decisions
+- Celebration of achievements
+- Knowledge transfer artifacts
+
+**Pattern:** Create celebration moments in technical work.
+
+### 3. The TODO.txt Truth
+Discovered that TODO.txt was outdated - most "problems" were already solved!
+**Lesson:** Regularly audit task lists against reality.
+
+### 4. Progressive Enhancement Philosophy
+Start with working basics, layer on improvements:
+1. Get themes loading →
+2. Add validation →
+3. Add dry-run →
+4. Add visual previews →
+5. Improve UX with aliasing
+
+**Never break working features while adding new ones.**
+
+## 🎯 ENGINE Achievements
+
+### Technical Excellence
+- Zero regressions despite major refactoring
+- All 26 theme engine tests passing continuously
+- Professional-grade validation and error handling
+- CI/CD-ready with dry-run support
+
+### User Experience Wins
+- Visual theme discovery removes guesswork
+- `--use` alias clarifies intent
+- Comprehensive help with examples
+- Clear error messages with fix suggestions
+
+### Architectural Cleanliness
+- Clear separation: ENGINE (configs) vs THEME (styles)
+- ODX directory structure (not RSB)
+- Proper inheritance and override patterns
+- Template/base theme intelligence
+
+## 🔮 Future Pattern Library
+
+### The "Already Done" Discovery
+**Pattern:** Before implementing, check if it already exists.
+We discovered `--use` alias and visual listing were already implemented!
+
+### The Protection Pattern Continues
+Just as width calculations got protected macros, the ENGINE system got:
+- Validation protection (can't import broken configs)
+- Dry-run protection (preview before action)
+- Hierarchy protection (can't lose themes)
+
+### Documentation as First-Class Feature
+ENGINE help integration wasn't an afterthought:
+- Examples in every command
+- Clear next-steps guidance
+- Integrated troubleshooting tips
+
+## 🎭 Memorable Moments - ENGINE Edition
+
+### The Great Blueprint Hunt
+"isn't blueprint one of our core themes? why isnt it on there"
+→ Led to discovering theme categorization logic
+→ Fixed by adding blueprint to global themes
+
+### The Context Collapse
+"oh geez what a huge context wipe. do you need to rehydrate on docs?"
+→ Robust session documentation proved its worth
+→ Recovery was seamless thanks to .eggs and SESSION files
+
+### The Completion Surprise
+"so is there anything really left to do lol"
+→ Discovered most TODO items were already complete
+→ Lesson: Regular reality checks prevent phantom work
+
+## 🚀 ENGINE System Legacy
+
+**What started as:** "Fix broken theme/engine system"
+
+**What we delivered:**
+- Complete theme management system
+- Visual theme discovery
+- Professional validation
+- CI/CD-ready operations
+- Intuitive API with `--use`
+- Comprehensive test coverage
+
+**The real achievement:** Built a theme system so complete that when we checked what was left to do, the answer was "not really!"
+
+---
+
+*"From broken themes to visual paradise, delivered with eggs and enthusiasm."* - Boxy ENGINE epic epitaph
