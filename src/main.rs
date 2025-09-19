@@ -37,7 +37,7 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
-mod parser;
+mod core;
 mod colors;
 mod emoji_debug;
 mod jynx_plugin;
@@ -45,8 +45,6 @@ mod width_plugin;
 mod theme_engine;
 mod themes;
 mod themes_builtin;
-mod help;
-mod config;
 mod visual;
 
 use std::io::{self, Read, Write};
@@ -58,15 +56,13 @@ use regex::Regex;
 use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
-use parser::*;
+use core::*;  // Import core module (consolidates config, parser, help)
 use colors::*;
 use width_plugin::*;
 use jynx_plugin::*;
 use themes::{handle_theme_command, handle_engine_command}; // RSB MODULE_SPEC compliant imports
 use theme_engine::*;
-use help::*;
 use visual::*;
-use config::*;
 
 // RSB (Rebel String-Based) framework imports
 // Note: RSB param! macro removed in favor of std::env::var for BOXY_THEME environment variable

@@ -11,7 +11,7 @@
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
 use crate::{expand_variables, render_title_or_footer, RESET, get_display_width, get_terminal_width, get_color_code, truncate_with_ellipsis};
-use crate::config::BoxyConfig;
+use crate::core::BoxyConfig;
 
 // ============================================================================
 // BOX STYLE SYSTEM (from boxes.rs)
@@ -597,7 +597,7 @@ impl<'a> Body<'a> {
 
         if self.config.width.fixed_width.is_none() {
             // AUTO WIDTH: Default wrapping at terminal boundaries, remove hints
-            use crate::parser::wrap_text_at_word_boundaries;
+            use crate::core::wrap_text_at_word_boundaries;
             use crate::width_plugin::get_terminal_width;
 
             let mut composed_lines: Vec<String> = Vec::new();
@@ -626,7 +626,7 @@ impl<'a> Body<'a> {
             composed_lines
         } else if self.config.width.enable_wrapping {
             // FIXED WIDTH + WRAPPING: Use hint-aware wrapping within fixed width
-            use crate::parser::wrap_text_at_word_boundaries;
+            use crate::core::wrap_text_at_word_boundaries;
 
             let mut composed_lines: Vec<String> = Vec::new();
 

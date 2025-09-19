@@ -10,7 +10,7 @@ use crate::{ JynxPlugin, jynx_println };
 use crate::{ validate_color, validate_width};
 use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};
 use crate::visual::validate_box_style;
-use crate::help::{NAME, VERSION};
+use crate::core::{NAME, VERSION};
 
 /// Handle `boxy theme create <name>` command
 pub fn handle_theme_create(name: &str, jynx: &JynxPlugin) {

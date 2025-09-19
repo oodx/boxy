@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_component_structs_available() {
         // Create a basic config to test component creation
-        use crate::config::BoxyConfig;
+        use crate::core::BoxyConfig;
 
         let config = BoxyConfig::default();
 
