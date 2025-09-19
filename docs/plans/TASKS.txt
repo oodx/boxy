@@ -1,0 +1,397 @@
+================================================================================
+ 📋 BOXY RSB COMPLIANCE - DETAILED TASK BREAKDOWN
+================================================================================
+
+Format: [TICKET-ID] Task Description (Story Points) - Priority
+Story Point Scale: 1=Trivial, 2=Small, 3=Medium, 5=Large, 8=Complex, 13=Epic
+
+================================================================================
+ 🎯 MILESTONE 1: BASIC MODULE RESTRUCTURING (21 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Low | No Breaking Changes
+
+Theme: Directory Structure Setup (8 pts)
+----------------------------------------
+[M1-001] Create src/themes/ directory and mod.rs (2) - High
+  - Create themes/ directory
+  - Move themes.rs content to themes/mod.rs
+  - Update imports in main.rs and lib.rs
+  - Verify compilation
+
+[M1-002] Create src/colors/ directory and mod.rs (2) - High
+  - Create colors/ directory
+  - Move colors.rs content to colors/mod.rs
+  - Update imports throughout codebase
+  - Verify compilation
+
+[M1-003] Create src/visual/ directory and mod.rs (2) - High
+  - Create visual/ directory
+  - Move boxes.rs, components.rs, draw.rs to visual/mod.rs
+  - Consolidate visual functionality
+  - Update imports
+
+[M1-004] Create src/core/ directory and mod.rs (2) - High
+  - Create core/ directory
+  - Move config.rs, parser.rs, help.rs to core/mod.rs
+  - Handle remaining utility modules
+  - Update imports
+
+Theme: Re-export Compatibility Layer (8 pts)
+--------------------------------------------
+[M1-005] Update lib.rs re-exports for themes module (2) - High
+  - Add pub use themes::* to maintain compatibility
+  - Test all theme-related CLI functionality
+  - Verify theme loading still works
+
+[M1-006] Update lib.rs re-exports for colors module (2) - High
+  - Add pub use colors::* to maintain compatibility
+  - Test color functionality in CLI
+  - Verify ANSI color codes work
+
+[M1-007] Update lib.rs re-exports for visual module (2) - High
+  - Add pub use visual::* to maintain compatibility
+  - Test box drawing functionality
+  - Verify component rendering
+
+[M1-008] Update lib.rs re-exports for core module (2) - High
+  - Add pub use core::* to maintain compatibility
+  - Test configuration and parsing
+  - Verify help system works
+
+Theme: Integration Testing (5 pts)
+----------------------------------
+[M1-009] Full CLI regression testing (3) - Critical
+  - Test all CLI commands with new structure
+  - Verify theme loading, color application, box drawing
+  - Performance benchmarking vs baseline
+
+[M1-010] Update internal imports across codebase (2) - Medium
+  - Fix any remaining import issues
+  - Ensure all modules can find dependencies
+  - Clean up unused imports
+
+[M1-011] Protect critical width/emoji functions during restructure (2) - Critical
+  - Document exact locations of all protected functions
+  - Ensure width_plugin.rs and emoji_debug.rs move as complete units
+  - Preserve all width calculation macros exactly
+  - Validate using: ./bin/test.sh && ./bin/feature-test.sh
+
+================================================================================
+ 🎯 MILESTONE 1.5: AUTO/NONE PROPERTIES VALIDATION (8 pts)
+================================================================================
+Duration: 3-5 days | Risk: Low | Bug Fixes & Validation
+
+Theme: Text Color Auto/None Testing (3 pts)
+-------------------------------------------
+[M1.5-001] Test text_color="auto" behavior (2) - High
+  - Verify "auto" matches box color in themes
+  - Test with different box colors (red, blue, green, etc.)
+  - Verify inheritance from parent themes with "auto"
+  - Check builtin themes with "auto" text_color
+
+[M1.5-002] Test text_color="none" behavior (1) - Medium
+  - Verify "none" uses default terminal color
+  - Test with different terminal color schemes
+  - Ensure no ANSI codes when text_color="none"
+
+Theme: Width Auto Testing (3 pts)
+---------------------------------
+[M1.5-003] Test width="auto" vs fixed width behavior (2) - High
+  - Verify auto-sizing respects terminal width
+  - Test with different terminal sizes
+  - Check word wrapping with auto width
+  - Validate padding calculations with auto width
+
+[M1.5-004] Test width inheritance in themes (1) - Medium
+  - Verify themes with width=None use auto-sizing
+  - Test theme inheritance with mixed width settings
+  - Check CLI --width=auto override behavior
+
+Theme: Property Integration Testing (2 pts)
+-------------------------------------------
+[M1.5-005] Create comprehensive auto/none test suite (2) - Critical
+  - Integration tests for all auto/none combinations
+  - CLI tests with --text=auto, --text=none
+  - Theme loading tests with auto/none properties
+  - Regression tests to prevent future breaks
+  - Run full test suite: ./bin/test.sh && ./bin/feature-test.sh
+
+================================================================================
+ 🎯 MILESTONE 2: LIBRARY API DEVELOPMENT (34 pts)
+================================================================================
+Duration: 2-3 weeks | Risk: Medium | New Public API
+
+Theme: Core Library API Design (13 pts)
+---------------------------------------
+[M2-001] Design public API surface for box drawing (5) - Critical
+  - Define BoxBuilder pattern for ergonomic usage
+  - Create draw_box(), draw_text_box() functions
+  - Design width/height/padding configuration
+  - Plan async/sync variants
+
+[M2-002] Design theme system public API (5) - Critical
+  - Create ThemeLoader, ThemeApplicator traits
+  - Design theme selection and validation functions
+  - Plan theme customization and override API
+  - Consider theme caching strategies
+
+[M2-003] Design color system public API (3) - High
+  - Create color parsing and manipulation functions
+  - Design palette selection and validation
+  - Plan ANSI code generation utilities
+  - Consider color space conversions
+
+Theme: Library Implementation (13 pts)
+--------------------------------------
+[M2-004] Implement BoxBuilder and drawing functions (5) - High
+  - Create BoxBuilder with fluent interface
+  - Implement core drawing logic for library usage
+  - Handle text wrapping and width calculation
+  - Add validation and error handling
+
+[M2-005] Implement theme loading API (5) - High
+  - Create theme loading from files/built-ins
+  - Implement theme application to boxes
+  - Add theme validation and error handling
+  - Support custom theme definitions
+
+[M2-006] Implement color manipulation utilities (3) - Medium
+  - Create color parsing and validation functions
+  - Implement ANSI code generation
+  - Add color palette utilities
+  - Support RGB/hex color inputs
+
+Theme: Documentation & Examples (8 pts)
+---------------------------------------
+[M2-007] Create comprehensive library documentation (3) - High
+  - Write rustdoc for all public APIs
+  - Create usage examples for common patterns
+  - Document theme system for library users
+  - Add migration guide from CLI usage
+
+[M2-008] Create library usage examples (3) - High
+  - Basic box drawing example
+  - Theme customization example
+  - Color manipulation example
+  - Integration with other CLI tools
+
+[M2-009] Separate CLI and library concerns (2) - Medium
+  - Move CLI-specific logic to main.rs
+  - Ensure library has no CLI dependencies
+  - Create clean separation of concerns
+  - Test library usage without CLI
+
+================================================================================
+ 🎯 MILESTONE 3: UTILS/HELPERS SEPARATION (18 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Low | Internal Reorganization
+
+Theme: Themes Module Separation (5 pts)
+---------------------------------------
+[M3-001] Create themes/utils.rs with public helpers (3) - High
+  - Move load_theme(), validate_theme() to utils.rs
+  - Move theme application functions to utils.rs
+  - Ensure clean public interface
+
+[M3-002] Create themes/helpers.rs with internal logic (2) - Medium
+  - Move theme parsing internals to helpers.rs
+  - Move YAML processing to helpers.rs
+  - Keep implementation details private
+
+Theme: Colors Module Separation (4 pts)
+---------------------------------------
+[M3-003] Create colors/utils.rs with public helpers (2) - High
+  - Move get_color_code(), validate_color() to utils.rs
+  - Move ANSI generation functions to utils.rs
+
+[M3-004] Create colors/helpers.rs with internal logic (2) - Medium
+  - Move color parsing internals to helpers.rs
+  - Move palette management to helpers.rs
+
+Theme: Visual Module Separation (5 pts)
+---------------------------------------
+[M3-005] Create visual/utils.rs with public helpers (3) - High
+  - Move draw_box(), calculate_width() to utils.rs
+  - Move component rendering to utils.rs
+
+[M3-006] Create visual/helpers.rs with internal logic (2) - Medium
+  - Move internal width calculations to helpers.rs
+  - Move box character selection to helpers.rs
+
+Theme: Core Module Separation (4 pts)
+-------------------------------------
+[M3-007] Create core/utils.rs with public helpers (2) - High
+  - Move configuration utilities to utils.rs
+  - Move argument parsing helpers to utils.rs
+
+[M3-008] Create core/helpers.rs with internal logic (2) - Medium
+  - Move internal parsing logic to helpers.rs
+  - Move configuration merging to helpers.rs
+
+================================================================================
+ 🎯 MILESTONE 4: TYPED ERROR SYSTEM (16 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Medium | Error Handling Changes
+
+Theme: Error Type Definition (8 pts)
+------------------------------------
+[M4-001] Create core/error.rs with BoxyError master enum (3) - Critical
+  - Define BoxyError with variants for each module
+  - Add thiserror derive and proper error messages
+  - Include source error chaining
+
+[M4-002] Create module-specific error types (5) - High
+  - ThemeError in themes/error.rs
+  - ColorError in colors/error.rs
+  - VisualError in visual/error.rs
+  - CoreError in core/error.rs
+
+Theme: Error Migration (8 pts)
+------------------------------
+[M4-003] Replace String errors in themes module (3) - High
+  - Update all Result<T, String> to Result<T, ThemeError>
+  - Add proper error variants for theme operations
+  - Update error propagation
+
+[M4-004] Replace String errors in colors module (2) - High
+  - Update color operations to use ColorError
+  - Add proper error variants
+
+[M4-005] Replace String errors in visual module (2) - High
+  - Update drawing operations to use VisualError
+  - Add proper error variants
+
+[M4-006] Replace String errors in core module (1) - Medium
+  - Update configuration and parsing errors
+  - Ensure proper error propagation to CLI
+
+================================================================================
+ 🎯 MILESTONE 5: FEATURE FLAGS & ADAPTERS (28 pts)
+================================================================================
+Duration: 2-3 weeks | Risk: High | Complex Feature Interactions
+
+Theme: Feature Flag Design (8 pts)
+----------------------------------
+[M5-001] Design Cargo.toml feature hierarchy (5) - Critical
+  - Define visual-base, visual-advanced features
+  - Define colors-simple, colors-named features
+  - Define themes-builtin, themes-yaml features
+  - Plan default feature set
+
+[M5-002] Implement conditional compilation (3) - High
+  - Add #[cfg(feature = "...")] throughout codebase
+  - Ensure graceful degradation when features disabled
+  - Test feature combinations
+
+Theme: Adapter Pattern Implementation (12 pts)
+----------------------------------------------
+[M5-003] Create themes/adapters.rs for color integration (5) - High
+  - Implement ColorAdapter for theme → color operations
+  - Add feature gating for color dependencies
+  - Provide fallbacks when colors disabled
+
+[M5-004] Create visual/adapters.rs for theme integration (5) - High
+  - Implement ThemeAdapter for visual → theme operations
+  - Add feature gating for theme dependencies
+  - Provide fallbacks when themes disabled
+
+[M5-005] Create cross-module dependency injection (2) - Medium
+  - Design service locator pattern if needed
+  - Implement dependency injection for adapters
+  - Ensure testability
+
+Theme: Feature Testing (8 pts)
+------------------------------
+[M5-006] Test all feature flag combinations (5) - Critical
+  - Create CI matrix for feature combinations
+  - Test minimal builds with reduced features
+  - Verify no compilation errors
+
+[M5-007] Performance testing with different features (3) - Medium
+  - Benchmark performance with minimal features
+  - Ensure no overhead when features disabled
+  - Validate binary size reduction
+
+================================================================================
+ 🎯 MILESTONE 6: CURATED PRELUDE & MACROS (14 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Medium | Public API Changes
+
+Theme: Prelude Curation (8 pts)
+-------------------------------
+[M6-001] Remove wildcard re-exports from lib.rs (5) - Critical
+  - Replace pub use module::* with specific exports
+  - Define intentional public API surface
+  - Ensure backward compatibility via explicit exports
+
+[M6-002] Implement ASCII-first naming conventions (3) - Medium
+  - Audit public API for non-ASCII names
+  - Provide ASCII alternatives where needed
+  - Document Unicode variants
+
+Theme: Macro System (6 pts)
+---------------------------
+[M6-003] Create module-owned macros (3) - Medium
+  - Add macros.rs to each module as needed
+  - Implement ergonomic macros for common operations
+  - Ensure macros follow RSB patterns
+
+[M6-004] Final RSB MODULE_SPEC compliance validation (3) - High
+  - Audit entire codebase against RSB MODULE_SPEC
+  - Fix any remaining compliance issues
+  - Document compliance status
+
+### CRITICAL FUNCTION PROTECTION TASKS (Added to All Milestones):
+
+[MX-P01] Width calculation protection validation (1) - Critical
+  - Test emoji width calculations before/after changes
+  - Validate: echo "✅🚀ℹ️👻" | cargo run -- --theme test
+  - Run: ./bin/test.sh && ./bin/feature-test.sh
+
+[MX-P02] Icon placement protection validation (1) - Critical
+  - Test icon auto-detection and spacing
+  - Validate: echo "test" | cargo run -- --title "📦 Status"
+  - Ensure parser.rs:385-410 logic preserved exactly
+
+[MX-P03] Performance regression protection (1) - Critical
+  - Benchmark width calculations before/after
+  - No performance degradation in emoji rendering
+  - Run: ./tests/misc/performance_test.sh
+
+================================================================================
+ 📊 TASK SUMMARY BY MILESTONE
+================================================================================
+
+M1 (23 pts): 11 tasks + 3 protection - Basic module restructuring
+M2 (34 pts): 9 tasks - Library API development
+M3 (18 pts): 8 tasks - Utils/helpers separation
+M4 (16 pts): 6 tasks - Typed error system
+M5 (28 pts): 7 tasks - Feature flags & adapters
+M6 (14 pts): 4 tasks - Curated prelude & macros
+
+Total: 131 story points across 44 tasks
+
+================================================================================
+ 🎯 TASK PRIORITIZATION
+================================================================================
+
+Critical Path Tasks (Must complete first):
+- M1-001 through M1-008: Module structure setup
+- M2-001, M2-002: API design (blocks implementation)
+- M4-001: Master error enum (blocks error migration)
+- M5-001: Feature flag design (blocks implementation)
+- M6-001: Prelude curation (final API surface)
+
+High Risk Tasks (Need extra attention):
+- M2-001: Public API design (affects all future work)
+- M5-001: Feature flag hierarchy (complex interactions)
+- M5-006: Feature combination testing (high complexity)
+- M6-001: Wildcard removal (potential breaking changes)
+
+Dependencies:
+- M3 depends on M1 completion
+- M4 can run parallel to M3
+- M5 depends on M1-M4 completion
+- M6 depends on all previous milestones
+
+================================================================================
