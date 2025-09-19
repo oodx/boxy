@@ -9,7 +9,7 @@ use crate::{ HashMap, Write };
 use crate::{ JynxPlugin, jynx_println };
 use crate::{ validate_color, validate_width};
 use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};
-use crate::boxes::validate_box_style;
+use crate::visual::validate_box_style;
 use crate::help::{NAME, VERSION};
 
 /// Handle `boxy theme create <name>` command

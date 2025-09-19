@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use crate::{ fs, io };
-use crate::{ HashMap, Write, boxes::*, help::*};
+use crate::{ HashMap, Write, visual::*, help::*};
 use crate::{ JynxPlugin, jynx_println };
 use crate::{ validate_color, validate_width};
 use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};

@@ -37,7 +37,6 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
-mod boxes;
 mod parser;
 mod colors;
 mod emoji_debug;
@@ -47,9 +46,8 @@ mod theme_engine;
 mod themes;
 mod themes_builtin;
 mod help;
-mod draw;
 mod config;
-mod components;
+mod visual;
 
 use std::io::{self, Read, Write};
 use std::env;
@@ -60,7 +58,6 @@ use regex::Regex;
 use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
-use boxes::*;
 use parser::*;
 use colors::*;
 use width_plugin::*;
@@ -68,7 +65,7 @@ use jynx_plugin::*;
 use themes::{handle_theme_command, handle_engine_command}; // RSB MODULE_SPEC compliant imports
 use theme_engine::*;
 use help::*;
-use draw::*;
+use visual::*;
 use config::*;
 
 // RSB (Rebel String-Based) framework imports

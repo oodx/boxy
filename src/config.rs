@@ -1,4 +1,4 @@
-use crate::BoxStyle;
+use crate::visual::BoxStyle;
 
 /// Body content alignment options
 #[derive(Debug, Clone, PartialEq)]
