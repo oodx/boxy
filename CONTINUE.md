@@ -1,157 +1,184 @@
-# BOXY ENGINE FOUNDATION - SESSION CONTINUATION GUIDE
+# BOXY PROJECT CONTINUATION CONTEXT
 
-**Session Complete**: 2025-09-17
-**Foundation Status**: ✅ SOLID - Ready for SPRINT 2
-**Next Priority**: ENGINE-005 (Export Command)
+**Last Session:** SESSION_06 - BOXY_DEFAULTS_LEVEL and Global --dev-level Implementation
+**Date:** 2025-09-19
+**Status:** ✅ FULLY FUNCTIONAL - Major theme system overhaul completed
 
-## 🎯 CURRENT STATE
+## 🎯 PROJECT OVERVIEW
 
-### **SPRINT 1 COMPLETE** ✅
-**Foundation established** - All critical infrastructure working:
-- ✅ `boxy engine` namespace implemented
-- ✅ Global theme directory creation (`~/.local/etc/odx/boxy/themes/`)
-- ✅ Theme import with validation and backup protection
-- ✅ Path architecture unified (ODX for proper utilities)
-- ✅ RSB references cleaned up (deferred until proper framework)
-- ✅ Color alignment fixed (`boxy --colors` now perfectly spaced)
+**Boxy** is a sophisticated Rust-powered CLI utility for creating Unicode-aware text boxes with advanced theming, text wrapping, and styling capabilities. It handles emojis, CJK characters, and complex Unicode sequences with precision.
 
-### **SPRINT 2 READY** 🎯
-**Next implementation**: ENGINE-005 Export Command (3 story points)
-- **Pattern**: Reverse of import - copy from global to local
-- **Location**: `src/themes.rs` - add `handle_engine_export()` function
-- **Similar to**: `handle_engine_import()` lines 1211-1288
+### Core Features:
+- Multiple box styles (normal, rounded, double, heavy, ascii)
+- 90+ color palette with semantic themes
+- Intelligent text wrapping with hint markers (`#NL#`, `#W#`, `#T#`)
+- Comprehensive theme management system
+- Pipeline integration with box stripping modes
+- YAML-based theme engine with inheritance
 
-## 🚀 IMMEDIATE NEXT STEPS
+## 🚨 CRITICAL CONTEXT: RECENT MAJOR CHANGES
 
-### 1. Implement ENGINE-005 Export Command
+### Theme System Bug Discovery & Resolution
+**The Problem:** China the summary chicken discovered a critical bug where most documented themes (blueprint, magic, think, lore, etc.) were not actually available as builtin themes, only existing in YAML files. Users got "Theme not found" errors if YAML loading failed.
+
+**The Solution:** Complete theme system overhaul implementing a 3-level defaults system.
+
+## 🏗️ NEW ARCHITECTURE: BOXY_DEFAULTS_LEVEL SYSTEM
+
+### Three-Level Theme Hierarchy:
+```
+Level 0 (Minimal):     Basic box styles + blueprint only (10 themes)
+Level 1 (Standard):    + Semantic themes (error, success, warning, info)
+Level 2 (Extended):    + Legacy themes (think, lore, blocked, help, oops, lab, etc.) [32 themes total]
+```
+
+**Default Level:** 2 (user requested to see all themes)
+
+### Environment Control:
+- `BOXY_DEFAULTS_LEVEL=N` - Controls which builtin themes are available
+- `--dev-level=N` - CLI flag that globally overrides environment variable
+
+### Level 0 Special Behavior:
+- **Disables `boxy_default.yml`** - skips default theme file loading
+- **Preserves user overrides** - local boxy_*.yml and .themes/ files still work
+- **Minimal theme set** - only basic box styles + blueprint for clean environments
+
+## 📁 KEY FILES MODIFIED/CREATED
+
+### New Files:
+- `src/themes_builtin.rs` - **NEW** - All hardcoded theme definitions by level
+- `src/error.rs` - **STUB** - Placeholder for future BoxyError enum
+
+### Modified Files:
+- `src/main.rs` - Early --dev-level parsing, subcommand argument filtering
+- `src/theme_engine.rs` - Level-aware loading, uses themes_builtin module
+- `src/themes.rs` - Subcommand handlers accept opt_dev_level parameter
+- `README.md` - Updated with BOXY_DEFAULTS_LEVEL documentation
+
+### Key Functions:
 ```rust
-// Add to src/themes.rs, similar pattern to import
-pub fn handle_engine_export(name: &str, force_overwrite: bool) -> Result<(), Box<dyn std::error::Error>> {
-    // Reverse of import: copy from global ODX to local
-    // Source: ~/.local/etc/odx/boxy/themes/boxy_<name>.yml
-    // Target: ./boxy_<name>.yml
-    // Include validation, overwrite protection, backup creation
+// Core theme functions
+pub fn parse_defaults_level(override_level: Option<u8>) -> u8
+pub fn get_builtin_themes(override_level: Option<u8>) -> (HashMap<String, BoxyTheme>, Vec<String>)
+
+// Theme engine with override support
+impl ThemeEngine {
+    pub fn new() -> Result<Self, String>  // Uses env var
+    pub fn new_with_override(dev_level_override: Option<u8>) -> Result<Self, String>  // Uses override
 }
 ```
 
-### 2. Test & Validate
+## 🧪 VERIFICATION STATUS
+
+### ✅ All Tests Passing:
+1. **Level 0:** Only 10 themes, boxy_default.yml skipped, "think" theme fails
+2. **Level 1:** Standard semantic themes work
+3. **Level 2:** All 32 themes including legacy ones work
+4. **Global Override:** `--dev-level` works with both main usage AND subcommands
+5. **Debug Commands:** `theme hierarchy` and `engine list` respect dev-level
+6. **Argument Filtering:** `--dev-level` properly filtered from subcommand args
+
+### Test Commands That Work:
 ```bash
-cargo run --bin boxy -- engine init     # Ensure foundation works
-cargo run --bin boxy -- engine export default --overwrite
-cargo run --bin boxy -- engine debug    # Verify file locations
+# Theme level testing
+BOXY_DEFAULTS_LEVEL=0 echo "test" | cargo run --bin boxy -- --theme think     # ❌ Should fail
+BOXY_DEFAULTS_LEVEL=2 echo "test" | cargo run --bin boxy -- --theme think     # ✅ Should work
+
+# Global dev-level override
+echo "test" | cargo run --bin boxy -- theme --dev-level=0 hierarchy           # Shows 10 themes
+echo "test" | cargo run --bin boxy -- theme --dev-level=2 hierarchy           # Shows 32 themes
+
+# Level-specific theme availability
+echo "test" | cargo run --bin boxy -- --dev-level=0 --theme blueprint         # ✅ Works (level 0)
+echo "test" | cargo run --bin boxy -- --dev-level=0 --theme error             # ❌ Fails (level 1+)
+echo "test" | cargo run --bin boxy -- --dev-level=1 --theme error             # ✅ Works (level 1)
+echo "test" | cargo run --bin boxy -- --dev-level=0 --theme lore              # ❌ Fails (level 2)
 ```
 
-### 3. China Review
-Use China the summary chicken for technical validation after implementation.
+## 🎨 THEME ECOSYSTEM
 
-## 📋 TASK ROADMAP (SPRINT 2)
+### Available Themes by Level:
 
-**Immediate Priority** (15 story points):
-1. **ENGINE-005**: Export command [3 pts] - NEXT UP
-2. **ENGINE-010**: Enhanced debug command [5 pts]
-3. **ENGINE-011**: Visual list output [3 pts]
-4. **ENGINE-002**: Separate help menus [2 pts]
-5. **ENGINE-006**: Prefix validation [2 pts]
+**Level 0 (Minimal - 10 themes):**
+- `blueprint` - 📐 Blue ASCII technical theme (the one "styled" theme)
+- `default`, `default_rounded`, `default_double`, `default_heavy`, `default_ascii` - Basic box styles
 
-**Complete roadmap**: See `TASKS.txt` (49 total story points, 16 complete)
+**Level 1 (Standard - adds 4 themes):**
+- `error` - ❌ Crimson heavy borders, bold text
+- `success` - ✅ Emerald rounded borders, bold text
+- `warning` - ⚠️ Amber heavy borders, italic text
+- `info` - ℹ️ Azure normal borders, normal text
 
-## 🏗️ ARCHITECTURE CONTEXT
+**Level 2 (Extended - adds 13 legacy themes):**
+- `trace`, `dev`, `new`, `think`, `notif`, `lore`, `blocked`, `help`, `oops`, `lab`, `lock`, `unlock`, `key`
 
-### **Directory Structure** (ODX Standard)
-```
-~/.local/etc/odx/boxy/themes/    # Global theme storage
-├── boxy_default.yml             # Created by engine init
-├── boxy_success.yml             # Example user theme
-└── boxy_error.yml               # Example user theme
-```
+### Theme Loading Hierarchy (Priority Order):
+1. **Local boxy_*.yml files** (highest priority, alphabetically first)
+2. **Local .themes/ directory**
+3. **Local themes/ directory**
+4. **XDG global directory** (~/.local/etc/odx/boxy/themes/)
+5. **Builtin themes** (lowest priority, controlled by BOXY_DEFAULTS_LEVEL)
 
-### **Command Separation**
-- **Engine Commands**: Manage YAML config files (`boxy_*.yml`)
-  - `boxy engine init|import|export|list|debug|status|edit|help`
-- **Theme Commands**: Work with individual themes within configs
-  - `boxy theme show|dryrun|create`
+## 🔧 TECHNICAL IMPLEMENTATION DETAILS
 
-### **File Patterns**
-- **Theme Files**: `boxy_<name>.yml` (enforced prefix)
-- **Exclusions**: Files with 'template' or 'tmpl' ignored
-- **Validation**: Full YAML structure validation on import/export
+### Argument Parsing Flow:
+1. **Pre-scan** all arguments for `--dev-level=N` and `--no-color`
+2. **Filter** `--dev-level` from subcommand arguments
+3. **Pass** `opt_dev_level` to all theme engine operations
+4. **Override** environment variable if CLI flag provided
 
-## 🔧 TECHNICAL IMPLEMENTATION NOTES
+### Theme Engine Initialization:
+```rust
+// Main theme application path
+ThemeEngine::new_with_override(opt_dev_level)
 
-### **Key Functions Ready to Reference**
-- `handle_engine_import()`: src/themes.rs:1211-1288 - Template for export
-- `get_global_theme_dir()`: Path utilities for ODX directory
-- `validate_theme_yaml()`: YAML validation (reuse for export)
-
-### **Testing Commands**
-```bash
-# Foundation verification
-cargo run --bin boxy -- engine debug
-cargo run --bin boxy -- engine list
-cargo run --bin boxy -- --theme success
-
-# Export testing (after implementation)
-cargo run --bin boxy -- engine export default
-cargo run --bin boxy -- engine export success --overwrite
+// Subcommands (theme hierarchy, engine list, etc.)
+handle_theme_command(&filtered_args, &jynx, opt_dev_level)
+handle_engine_command(&filtered_args, &jynx, opt_dev_level)
 ```
 
-### **Error Patterns to Handle**
-- Source file doesn't exist in global directory
-- Target file exists locally (require --overwrite flag)
-- YAML validation failures
-- Permission issues
+### Level 0 YAML Skipping Logic:
+```rust
+// In load_themes_from_directory()
+if defaults_level == 0 && filename == "boxy_default.yml" {
+    self.file_trail.push(format!("  ⚠️  Skipped {} (disabled at BOXY_DEFAULTS_LEVEL=0)", filename));
+    continue;
+}
+```
 
-## 📚 CONTEXT FILES
+## 📋 CURRENT STATE SUMMARY
 
-### **Essential Reading**
-- `TASKS.txt`: Complete 18-task breakdown with dependencies
-- `TODO.txt`: Original requirements (shows progress)
-- `.session/SESSION_05_engine-foundation-complete.md`: Full technical narrative
+### ✅ COMPLETED:
+- Theme resolution bug completely fixed
+- Three-level defaults system fully implemented and tested
+- Global --dev-level override working across all operations
+- 13 legacy themes converted and accessible
+- Documentation updated
+- All verification tests passing
 
-### **Technical Reviews** (.eggs/)
-- `egg.6.sprint1-complete-foundation-ready.txt`: Latest validation
-- `egg.5.engine-foundation-complete.txt`: Foundation certification
+### 🎯 NO PENDING WORK:
+- No broken functionality
+- No compilation errors
+- No missing features requested
+- All user requirements satisfied
 
-### **Implementation References**
-- `src/themes.rs`: Engine command handlers
-- `src/main.rs`: Engine namespace routing (lines 152-165)
-- `src/theme_engine.rs`: ODX path configuration (line 200)
+### 🔄 POTENTIAL FUTURE WORK:
+- Complete BoxyError enum implementation (replace String errors)
+- Update remaining ThemeEngine::new() calls in test files
+- Additional theme validation or new theme levels
 
-## 🎖️ SUCCESS METRICS
+## 🧭 HOW TO CONTINUE
 
-### **Foundation Achievements** ✅
-- Global themes loading correctly from ODX directory
-- Engine namespace fully functional with comprehensive help
-- Import system with validation and backup protection
-- Clean architecture (no RSB warnings, proper ODX paths)
-- Perfect color alignment in `boxy --colors` output
+### If Starting Fresh:
+1. **Read this file** for full context
+2. **Check** `.session/SESSION_06_defaults-level-and-global-dev-flag.md` for detailed technical implementation
+3. **Test** the verification commands above to understand current behavior
+4. **Review** `src/themes_builtin.rs` to understand the new theme architecture
 
-### **SPRINT 2 Targets** 🎯
-- Export functionality matching import quality
-- Enhanced debug with theme hierarchy visualization
-- Visual list output with theme previews
-- Separated help systems for engine vs theme commands
-- Prefix validation for security and consistency
+### Key Insight:
+The project went from a broken theme system (missing builtin themes) to a sophisticated 3-level system with global dev-level override capability. Users now have complete control over builtin theme availability while preserving the ability to use custom theme files.
 
-## 🔄 REHYDRATION PROTOCOL
+### China Investigation:
+Check `.eggs/` directory for China the summary chicken's investigation reports that led to discovering the original theme resolution bug. The reports show the "smoking gun" TODO comment and provide comprehensive analysis of the theme system architecture.
 
-### **Agent Assistance**
-- **China**: Use for technical validation after each major task
-- **Standard Pattern**: Implement → Test → China Review → Next Task
-
-### **Architecture Principles**
-- **ODX Directory**: `~/.local/etc/odx/boxy/themes/` (not RSB)
-- **File Naming**: `boxy_<name>.yml` pattern enforced
-- **Validation**: Full YAML validation with descriptive errors
-- **Backup Strategy**: `.bak` files on overwrites
-
-### **Quality Standards**
-- No compilation warnings
-- All engine commands functional
-- Comprehensive error handling
-- User-friendly feedback messages
-- Pattern consistency with existing import code
-
----
-
-**Ready to Continue**: All foundation work complete, SPRINT 2 tasks clearly defined, architecture solid. Begin with ENGINE-005 export command implementation using proven patterns from ENGINE-004 import.
+**Status: Ready for new features or bug reports** 🚀
