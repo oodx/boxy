@@ -30,4 +30,9 @@
         - any layout configuartions like: lh,sc, etc.
 
     
+# BACKLOG
+    
 - EPIC 2: Eventual alignment with RSB. Requires large refactor and knowledge transfer
+
+
++ application mapping

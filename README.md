@@ -104,10 +104,10 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `--params <stream>` - Parse metadata stream: `hd='header'; ft='footer';` etc.
 
 **Visual Styling:**
-- `--style <STYLE>` - Border style: normal, rounded, double, heavy, ascii
-- `--color <COLOR>` - Border color from 90+ palette
+- `-s, --style <STYLE>` - Border style: normal, rounded, double, heavy, ascii
+- `-c, --color <COLOR>` - Border color from 90+ palette
 - `--text <COLOR>` - Text color: 'auto' matches border, 'none' default
-- `--width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
+- `-w, --width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
 - `--wrap` - Enable hint-aware wrapping for fixed widths
 
 **Content Sections:**
@@ -128,23 +128,25 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `--pad <a|b>` - Blank line above (a) and/or below (b) the body
 
 **Theme System:**
-- `--theme <name>` - Apply semantic theme (error, success, warning, info, critical)
+- `-t, --theme <name>` - Apply semantic theme (error, success, warning, info, critical)
 - `boxy theme list` - List all available themes
 - `boxy theme show <name>` - Show theme details
 - `boxy theme create <name>` - Create new theme interactively
-- `boxy theme import <file>` - Import theme from YAML
-- `boxy theme export <name>` - Export theme to YAML
+- `boxy theme import <file>` - Import theme from YAML (supports --dry-run)
+- `boxy theme export <name>` - Export theme to YAML (supports --dry-run)
 - `boxy theme edit <name>` - Edit existing theme
 - `boxy theme hierarchy` - Display theme loading hierarchy
 - `boxy theme dryrun <name>` - Test theme with sample content
+- `boxy engine list` - List all available theme engines
+- `boxy engine demo <name>` - Demo a theme engine's capabilities
 
 **Utility Commands:**
 - `--no-boxy[=strict]` - Strip box decoration (strict removes all formatting)
 - `--no-color` - Disable Jynx integration and color output
 - `boxy width` - Show terminal width diagnostics
 - `--colors` - Preview all 90+ available colors
-- `--help` - Show help message
-- `--version` - Show version information
+- `-h, --help` - Show help message
+- `-v, --version` - Show version information
 
 **Environment Variables:**
 - `BOXY_THEME=<name>` - Set default theme (overridden by --theme)
@@ -496,6 +498,18 @@ echo "Deployment complete" | boxy  # Uses success theme
 # Set minimum box width (default: 5)
 export BOXY_MIN_WIDTH=20
 echo "Short" | boxy  # Box will be at least 20 characters wide
+```
+
+### Builtin Theme Control
+```bash
+# Control which builtin themes are available (default: 2)
+export BOXY_DEFAULTS_LEVEL=0  # Minimal: basic box styles + blueprint only
+export BOXY_DEFAULTS_LEVEL=1  # Standard: error, success, warning, info
+export BOXY_DEFAULTS_LEVEL=2  # Extended: standard + legacy themes (think, lore, etc.)
+
+# Examples
+BOXY_DEFAULTS_LEVEL=0 echo "Clean setup" | boxy --theme blueprint
+BOXY_DEFAULTS_LEVEL=2 echo "All themes" | boxy --theme think
 ```
 
 ### Advanced Configuration

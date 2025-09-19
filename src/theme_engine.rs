@@ -166,8 +166,13 @@ fn default_true() -> bool { true }
 impl ThemeEngine {
     /// Create new theme engine with XDG+ directory support
     pub fn new() -> Result<Self, String> {
+        Self::new_with_override(None)
+    }
+
+    /// Create new theme engine with optional dev level override
+    pub fn new_with_override(dev_level_override: Option<u8>) -> Result<Self, String> {
         let xdg_base_dir = Self::get_xdg_base_dir();
-        
+
         let mut engine = ThemeEngine {
             themes: HashMap::new(),
             theme_files: Vec::new(),
@@ -177,10 +182,10 @@ impl ThemeEngine {
         };
         
         // Load built-in themes first (lowest priority - fallback)
-        engine.load_builtin_themes();
+        engine.load_builtin_themes(dev_level_override);
 
         // Load YAML theme files in reverse priority order (lowest to highest)
-        if let Err(e) = engine.load_theme_files() {
+        if let Err(e) = engine.load_theme_files(dev_level_override) {
             eprintln!("Warning: Failed to load theme files: {}", e);
             // Continue with built-in themes
         }
@@ -199,57 +204,28 @@ impl ThemeEngine {
         PathBuf::from(home).join(".local/etc/odx/boxy")
     }
     
-    /// Load built-in themes as fallback (converted from current themes.rs)
-    fn load_builtin_themes(&mut self) {
-        self.theme_hierarchy.push("Built-in themes (compiled fallback)".to_string());
-        self.file_trail.push("  📦 Built-in themes: error, success, warning, info, critical, debug, magic, silly, blueprint".to_string());
-        let builtin_themes = vec![
-            ("error", BoxyTheme {
-                color: "crimson".to_string(),
-                text_color: "white".to_string(),
-                style: "heavy".to_string(),
-                text_style: "bold".to_string(),
-                title: Some("❌ Error".to_string()),
-                icon: Some("❌".to_string()),
-                width: Some(60),
-                ..Default::default()
-            }),
-            ("success", BoxyTheme {
-                color: "emerald".to_string(),
-                text_color: "auto".to_string(),
-                style: "rounded".to_string(),
-                text_style: "bold".to_string(),
-                title: Some("✅ Success".to_string()),
-                icon: Some("✅".to_string()),
-                ..Default::default()
-            }),
-            ("warning", BoxyTheme {
-                color: "amber".to_string(),
-                text_color: "auto".to_string(),
-                style: "heavy".to_string(),
-                text_style: "italic".to_string(),
-                title: Some("⚠️ Warning".to_string()),
-                icon: Some("⚠️".to_string()),
-                ..Default::default()
-            }),
-            ("info", BoxyTheme {
-                color: "azure".to_string(),
-                text_color: "auto".to_string(),
-                style: "normal".to_string(),
-                text_style: "normal".to_string(),
-                title: Some("ℹ️ Info".to_string()),
-                icon: Some("ℹ️".to_string()),
-                ..Default::default()
-            }),
-        ];
-        
+    /// Load built-in themes based on BOXY_DEFAULTS_LEVEL
+    fn load_builtin_themes(&mut self, dev_level_override: Option<u8>) {
+        let defaults_level = crate::themes_builtin::parse_defaults_level(dev_level_override);
+        let (builtin_themes, trail) = crate::themes_builtin::get_builtin_themes(dev_level_override);
+
+        let level_description = match defaults_level {
+            0 => "Level 0 (Minimal) - basic styles only, boxy_default.yml disabled",
+            1 => "Level 1 (Standard) - semantic themes, boxy_default.yml enabled",
+            2 => "Level 2 (Extended) - all builtin themes, boxy_default.yml enabled",
+            _ => "Level ? (Unknown)",
+        };
+
+        self.theme_hierarchy.push(format!("Built-in themes (BOXY_DEFAULTS_LEVEL={}): {}", defaults_level, level_description));
+        self.file_trail.extend(trail);
+
         for (name, theme) in builtin_themes {
-            self.themes.insert(name.to_string(), theme);
+            self.themes.insert(name, theme);
         }
     }
     
     /// Load theme files from XDG+ directories and project themes directory
-    fn load_theme_files(&mut self) -> Result<(), String> {
+    fn load_theme_files(&mut self, dev_level_override: Option<u8>) -> Result<(), String> {
       
         // Create XDG+ directory structure if it doesn't exist
         let themes_dir = self.xdg_base_dir.join("themes");
@@ -263,7 +239,7 @@ impl ThemeEngine {
         // First, load theme files from XDG+ themes directory (lowest external priority)
         if themes_dir.exists() {
             self.theme_hierarchy.push(format!("XDG themes directory: {}", themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&themes_dir, "XDG") {
+            if let Err(e) = self.load_themes_from_directory(&themes_dir, "XDG", dev_level_override) {
                 eprintln!("Warning: Failed to load themes from XDG directory: {}", e);
             }
         }
@@ -272,7 +248,7 @@ impl ThemeEngine {
         let local_themes_dir = PathBuf::from("themes");
         if local_themes_dir.exists() {
             self.theme_hierarchy.push(format!("Local themes directory: {}", local_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&local_themes_dir, "local themes") {
+            if let Err(e) = self.load_themes_from_directory(&local_themes_dir, "local themes", dev_level_override) {
                 eprintln!("Warning: Failed to load themes from local directory: {}", e);
             }
         }
@@ -281,7 +257,7 @@ impl ThemeEngine {
         let dot_themes_dir = PathBuf::from(".themes");
         if dot_themes_dir.exists() {
             self.theme_hierarchy.push(format!("Local .themes directory: {}", dot_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir, ".themes") {
+            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir, ".themes", dev_level_override) {
                 eprintln!("Warning: Failed to load themes from .themes directory: {}", e);
             }
         }
@@ -340,7 +316,8 @@ impl ThemeEngine {
     }
 
     /// Load theme files from a specific directory
-    fn load_themes_from_directory(&mut self, themes_dir: &PathBuf, dir_type: &str) -> Result<(), String> {
+    fn load_themes_from_directory(&mut self, themes_dir: &PathBuf, dir_type: &str, dev_level_override: Option<u8>) -> Result<(), String> {
+        let defaults_level = crate::themes_builtin::parse_defaults_level(dev_level_override);
         let entries = fs::read_dir(themes_dir)
             .map_err(|e| format!("Failed to read themes directory {:?}: {}", themes_dir, e))?;
 
@@ -357,6 +334,11 @@ impl ThemeEngine {
                     }
                     // Skip template files
                     if filename.contains("template") || filename.contains("tmpl") {
+                        continue;
+                    }
+                    // At level 0, skip boxy_default.yml to enforce minimal theme set
+                    if defaults_level == 0 && filename == "boxy_default.yml" {
+                        self.file_trail.push(format!("  ⚠️  Skipped {} (disabled at BOXY_DEFAULTS_LEVEL=0)", filename));
                         continue;
                     }
                     theme_files_found.push(filename.to_string());

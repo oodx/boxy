@@ -139,7 +139,7 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
 
 
 /// Handle theme subcommands: list, show, etc.
-pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
+pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin, opt_dev_level: Option<u8>) {
     if args.is_empty() {
         eprintln!("Theme command requires an action. Usage: {} theme <action>", NAME);
         eprintln!("Available actions: list, show <theme>, hierarchy, dryrun <theme>, init, help");
@@ -210,7 +210,7 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
             handle_theme_edit(&args[1]);
         }
         "hierarchy" => {
-            match ThemeEngine::new() {
+            match ThemeEngine::new_with_override(opt_dev_level) {
                 Ok(theme_engine) => {
                     theme_engine.print_theme_hierarchy();
                 }
@@ -243,7 +243,7 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin) {
 }
 
 /// Handle engine subcommands: init, import, export, list, debug, etc.
-pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
+pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level: Option<u8>) {
     if args.is_empty() {
         eprintln!("❌ Engine command requires an action");
         eprintln!();
@@ -272,7 +272,7 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin) {
             handle_engine_init();
         }
         "list" => {
-            match ThemeEngine::new() {
+            match ThemeEngine::new_with_override(opt_dev_level) {
                 Ok(theme_engine) => {
                     handle_engine_list_enhanced(&theme_engine);
                 }

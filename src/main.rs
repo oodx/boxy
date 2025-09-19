@@ -45,6 +45,7 @@ mod jynx_plugin;
 mod width_plugin;
 mod theme_engine;
 mod themes;
+mod themes_builtin;
 mod help;
 mod draw;
 mod config;
@@ -144,27 +145,54 @@ fn run_boxy_application() -> Result<(), AppError> {
 
     // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
     // Subcommands should always execute regardless of piped input
+    // Pre-scan for --no-color and --dev-level to initialize properly
+    let mut opt_dev_level: Option<u8> = None;
+    for arg in args.iter().skip(1) {
+        if arg == "--no-color" || arg == "--no-colour" {
+            no_color_requested = true;
+        } else if arg.starts_with("--dev-level=") {
+            let level_str = &arg[12..]; // Skip "--dev-level="
+            match level_str.parse::<u8>() {
+                Ok(level) if level <= 2 => {
+                    opt_dev_level = Some(level);
+                }
+                Ok(level) => {
+                    eprintln!("Warning: --dev-level={} invalid (>2), ignoring", level);
+                }
+                Err(_) => {
+                    eprintln!("Warning: --dev-level='{}' invalid (not a number), ignoring", level_str);
+                }
+            }
+        }
+    }
+
     if args.len() >= 2 && args[1] == "width" {
         handle_width_command();
         return Ok(());
     }
-    
+
     if args.len() >= 2 && args[1] == "theme" {
-        // Initialize jynx for theme commands
-        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
-        let theme_jynx = JynxPlugin::new(no_color);
-        handle_theme_command(&args[2..], &theme_jynx);
+        // Filter out --dev-level from subcommand args
+        let filtered_args: Vec<String> = args[2..].iter()
+            .filter(|arg| !arg.starts_with("--dev-level="))
+            .cloned()
+            .collect();
+        let theme_jynx = JynxPlugin::new(no_color_requested);
+        handle_theme_command(&filtered_args, &theme_jynx, opt_dev_level);
         return Ok(());
     }
 
     if args.len() >= 2 && args[1] == "engine" {
-        // Initialize jynx for engine commands
-        let no_color = args.contains(&"--no-color".to_string()) || args.contains(&"--no-colour".to_string());
-        let engine_jynx = JynxPlugin::new(no_color);
-        handle_engine_command(&args[2..], &engine_jynx);
+        // Filter out --dev-level from subcommand args
+        let filtered_args: Vec<String> = args[2..].iter()
+            .filter(|arg| !arg.starts_with("--dev-level="))
+            .cloned()
+            .collect();
+        let engine_jynx = JynxPlugin::new(no_color_requested);
+        handle_engine_command(&filtered_args, &engine_jynx, opt_dev_level);
         return Ok(());
     }
-    
+
     // Handle migrate-commands subcommand
     // if args.len() >= 2 && args[1] == "migrate-commands" {
     //     // Initialize jynx for migration commands
@@ -172,22 +200,13 @@ fn run_boxy_application() -> Result<(), AppError> {
     //     let migrate_jynx = JynxPlugin::new(no_color);
     //     handle_migrate_command(&args[2..], &migrate_jynx);
     //     return;
-    // }    
+    // }
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
     let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "engine" );
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return Ok(());
-    }
-    
-
-    // Pre-scan for --no-color to initialize jynx properly
-    for arg in args.iter().skip(1) {
-        if arg == "--no-color" || arg == "--no-colour" {
-            no_color_requested = true;
-            break;
-        }
     }
     
     // Initialize jynx integration early
@@ -303,6 +322,9 @@ fn run_boxy_application() -> Result<(), AppError> {
                     theme_from_env = false; // CLI theme overrides environment
                     skip_next = true;
                 }
+            }
+            arg if arg.starts_with("--dev-level=") => {
+                // Already parsed in pre-scan, skip
             }
             "--wrap" => {
                 enable_wrapping = true;
@@ -499,7 +521,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     //      needs to return the right values for icon, fixed_width etc.
     // Apply theme if specified - using new theme engine
     if let Some(theme_name_str) = &theme_name {
-        match ThemeEngine::new() {
+        match ThemeEngine::new_with_override(opt_dev_level) {
             Ok(theme_engine) => {
                 if let Some(boxy_theme) = theme_engine.get_theme(theme_name_str) {
                     // Theme overrides defaults but explicit flags override theme

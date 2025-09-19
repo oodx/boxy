@@ -112,7 +112,7 @@ themes:
   blueprint:
     inherits: "base"
     color: "blue"
-    text_color: "blue"
+    text_color: "auto"
     style: "ascii"
     text_style: "normal"
     padding: 2
