@@ -65,7 +65,7 @@ use parser::*;
 use colors::*;
 use width_plugin::*;
 use jynx_plugin::*;
-use themes::*; //technically a plugin
+use themes::{handle_theme_command, handle_engine_command}; // RSB MODULE_SPEC compliant imports
 use theme_engine::*;
 use help::*;
 use draw::*;
