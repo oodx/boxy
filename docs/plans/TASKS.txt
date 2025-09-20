@@ -351,6 +351,60 @@ Theme: Macro System (6 pts)
   - Fix any remaining compliance issues
   - Document compliance status
 
+================================================================================
+ 🎯 MILESTONE HEIGHT: TERMINAL HEIGHT SYSTEM (18 pts) ⬆️ NEXT
+================================================================================
+Duration: 1-2 weeks | Risk: Medium | New Terminal Feature
+Status: Ready to begin - Follow width_plugin.rs patterns
+
+Theme: Height Plugin Foundation (8 pts)
+--------------------------------------
+[MH-001] Create src/height_plugin.rs following width_plugin.rs patterns (3) - Critical
+  - Create height_plugin.rs mirroring width_plugin.rs structure
+  - Implement get_terminal_height() with tput lines, stty size fallbacks
+  - Add validate_height() function (range 5-50 lines)
+  - Follow exact same pattern as get_terminal_width()
+
+[MH-002] Add height diagnostics subcommand (2) - High
+  - Implement handle_height_command() following handle_width_command()
+  - Add "height" subcommand to main.rs CLI parsing
+  - Display: tput lines, stty size rows, effective height
+  - Test across different terminal environments
+
+[MH-003] Integrate height detection in lib.rs and modules (3) - High
+  - Export height functions from lib.rs
+  - Add height_plugin to visual module imports
+  - Update core module with height configuration support
+  - Maintain compatibility with existing width system
+
+Theme: CLI Height Integration (5 pts)
+-------------------------------------
+[MH-004] Add --height flag to CLI argument parsing (2) - Critical
+  - Add height flag to main.rs argument parsing
+  - Support --height <N> syntax following --width pattern
+  - Add height validation using validate_height()
+  - Integrate with existing BoxyConfig.fixed_height field
+
+[MH-005] Extend --params flag to support h=N syntax (3) - High
+  - Update parse_content_stream() in core/utils.rs
+  - Add h=N parsing alongside existing k='v' pairs
+  - Support w=N (width) and h=M (height) together
+  - Test: boxy --params "h=15; w=40; tl='Title';" "Content"
+
+Theme: Height Layout Engine (5 pts)
+-----------------------------------
+[MH-006] Implement height padding in visual system (3) - Critical
+  - Add height calculation functions to visual/utils.rs
+  - Implement padding generation following draw.rs.backup logic
+  - Integrate with existing component system (Header/Body/Status/Footer)
+  - Preserve status line positioning at bottom
+
+[MH-007] Add height mode support (pad/truncate/auto) (2) - Medium
+  - Add HeightMode enum to core configuration
+  - Implement padding mode (add blank lines to reach target)
+  - Implement truncate mode (cut content if exceeds height)
+  - Default to "pad" mode for layout engine compatibility
+
 ### CRITICAL FUNCTION PROTECTION TASKS (Added to All Milestones):
 
 [MX-P01] Width calculation protection validation (1) - Critical
@@ -374,15 +428,16 @@ Theme: Macro System (6 pts)
 
 M1 (23 pts): 11 tasks + 3 protection - Basic module restructuring ✅ COMPLETED
 M1.5 (8 pts): 5 tasks - Auto/None properties validation ✅ COMPLETED
-M2 (34 pts): 9 tasks - Library API development ⬆️ NEXT
+MH (18 pts): 7 tasks - Terminal height system ⬆️ NEXT
+M2 (34 pts): 9 tasks - Library API development
 M3 (18 pts): 8 tasks - Utils/helpers separation
 M4 (16 pts): 6 tasks - Typed error system
 M5 (28 pts): 7 tasks - Feature flags & adapters
 M6 (14 pts): 4 tasks - Curated prelude & macros
 
 Completed: 31 story points (M1 + M1.5)
-Remaining: 108 story points across 32 tasks
-Total: 139 story points across 49 tasks
+Remaining: 126 story points across 39 tasks (including MH)
+Total: 157 story points across 56 tasks
 
 ================================================================================
  🎯 TASK PRIORITIZATION

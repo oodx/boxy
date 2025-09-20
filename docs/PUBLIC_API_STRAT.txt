@@ -1,0 +1,777 @@
+================================================================================
+ 📦 BOXY PUBLIC API STRATEGY - LIBRARY INTERFACE DESIGN
+================================================================================
+
+Project: Boxy CLI → Library + Public API Development
+Version: 0.16.1 → 1.0.0 (M2 Library API Development)
+Target: M2 Milestone - 34 Story Points
+
+🎯 MISSION: Transform boxy from CLI-only tool to dual CLI/Library with clean,
+ergonomic public API for programmatic box drawing in Rust applications.
+
+================================================================================
+ 🚩 DESIGN PRINCIPLES
+================================================================================
+
+1. **DUAL IDENTITY** - CLI tool unchanged, library functionality added
+2. **ERGONOMIC FIRST** - BoxBuilder pattern for common usage
+3. **POWER USER READY** - Direct functions for advanced control
+4. **ZERO DEPENDENCIES** - No external crates in public API
+5. **ERROR TRANSPARENT** - Comprehensive Result types and clear messages
+6. **DOCUMENTATION RICH** - Examples for every public function
+7. **PERFORMANCE AWARE** - String allocation optimization where possible
+8. **BACKWARD COMPATIBLE** - All CLI features available programmatically
+
+================================================================================
+ 🏗️ API ARCHITECTURE OVERVIEW
+================================================================================
+
+### **Public API Surface** (src/lib.rs)
+```rust
+// Primary ergonomic interface
+pub use BoxBuilder;
+
+// Direct drawing functions
+pub use draw_box, render_to_string;
+
+// Configuration and styling
+pub use BoxyConfig, BoxStyle, StylePresets;
+
+// Theme system
+pub use ThemeLoader, apply_theme, list_themes;
+
+// Color system
+pub use ColorPalette, parse_color, validate_color;
+
+// Height system (from BOXY_HEIGHT_STRAT)
+pub use HeightMode, HeightManager;
+
+// Error handling
+pub use BoxyError, Result;
+```
+
+### **Module Responsibility Matrix**
+```
+Module     │ CLI Concerns          │ Library Concerns       │ Shared
+───────────┼──────────────────────┼──────────────────────┼─────────────────
+visual/    │ Terminal output       │ String rendering      │ Components
+themes/    │ File discovery        │ Theme application     │ Validation
+colors/    │ Terminal detection    │ ANSI generation       │ Parsing
+core/      │ Argument parsing      │ Configuration         │ BoxyConfig
+main.rs    │ CLI interface         │ ∅                     │ ∅
+lib.rs     │ ∅                     │ Public API            │ Re-exports
+```
+
+================================================================================
+ 🔧 BOXBUILDER PATTERN - PRIMARY INTERFACE
+================================================================================
+
+### **Core BoxBuilder Implementation**
+```rust
+// src/visual/builder.rs (new file)
+#[derive(Debug, Clone)]
+pub struct BoxBuilder {
+    config: BoxyConfig,
+}
+
+impl BoxBuilder {
+    // Constructor
+    pub fn new(text: impl Into<String>) -> Self
+
+    // Dimensions
+    pub fn width(self, width: usize) -> Self
+    pub fn height(self, height: usize) -> Self
+    pub fn padding(self, horizontal: usize, vertical: usize) -> Self
+
+    // Styling
+    pub fn style(self, style: impl Into<String>) -> Self  // "normal", "rounded", etc.
+    pub fn theme(self, theme: impl Into<String>) -> Self  // "default", "modern", etc.
+    pub fn color(self, color: impl Into<String>) -> Self  // "red", "#FF0000", etc.
+
+    // Content
+    pub fn title(self, title: impl Into<String>) -> Self
+    pub fn status(self, status: impl Into<String>) -> Self
+
+    // Height system integration (from BOXY_HEIGHT_STRAT)
+    pub fn height_mode(self, mode: HeightMode) -> Self     // Pad, Truncate, Auto
+    pub fn height_filler(self, filler: char) -> Self      // Custom padding char
+
+    // Advanced configuration
+    pub fn config(self, config: BoxyConfig) -> Self       // Full control
+    pub fn merge_config(self, partial: PartialBoxyConfig) -> Self
+
+    // Output methods
+    pub fn draw(self) -> Result<()>                        // Print to stdout
+    pub fn render(self) -> Result<String>                  // Return string
+    pub fn render_lines(self) -> Result<Vec<String>>       // Return line vector
+
+    // Validation
+    pub fn validate(self) -> Result<Self>                  // Validate config
+    pub fn build(self) -> Result<BoxyConfig>               // Extract config
+}
+```
+
+### **Usage Examples**
+```rust
+use boxy::BoxBuilder;
+
+// Simple usage
+BoxBuilder::new("Hello World")
+    .width(20)
+    .style("rounded")
+    .draw()?;
+
+// Complex dashboard box
+let status_box = BoxBuilder::new("System operational")
+    .width(40)
+    .height(8)                    // Fixed height for layout
+    .theme("modern")
+    .title("System Status")
+    .status("Last updated: 2025-09-19")
+    .padding(2, 1)
+    .render()?;
+
+// TUI integration
+let panel = BoxBuilder::new(format!("CPU: {}%", cpu_usage))
+    .height(6)                    // Consistent panel height
+    .color("green")
+    .title("Performance")
+    .render()?;
+```
+
+================================================================================
+ 🎨 THEME SYSTEM API
+================================================================================
+
+### **Theme Management Interface**
+```rust
+// src/themes/api.rs (new file)
+
+#[derive(Debug, Clone)]
+pub struct ThemeLoader;
+
+impl ThemeLoader {
+    pub fn builtin() -> Vec<String>                        // List built-in themes
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Theme>
+    pub fn from_string(yaml: &str) -> Result<Theme>
+    pub fn validate(theme: &Theme) -> Result<()>
+}
+
+// Theme application
+pub fn apply_theme(config: &mut BoxyConfig, theme_name: &str) -> Result<()>
+pub fn list_themes() -> Vec<String>                       // All available themes
+pub fn get_theme(name: &str) -> Result<Theme>            // Load specific theme
+pub fn preview_theme(theme_name: &str, sample_text: &str) -> Result<String>
+
+// Theme customization
+#[derive(Debug, Clone)]
+pub struct ThemeBuilder {
+    theme: Theme,
+}
+
+impl ThemeBuilder {
+    pub fn new(base_theme: &str) -> Result<Self>
+    pub fn box_color(self, color: &str) -> Self
+    pub fn text_color(self, color: &str) -> Self
+    pub fn style(self, style: &str) -> Self
+    pub fn build(self) -> Theme
+}
+```
+
+### **Theme Usage Examples**
+```rust
+use boxy::{BoxBuilder, ThemeLoader, apply_theme};
+
+// Apply built-in theme
+BoxBuilder::new("Content")
+    .theme("modern")
+    .draw()?;
+
+// Custom theme from file
+let custom_theme = ThemeLoader::from_file("my_theme.yaml")?;
+let mut config = BoxyConfig::default();
+apply_theme(&mut config, "my_theme")?;
+
+// Theme preview
+let preview = preview_theme("modern", "Sample text")?;
+println!("{}", preview);
+
+// Custom theme builder
+let dark_theme = ThemeBuilder::new("default")?
+    .box_color("#333333")
+    .text_color("#FFFFFF")
+    .build();
+```
+
+================================================================================
+ 🎨 COLOR SYSTEM API
+================================================================================
+
+### **Color Management Interface**
+```rust
+// src/colors/api.rs (new file)
+
+#[derive(Debug, Clone)]
+pub struct ColorPalette;
+
+impl ColorPalette {
+    pub fn named_colors() -> Vec<String>                   // "red", "blue", etc.
+    pub fn validate_color(color: &str) -> Result<()>
+    pub fn to_ansi(color: &str) -> Result<String>          // Generate ANSI codes
+    pub fn from_hex(hex: &str) -> Result<String>           // "#FF0000" -> ANSI
+    pub fn from_rgb(r: u8, g: u8, b: u8) -> String        // RGB -> ANSI
+}
+
+// Color utilities
+pub fn parse_color(input: &str) -> Result<String>         // Flexible color parsing
+pub fn validate_color(color: &str) -> Result<()>          // Color validation
+pub fn color_preview(color: &str) -> Result<String>       // Visual color sample
+
+// Color manipulation
+pub fn lighten_color(color: &str, amount: f32) -> Result<String>
+pub fn darken_color(color: &str, amount: f32) -> Result<String>
+pub fn contrast_color(background: &str) -> Result<String>  // Auto contrast text
+```
+
+### **Color Usage Examples**
+```rust
+use boxy::{BoxBuilder, ColorPalette, parse_color};
+
+// Named colors
+BoxBuilder::new("Alert!")
+    .color("red")
+    .draw()?;
+
+// Hex colors
+BoxBuilder::new("Custom")
+    .color("#3498db")
+    .draw()?;
+
+// RGB colors
+let blue_ansi = ColorPalette::from_rgb(52, 152, 219);
+BoxBuilder::new("RGB Blue")
+    .color(blue_ansi)
+    .draw()?;
+
+// Color validation
+if ColorPalette::validate_color("#invalid").is_err() {
+    println!("Invalid color format");
+}
+
+// Auto contrast
+let bg_color = "#2c3e50";
+let text_color = contrast_color(bg_color)?;  // Auto-select readable text color
+```
+
+================================================================================
+ 🔧 DIRECT FUNCTIONS API
+================================================================================
+
+### **Core Drawing Functions**
+```rust
+// src/visual/api.rs (new file)
+
+// Primary drawing functions
+pub fn draw_box(config: BoxyConfig) -> Result<()>          // Print to stdout
+pub fn render_to_string(config: BoxyConfig) -> Result<String>  // Return string
+pub fn render_to_lines(config: BoxyConfig) -> Result<Vec<String>>  // Line vector
+
+// Utility functions
+pub fn calculate_box_width(text: &str, padding: usize, max_width: Option<usize>) -> usize
+pub fn calculate_box_height(config: &BoxyConfig) -> usize
+pub fn validate_config(config: &BoxyConfig) -> Result<()>
+
+// Component access (advanced usage)
+pub fn render_header(config: &BoxyConfig, width: usize) -> Result<String>
+pub fn render_body(config: &BoxyConfig, width: usize) -> Result<Vec<String>>
+pub fn render_status(config: &BoxyConfig, width: usize) -> Result<Vec<String>>
+pub fn render_footer(config: &BoxyConfig, width: usize) -> Result<String>
+
+// Content utilities
+pub fn strip_box_content(boxed_output: &str) -> String    // Remove box decoration
+pub fn measure_content(text: &str) -> (usize, usize)      // (width, height)
+```
+
+### **Direct API Usage Examples**
+```rust
+use boxy::{draw_box, render_to_string, BoxyConfig};
+
+// Direct configuration
+let mut config = BoxyConfig::default();
+config.text = "Hello World".to_string();
+config.colors.box_color = "blue".to_string();
+config.width.fixed_width = Some(30);
+
+// Direct drawing
+draw_box(config.clone())?;
+
+// String rendering
+let output = render_to_string(config)?;
+print!("{}", output);
+
+// Component-level control
+let header = render_header(&config, 30)?;
+let body_lines = render_body(&config, 30)?;
+let footer = render_footer(&config, 30)?;
+```
+
+================================================================================
+ 🌟 METEOR TOKEN INTEGRATION API - BLOCKING DEPENDENCY ⚠️
+================================================================================
+
+⚠️  **CRITICAL DEPENDENCY WARNING** ⚠️
+
+🚫 **METEOR TOKENS ARE A BLOCKING DEPENDENCY** 🚫
+
+Token functionality CANNOT be implemented until meteor crate is complete and available.
+All token-related features are PLACEHOLDER ONLY and will remain non-functional until
+meteor dependency is resolved.
+
+**Current Status:**
+- Meteor crate: NOT AVAILABLE
+- Token implementation: PLACEHOLDER STUBS ONLY
+- Token features: COMPLETELY NON-FUNCTIONAL
+- Timeline: DEPENDENT ON METEOR COMPLETION
+
+### **Token System Integration** (POST-METEOR IMPLEMENTATION)
+Based on China's analysis of TOKEN_NAMESPACE_CONCEPT.md, meteor tokens WILL provide:
+- Universal addressing scheme with `ctx:namespace:key=value` pattern
+- Context isolation (app/user/system) for configuration hierarchy
+- Runtime updates without application restarts
+- Cross-platform consistent configuration format
+
+**⚠️ IMPLEMENTATION BLOCKED UNTIL METEOR IS AVAILABLE ⚠️**
+
+### **Core Token Traits** (NON-FUNCTIONAL PLACEHOLDER STUBS)
+```rust
+// src/tokens.rs (PLACEHOLDER FILE - NON-FUNCTIONAL)
+// ⚠️ WARNING: These traits are STUBS ONLY and cannot be used until meteor is available
+
+/// Token serialization trait - converts boxy objects to meteor tokens
+pub trait ToToken {
+    fn to_tokens(&self) -> Result<TokenBucket>;
+    fn to_token_stream(&self, context: &str) -> Result<String>;
+}
+
+/// Token deserialization trait - creates boxy objects from meteor tokens
+pub trait FromToken: Sized {
+    fn from_tokens(bucket: &TokenBucket) -> Result<Self>;
+    fn from_token_stream(stream: &str) -> Result<Self>;
+}
+
+/// Runtime token updates - enables live configuration changes
+pub trait TokenUpdate {
+    fn apply_tokens(&mut self, bucket: &TokenBucket) -> Result<()>;
+    fn merge_context(&mut self, context: &str, bucket: &TokenBucket) -> Result<()>;
+}
+
+// ⚠️ PLACEHOLDER meteor types - COMPLETELY NON-FUNCTIONAL until meteor crate is ready
+#[derive(Debug, Clone)]
+pub struct TokenBucket {
+    context: String,
+    data: HashMap<String, HashMap<String, String>>,
+}
+
+// ⚠️ All token functionality BLOCKED on meteor dependency
+```
+
+### **BoxBuilder Token Integration** (NON-FUNCTIONAL UNTIL METEOR AVAILABLE)
+```rust
+// ⚠️ WARNING: All implementations below are PLACEHOLDER STUBS ONLY
+// These will return errors or panic until meteor dependency is resolved
+
+impl ToToken for BoxBuilder {
+    fn to_tokens(&self) -> Result<TokenBucket> {
+        // ⚠️ BLOCKED: Cannot serialize until meteor crate is available
+        Err(BoxyError::Token {
+            message: "Token functionality blocked on meteor dependency".to_string()
+        })
+    }
+}
+
+impl FromToken for BoxBuilder {
+    fn from_tokens(bucket: &TokenBucket) -> Result<Self> {
+        // ⚠️ BLOCKED: Cannot deserialize until meteor crate is available
+        Err(BoxyError::Token {
+            message: "Token functionality blocked on meteor dependency".to_string()
+        })
+    }
+}
+
+impl TokenUpdate for BoxBuilder {
+    fn apply_tokens(&mut self, bucket: &TokenBucket) -> Result<()> {
+        // ⚠️ BLOCKED: Cannot apply updates until meteor crate is available
+        Err(BoxyError::Token {
+            message: "Token functionality blocked on meteor dependency".to_string()
+        })
+    }
+}
+```
+
+### **Token Usage Examples** (WILL FAIL UNTIL METEOR AVAILABLE)
+```rust
+use boxy::{BoxBuilder, ToToken, FromToken};
+
+// ⚠️ WARNING: All examples below will return errors until meteor is available
+
+// Attempting to serialize will fail
+let builder = BoxBuilder::new("content").width(40).theme("modern");
+// This will return: Err(BoxyError::Token { message: "Token functionality blocked..." })
+let tokens = builder.to_tokens(); // ❌ WILL FAIL
+
+// Attempting to deserialize will fail
+let token_input = "user:box:width=50; app:box:theme=dark; system:box:height=20;";
+// This will return: Err(BoxyError::Token { message: "Token functionality blocked..." })
+let restored_builder = BoxBuilder::from_token_stream(token_input); // ❌ WILL FAIL
+
+// Runtime updates are blocked
+let mut builder = BoxBuilder::new("status");
+// This will return: Err(BoxyError::Token { message: "Token functionality blocked..." })
+builder.apply_tokens(&updates); // ❌ WILL FAIL
+
+// 🔮 POST-METEOR IMPLEMENTATION (FUTURE):
+// When meteor is available, these examples will work as designed
+```
+
+### **Integration Zones** (High Value Areas)
+1. **Configuration Management**: BoxyConfig serialization with context separation
+2. **Theme System**: User customizations via token overrides
+3. **Layout Configuration**: Grid layouts as coordinate tokens
+4. **Runtime Updates**: Live configuration without restarts
+5. **Multi-File Projects**: Distributed config with context isolation
+
+### **Implementation Strategy - METEOR DEPENDENCY RESOLUTION**
+- **BLOCKED**: All token functionality depends on meteor crate completion
+- **M2 Milestone**: Token traits as placeholder stubs ONLY (non-functional)
+- **POST-METEOR Phase 1**: Basic string serialization/deserialization
+- **POST-METEOR Phase 2**: Integration with actual meteor crate
+- **POST-METEOR Phase 3**: Runtime update capabilities and context merging
+
+⚠️ **NO TOKEN FEATURES WILL BE FUNCTIONAL UNTIL METEOR IS COMPLETE** ⚠️
+
+================================================================================
+ 📊 ERROR HANDLING STRATEGY
+================================================================================
+
+### **Error Type Hierarchy**
+```rust
+// src/error.rs (new file)
+
+#[derive(Debug, thiserror::Error)]
+pub enum BoxyError {
+    #[error("Invalid box style: {style}")]
+    InvalidStyle { style: String },
+
+    #[error("Invalid color: {color}")]
+    InvalidColor { color: String },
+
+    #[error("Theme not found: {theme}")]
+    ThemeNotFound { theme: String },
+
+    #[error("Invalid theme format: {message}")]
+    InvalidTheme { message: String },
+
+    #[error("Configuration error: {message}")]
+    Config { message: String },
+
+    #[error("Height configuration error: {message}")]
+    Height { message: String },
+
+    #[error("Width too small: minimum {min}, got {actual}")]
+    WidthTooSmall { min: usize, actual: usize },
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("YAML parsing error: {0}")]
+    Yaml(#[from] serde_yaml::Error),
+
+    #[error("Token functionality blocked: {message} (meteor dependency required)")]
+    Token { message: String },
+
+    #[error("Token context error: {context} (meteor dependency required)")]
+    TokenContext { context: String },
+}
+
+pub type Result<T> = std::result::Result<T, BoxyError>;
+```
+
+### **Error Handling Examples**
+```rust
+use boxy::{BoxBuilder, BoxyError};
+
+// Graceful error handling
+match BoxBuilder::new("content").style("invalid").draw() {
+    Ok(()) => println!("Box drawn successfully"),
+    Err(BoxyError::InvalidStyle { style }) => {
+        eprintln!("Unknown style: {}. Try: normal, rounded, double", style);
+    }
+    Err(e) => eprintln!("Error: {}", e),
+}
+
+// Result chaining
+let result = BoxBuilder::new("test")
+    .validate()?                    // Early validation
+    .theme("modern")?               // Can fail
+    .render()?;                     // Can fail
+
+// Error recovery
+let output = BoxBuilder::new("content")
+    .theme("custom")
+    .draw()
+    .or_else(|_| {
+        // Fallback to default theme
+        BoxBuilder::new("content").theme("default").draw()
+    })?;
+```
+
+================================================================================
+ 📖 DOCUMENTATION STRATEGY
+================================================================================
+
+### **Documentation Structure**
+```
+docs/api/
+├── getting_started.md          # Quick start guide
+├── boxbuilder.md              # BoxBuilder comprehensive guide
+├── themes.md                  # Theme system documentation
+├── colors.md                  # Color system documentation
+├── height_system.md           # Height/layout features
+├── examples/                  # Code examples
+│   ├── basic_usage.rs
+│   ├── tui_integration.rs
+│   ├── custom_themes.rs
+│   └── error_handling.rs
+└── migration_guide.md         # CLI to library migration
+```
+
+### **Rustdoc Standards**
+```rust
+/// Creates a new box with the specified text content.
+///
+/// # Examples
+///
+/// ```rust
+/// use boxy::BoxBuilder;
+///
+/// let output = BoxBuilder::new("Hello World")
+///     .width(20)
+///     .style("rounded")
+///     .render()?;
+///
+/// println!("{}", output);
+/// ```
+///
+/// # Errors
+///
+/// Returns [`BoxyError::Config`] if the text is empty or configuration is invalid.
+///
+/// # Panics
+///
+/// This function does not panic under normal circumstances.
+pub fn new(text: impl Into<String>) -> Self
+```
+
+### **Example Categories**
+1. **Quick Start** - Basic BoxBuilder usage
+2. **Advanced Configuration** - Direct config manipulation
+3. **Theme System** - Custom themes and application
+4. **Color Management** - Color parsing and validation
+5. **Height System** - Fixed height for layout engines
+6. **TUI Integration** - Usage in terminal UI frameworks
+7. **Error Handling** - Comprehensive error management
+8. **Performance** - Optimization techniques
+
+================================================================================
+ 🚀 LIBRARY INTEGRATION EXAMPLES
+================================================================================
+
+### **TUI Framework Integration**
+```rust
+// ratatui integration example
+use ratatui::prelude::*;
+use boxy::BoxBuilder;
+
+fn render_status_panel(cpu: f32, memory: f32) -> Result<String, Box<dyn std::error::Error>> {
+    let content = format!("CPU: {:.1}%\nMemory: {:.1}%", cpu, memory);
+
+    let status_box = BoxBuilder::new(content)
+        .height(6)                  // Fixed height for layout
+        .width(25)
+        .theme("minimal")
+        .title("System Stats")
+        .render()?;
+
+    Ok(status_box)
+}
+```
+
+### **Web Backend Integration**
+```rust
+// actix-web integration example
+use actix_web::{web, HttpResponse, Result};
+use boxy::BoxBuilder;
+
+async fn api_status() -> Result<HttpResponse> {
+    let status_display = BoxBuilder::new("API is running")
+        .style("double")
+        .color("green")
+        .title("Server Status")
+        .render()
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/plain")
+        .body(status_display))
+}
+```
+
+### **CLI Tool Enhancement**
+```rust
+// Custom CLI tool using boxy as library
+use clap::Parser;
+use boxy::BoxBuilder;
+
+#[derive(Parser)]
+struct Args {
+    message: String,
+    #[arg(long)]
+    style: Option<String>,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+
+    let mut builder = BoxBuilder::new(args.message);
+
+    if let Some(style) = args.style {
+        builder = builder.style(style);
+    }
+
+    builder.draw()?;
+    Ok(())
+}
+```
+
+================================================================================
+ 🎯 MIGRATION STRATEGY
+================================================================================
+
+### **CLI Compatibility Guarantee**
+```bash
+# All existing CLI usage MUST work identically
+echo "test" | boxy --theme modern --title "Status"
+boxy --width 40 --color red "Alert message"
+boxy --help                                    # Unchanged help output
+```
+
+### **Library Introduction Path**
+```rust
+// Phase 1: Direct function usage (familiar)
+use boxy::{draw_box, BoxyConfig};
+let mut config = BoxyConfig::default();
+config.text = "Hello".to_string();
+draw_box(config)?;
+
+// Phase 2: Builder pattern (ergonomic)
+use boxy::BoxBuilder;
+BoxBuilder::new("Hello").draw()?;
+
+// Phase 3: Advanced features (powerful)
+BoxBuilder::new("Status")
+    .height(8)
+    .theme("custom")
+    .validate()?
+    .draw()?;
+```
+
+### **Gradual Feature Adoption**
+1. **Basic Drawing** - Simple BoxBuilder usage
+2. **Theme Integration** - Apply existing themes programmatically
+3. **Color Customization** - Programmatic color control
+4. **Height System** - Layout engine integration
+5. **Advanced Configuration** - Full config manipulation
+6. **Error Handling** - Comprehensive error management
+
+================================================================================
+ 📊 SUCCESS METRICS
+================================================================================
+
+### **API Quality Metrics**
+✅ **Ergonomics**: Common tasks require ≤ 3 method calls
+✅ **Performance**: Library overhead < 10% vs CLI
+✅ **Memory**: String allocation optimized for common patterns
+✅ **Errors**: All failure modes have clear error messages
+✅ **Documentation**: 100% public API documented with examples
+✅ **Compatibility**: Zero CLI behavior changes
+
+### **Adoption Metrics**
+✅ **Examples**: Functional examples for all use cases
+✅ **Integration**: TUI framework integration demos
+✅ **Migration**: Clear path from CLI to library usage
+✅ **Testing**: Library API test coverage > 95%
+
+================================================================================
+ 📋 IMPLEMENTATION ROADMAP
+================================================================================
+
+### **Phase 1: Foundation (Week 1)**
+□ Create src/lib.rs with initial public exports
+□ Implement basic BoxBuilder pattern
+□ Basic draw() and render() methods
+□ Error type definitions (BoxyError enum)
+□ Documentation structure setup
+
+### **Phase 2: Core Features (Week 2)**
+□ Complete BoxBuilder implementation
+□ Theme system API (ThemeLoader, apply_theme)
+□ Color system API (ColorPalette, parse_color)
+□ Direct function API (draw_box, render_to_string)
+□ Comprehensive error handling
+
+### **Phase 3: Advanced Features (Week 3)**
+□ Height system integration (from BOXY_HEIGHT_STRAT)
+□ Component-level API access
+□ Advanced configuration options
+□ Performance optimizations
+□ Validation systems
+
+### **Phase 4: Polish & Launch (Week 4)**
+□ Complete documentation with examples
+□ Integration examples (TUI, web, CLI)
+□ Migration guide creation
+□ Performance benchmarking
+□ API stabilization review
+□ Meteor token trait stubs (NON-FUNCTIONAL placeholders only)
+□ Token stub documentation with meteor dependency warnings
+
+**⚠️ NOTE: Token functionality explicitly excluded from M2 due to meteor dependency**
+
+================================================================================
+ 🎯 API COMPLETION CRITERIA
+================================================================================
+
+**M2 Milestone Complete When (METEOR-INDEPENDENT CRITERIA):**
+1. ✅ BoxBuilder pattern fully functional
+2. ✅ Direct drawing functions available
+3. ✅ Theme system API implemented
+4. ✅ Color system API implemented
+5. ✅ Height system integrated (from BOXY_HEIGHT_STRAT)
+6. ✅ Comprehensive error handling (excluding token functionality)
+7. ✅ Complete documentation with examples (excluding functional token examples)
+8. ✅ Zero CLI regressions
+9. ✅ Library test coverage > 95% (excluding token functionality)
+10. ✅ Performance benchmarks acceptable
+11. ✅ Meteor token trait stubs documented as NON-FUNCTIONAL placeholders
+
+**🚫 EXPLICITLY EXCLUDED FROM M2:**
+- Functional token implementation (blocked on meteor)
+- Token serialization/deserialization (blocked on meteor)
+- Token runtime updates (blocked on meteor)
+- Token integration examples (blocked on meteor)
+
+**✅ M2 CAN PROCEED WITHOUT METEOR DEPENDENCY**
+
+**Ready for M3 Utils/Helpers Separation with solid public API foundation.**
+
+================================================================================

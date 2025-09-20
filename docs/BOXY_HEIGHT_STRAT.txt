@@ -1,0 +1,380 @@
+================================================================================
+ 📏 BOXY HEIGHT STRATEGY - TERMINAL LAYOUT ENGINE SUPPORT
+================================================================================
+
+Project: Boxy CLI → Library + Height System Integration
+Version: 0.16.1 → 1.0.0 (M2 Library API Development)
+Target: M2 Milestone - Fixed Height Feature Integration
+
+🎯 MISSION: Enable boxy to output fixed-height boxes for terminal multiplexers,
+TUI frameworks, and layout engines requiring predictable vertical spacing.
+
+================================================================================
+ 🚩 CORE REQUIREMENTS
+================================================================================
+
+1. **OPTIONAL BY DEFAULT** - Height features OFF in normal terminal mode
+2. **EXPLICIT ACTIVATION** - Requires --height flag or environment variable
+3. **EARLY CONFIGURATION** - All env vars loaded in main(), not scattered
+4. **COMPONENT PRESERVATION** - Maintain Header/Body/Status/Footer separation
+5. **LAYOUT ENGINE READY** - Predictable output dimensions for TUI frameworks
+
+================================================================================
+ 🏗️ ARCHITECTURE STRATEGY
+================================================================================
+
+### **Height Configuration Loading** (Early in main())
+```
+Priority Order:
+1. CLI --height flag (highest priority)
+2. BOXY_HEIGHT environment variable
+3. Config file height setting
+4. None (default - height disabled)
+
+Environment Variables (loaded once in main()):
+- BOXY_HEIGHT: Target height value (usize)
+- BOXY_HEIGHT_MODE: "pad" | "truncate" | "auto" (default: "pad")
+- BOXY_HEIGHT_FILLER: Custom filler character (default: space)
+```
+
+### **Component Architecture Integration**
+```
+Box Structure (when height enabled):
+┌─────────────────┐  ← Header (1 line)
+│ Content Line 1  │  ↑
+│ Content Line 2  │  │ Body (dynamic)
+│                 │  │ + Padding (calculated)
+│ [padding lines] │  ↓
+│ Status: Ready   │  ← Status (variable lines)
+└─────────────────┘  ← Footer (1 line)
+
+Height Calculation:
+total_height = header(1) + body + padding + status + footer(1)
+padding_needed = max(0, target_height - (header + body + status + footer))
+```
+
+### **Height Modes**
+1. **"pad"** (default): Add blank lines to reach target height
+2. **"truncate"**: Cut content if exceeds target height
+3. **"auto"**: Use content height (effectively disabled)
+
+================================================================================
+ 🔧 IMPLEMENTATION PLAN
+================================================================================
+
+### **Phase 1: CLI Integration**
+```
+src/main.rs additions:
+- Add --height <HEIGHT> flag to clap
+- Add --height-mode <MODE> flag
+- Load BOXY_* height env vars early
+- Pass height config to BoxyConfig
+```
+
+### **Phase 2: Core Configuration**
+```
+src/core/utils.rs - BoxyConfig enhancement:
+- height_enabled: bool
+- target_height: Option<usize>  (existing field)
+- height_mode: HeightMode enum
+- height_filler: char
+```
+
+### **Phase 3: Visual System Integration**
+```
+src/visual/utils.rs additions:
+- calculate_height_padding(config, body_lines, status_lines) -> usize
+- generate_height_padding(count, config) -> Vec<String>
+- should_apply_height_padding(config) -> bool
+
+Integration in draw_box() and render_to_string():
+1. Calculate current content height
+2. Check if height padding needed
+3. Generate padding lines with proper styling
+4. Insert padding between body and status (preserve status position)
+```
+
+### **Phase 4: Height Manager Component**
+```
+src/visual/height.rs (new):
+pub struct HeightManager {
+    enabled: bool,
+    target_height: usize,
+    mode: HeightMode,
+    filler: char,
+}
+
+impl HeightManager {
+    pub fn new(config: &BoxyConfig) -> Self
+    pub fn calculate_padding_needed(&self, current_lines: usize) -> usize
+    pub fn generate_padding_lines(&self, count: usize, config: &BoxyConfig) -> Vec<String>
+    pub fn should_truncate(&self, current_lines: usize) -> bool
+}
+```
+
+================================================================================
+ 💻 CLI INTERFACE DESIGN
+================================================================================
+
+### **New CLI Flags**
+```bash
+# Enable fixed height mode
+boxy --height 20 "Content here"
+
+# Specify height mode
+boxy --height 15 --height-mode pad "Content"
+boxy --height 10 --height-mode truncate "Long content"
+
+# Custom filler character
+boxy --height 12 --height-filler "." "Content"
+
+# Combined with existing flags
+boxy --height 20 --theme modern --title "Status" "Content"
+```
+
+### **Environment Variables**
+```bash
+# Set default height
+export BOXY_HEIGHT=20
+
+# Set default height mode
+export BOXY_HEIGHT_MODE=pad
+
+# Custom filler
+export BOXY_HEIGHT_FILLER="·"
+
+# Use with CLI (env + flag combination)
+BOXY_HEIGHT=15 boxy --title "Status" "Content"
+```
+
+================================================================================
+ 🎮 USE CASE SCENARIOS
+================================================================================
+
+### **Terminal Multiplexer Integration**
+```bash
+# tmux pane with fixed height
+tmux split-window -v -l 10 'echo "Status: Ready" | boxy --height 8 --title "System"'
+
+# Screen window with consistent height
+screen -X eval 'split' 'focus down' 'resize 12' 'exec boxy --height 10 "Loading..."'
+```
+
+### **TUI Framework Integration**
+```rust
+// Library usage in TUI frameworks
+let status_box = BoxBuilder::new("System Ready")
+    .height(8)
+    .title("Status")
+    .theme("minimal")
+    .render();
+
+// Always produces exactly 8 lines of output
+```
+
+### **Layout Engine Support**
+```bash
+# Dashboard with consistent panel heights
+echo "CPU: 45%" | boxy --height 6 --title "CPU" &
+echo "Memory: 78%" | boxy --height 6 --title "Memory" &
+echo "Disk: 23%" | boxy --height 6 --title "Storage" &
+wait
+```
+
+================================================================================
+ 🧪 TESTING STRATEGY
+================================================================================
+
+### **Height Calculation Tests**
+```rust
+#[test]
+fn test_height_padding_calculation() {
+    // Test padding math for various scenarios
+    let config = BoxyConfig { target_height: Some(10), height_enabled: true, .. };
+    let body_lines = 3;
+    let status_lines = 1;
+    // header(1) + body(3) + status(1) + footer(1) = 6
+    // padding_needed = 10 - 6 = 4
+    assert_eq!(calculate_height_padding(&config, body_lines, status_lines), 4);
+}
+
+#[test]
+fn test_height_disabled_by_default() {
+    let config = BoxyConfig::default();
+    assert!(!should_apply_height_padding(&config));
+}
+
+#[test]
+fn test_height_truncation_mode() {
+    // Test content truncation when height mode is "truncate"
+}
+```
+
+### **Integration Tests**
+```bash
+# Test height output consistency
+./tests/height/test_fixed_output.sh
+./tests/height/test_multiplexer_integration.sh
+./tests/height/test_environment_variables.sh
+```
+
+================================================================================
+ ⚠️ EDGE CASES & CONSIDERATIONS
+================================================================================
+
+### **Edge Cases to Handle**
+1. **Target height < minimum required** (header + footer + 1 content line)
+2. **Very large height values** (memory usage with many padding lines)
+3. **Terminal width changes** during height calculation
+4. **Unicode content** affecting height measurements
+5. **Status lines exceeding expected count**
+
+### **Performance Considerations**
+1. **Efficient padding generation** - avoid repeated string allocation
+2. **Memory usage** with large height values
+3. **Caching** blank line templates when possible
+
+### **Compatibility Requirements**
+1. **Zero impact** when height disabled (default behavior unchanged)
+2. **Backward compatibility** - all existing CLI usage works identically
+3. **Library API** - height features available but optional
+
+================================================================================
+ 🎯 SUCCESS CRITERIA
+================================================================================
+
+### **Functional Requirements**
+✅ Height feature disabled by default (zero behavior change)
+✅ --height flag enables fixed height output
+✅ Environment variable support (BOXY_HEIGHT, BOXY_HEIGHT_MODE)
+✅ Component separation preserved (status stays at bottom)
+✅ Multiple height modes (pad, truncate, auto)
+✅ Consistent output dimensions for layout engines
+
+### **Quality Requirements**
+✅ Comprehensive test coverage for height calculations
+✅ Performance impact < 5% when height enabled
+✅ Memory usage scales linearly with height value
+✅ Clean integration with existing component architecture
+✅ No regressions in existing functionality
+
+### **Library API Requirements**
+✅ BoxBuilder.height() method available
+✅ Height configuration via BoxyConfig
+✅ String rendering maintains height consistency
+✅ Error handling for invalid height values
+
+================================================================================
+ 📋 IMPLEMENTATION CHECKLIST
+================================================================================
+
+**Phase 1: CLI Foundation**
+□ Add --height flag to main.rs
+□ Add --height-mode flag
+□ Environment variable loading in main()
+□ Update BoxyConfig with height fields
+□ Basic height validation
+
+**Phase 2: Core Logic**
+□ Height calculation functions in visual/utils.rs
+□ Padding line generation with proper styling
+□ Integration with existing draw_box() function
+□ Height modes implementation (pad/truncate/auto)
+
+**Phase 3: Advanced Features**
+□ HeightManager component creation
+□ Custom filler character support
+□ Truncation mode implementation
+□ Memory optimization for large heights
+
+**Phase 4: Testing & Polish**
+□ Comprehensive test suite
+□ Integration tests with multiplexers
+□ Performance benchmarking
+□ Documentation and examples
+
+================================================================================
+ 🎯 MILESTONE COMPLETION CRITERIA
+================================================================================
+
+**Height Strategy Complete When:**
+1. ✅ --height flag implemented and working
+2. ✅ Environment variable support functional
+3. ✅ Component architecture preserved
+4. ✅ All height modes (pad/truncate/auto) working
+5. ✅ Zero regressions in default behavior
+6. ✅ Test coverage > 90% for height features
+7. ✅ Library API includes height functionality
+8. ✅ Documentation and examples complete
+
+**Ready for M2 Library API integration with robust height system support.**
+
+================================================================================
+ 🔧 UPDATED IMPLEMENTATION INSIGHTS
+================================================================================
+
+### **Height Plugin Implementation** (Following width_plugin.rs patterns)
+```rust
+// src/height_plugin.rs (new file following width_plugin.rs)
+
+/// Validate height input (similar to validate_width)
+pub fn validate_height(height_str: &str) -> Result<(), String>
+
+/// Height diagnostics subcommand (similar to handle_width_command)
+pub fn handle_height_command()
+
+/// Get terminal height with fallback to 24 lines (similar to get_terminal_width)
+pub fn get_terminal_height() -> usize {
+    // Try tput lines with /dev/tty
+    // Try stty size with /dev/tty (first value is rows)
+    // Try environment variables (LINES)
+    // Fallback to 24
+}
+
+/// Height calculation for layout engines (similar to get_display_width patterns)
+pub fn calculate_content_height(lines: &[String]) -> usize
+```
+
+### **Critical Function Protection**
+Following the CRITICAL_FUNCTIONS_PROTECTION.md patterns:
+- height_plugin.rs will need similar protection as width_plugin.rs
+- Terminal height detection logic is critical for layout consistency
+- Height calculations must be tested across different terminal environments
+- Any changes require extensive testing like width functions
+
+### **Param Flag Integration**
+Update existing parse_content_stream to support:
+```rust
+// Existing: k='v' pairs (hd, tl, st, ft, ic)
+// Add: w=N (width), h=M (height) support
+boxy --params "h=15; w=40; tl='Title';" "Content"
+```
+
+### **Terminal Height Detection Implementation**
+From width_plugin.rs analysis, height detection follows same pattern:
+```rust
+// stty size returns "rows cols" - extract first value for height
+let stty_rows_tty = {
+    let mut c = Command::new("stty");
+    c.arg("size");
+    run_with_tty(c).and_then(|s| {
+        let parts: Vec<&str> = s.split_whitespace().collect();
+        if parts.len() == 2 { parts[0].parse::<usize>().ok() } else { None }
+    })
+};
+
+// tput lines for height (similar to tput cols for width)
+let tput_lines_tty = {
+    let mut c = Command::new("tput");
+    c.arg("lines");
+    run_with_tty(c).and_then(|s| s.trim().parse::<usize>().ok())
+};
+```
+
+### **Height Diagnostics Subcommand**
+Add to CLI parsing (like existing "width" subcommand):
+```bash
+boxy height    # Show height diagnostics like width diagnostics
+```
+
+================================================================================

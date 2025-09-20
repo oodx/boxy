@@ -42,6 +42,7 @@ mod colors;
 mod emoji_debug;
 mod jynx_plugin;
 mod width_plugin;
+mod height_plugin;
 mod theme_engine;
 mod themes;
 mod themes_builtin;
@@ -59,6 +60,7 @@ use std::collections::HashMap;
 use core::*;  // Import core module (consolidates config, parser, help)
 use colors::*;
 use width_plugin::*;
+use height_plugin::*;
 use jynx_plugin::*;
 use themes::{handle_theme_command, handle_engine_command}; // RSB MODULE_SPEC compliant imports
 use theme_engine::*;
@@ -163,6 +165,10 @@ fn run_boxy_application() -> Result<(), AppError> {
         handle_width_command();
         return Ok(());
     }
+    if args.len() >= 2 && args[1] == "height" {
+        handle_height_command();
+        return Ok(());
+    }
 
     if args.len() >= 2 && args[1] == "theme" {
         // Filter out --dev-level from subcommand args
@@ -196,7 +202,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     // }
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "theme" | "engine" );
+    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "height" | "theme" | "engine" );
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return Ok(());

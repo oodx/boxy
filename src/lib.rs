@@ -2,6 +2,7 @@ pub mod colors;
 pub mod core;
 pub mod visual;
 pub mod width_plugin;
+pub mod height_plugin;
 pub mod emoji_debug;
 pub mod jynx_plugin;
 
@@ -68,6 +69,7 @@ pub use visual::{
 
 // Import other modules
 pub use width_plugin::*;
+pub use height_plugin::*;
 pub use jynx_plugin::*;
 
 // Re-export external types that modules need
