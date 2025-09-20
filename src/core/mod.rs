@@ -16,6 +16,9 @@ pub mod helpers;
 pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
+// The crate binary does not use many of these directly, but we keep them for
+// library consumers. Silence lint noise until the wider API consolidation lands.
+#[allow(unused_imports)]
 pub use utils::{
     AlignmentConfig,
     // Configuration types

@@ -14,6 +14,7 @@ pub fn get_home_dir() -> String {
 }
 
 /// Gets the current working directory.
+#[allow(dead_code)] // Legacy helper kept for future theme CLI workflows.
 pub fn get_current_dir() -> String {
     std::env::current_dir()
         .map(|p| p.to_string_lossy().to_string())

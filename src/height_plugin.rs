@@ -16,6 +16,7 @@ use crate::{Command, File, Stdio};
 ///
 /// # Examples
 /// ```
+/// use boxy::height_plugin::validate_height;
 /// assert!(validate_height("20").is_ok());
 /// assert!(validate_height("3").is_err());  // Too small
 /// assert!(validate_height("100").is_err()); // Too large
@@ -174,8 +175,11 @@ pub fn get_terminal_height() -> usize {
 /// # Example
 /// ```
 /// let lines = vec!["Line 1".to_string(), "Line 2".to_string()];
+/// use boxy::height_plugin::calculate_content_height;
+/// let lines = vec![String::from("line"), String::new()];
 /// assert_eq!(calculate_content_height(&lines), 2);
 /// ```
+#[allow(dead_code)] // Height pipeline integration still in progress; see docs/HEIGHT_FEATURE.md.
 pub fn calculate_content_height(lines: &[String]) -> usize {
     lines.len()
 }

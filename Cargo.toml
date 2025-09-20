@@ -19,7 +19,8 @@ chrono = { version = "0.4", features = ["serde"] }
 rsb = { git = "https://github.com/oodx/rsb", branch = "main" }
 
 [dev-dependencies]
-criterion = { version = "0.5", default-features = false, features = ["html_reports", "rayon"] }
+#criterion = { version = "0.5", default-features = false, features = ["html_reports", "rayon"] }
+criterion = "0.7"
 
 [package.metadata.notes]
 todo = "RSB integration in progress"

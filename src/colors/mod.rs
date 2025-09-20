@@ -9,6 +9,9 @@ pub mod helpers;
 pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
+// Allow unused lint because the CLI binary may not reference every helper directly,
+// but downstream library users depend on this surface.
+#[allow(unused_imports)]
 pub use utils::{RESET, generate_color_help, get_color_categories, get_color_code, validate_color};
 
 // Test module access

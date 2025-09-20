@@ -54,10 +54,12 @@ pub use visual::{
     Header,
     NORMAL,
     ROUNDED,
+    RenderTarget,
     Status,
     // Drawing functions with PROTECTED width calculations
     calculate_box_width,
     draw_box,
+    render_to_string,
     strip_box,
     // Box style system
     validate_box_style,

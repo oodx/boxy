@@ -4,12 +4,10 @@
 //! Functions here are not part of the public API.
 
 use crate::core::{NAME, VERSION};
-use crate::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
-use crate::visual::validate_box_style;
-use crate::{HashMap, Write};
+use crate::theme_engine::ThemeEngine;
 use crate::{JynxPlugin, jynx_println};
 use crate::{fs, io};
-use crate::{validate_color, validate_width};
+use std::io::Write;
 use std::path::PathBuf;
 
 /// Handle `boxy theme create <name>` command
@@ -1290,6 +1288,7 @@ fn get_icon_for_theme(name: &str) -> &'static str {
 }
 
 /// Get box drawing characters for the given style
+#[allow(dead_code)] // Retained for future theme style previews.
 fn get_box_chars_for_style(style: &str) -> (char, char, char) {
     match style {
         "rounded" => ('╭', '─', '╮'),

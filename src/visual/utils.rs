@@ -11,6 +11,7 @@
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
 use crate::core::BoxyConfig;
+use crate::visual::render_target::RenderTarget;
 use crate::{
     RESET, expand_variables, get_color_code, get_display_width, get_terminal_width,
     render_title_or_footer, truncate_with_ellipsis,
@@ -179,30 +180,52 @@ pub fn calculate_box_width(
 }
 
 pub fn draw_box(config: BoxyConfig) {
-    // Calculate width considering text and title only (status handled separately by Status component)
+    let final_width = calculate_final_width(&config);
+    let mut target = RenderTarget::with_capacity(estimate_capacity(final_width, &config));
+    render_box_with_width(&config, final_width, &mut target);
+    print!("{}", target.into_string());
+}
+
+#[allow(dead_code)] // Public library API; benchmarks and downstream code consume this path.
+pub fn render_to_string(config: &BoxyConfig) -> String {
+    let final_width = calculate_final_width(config);
+    let mut target = RenderTarget::with_capacity(estimate_capacity(final_width, config));
+    render_box_with_width(config, final_width, &mut target);
+    target.into_string()
+}
+
+fn calculate_final_width(config: &BoxyConfig) -> usize {
     let mut all_content = config.text.clone();
     if let Some(title) = &config.title {
         all_content.push('\n');
         all_content.push_str(title);
     }
 
-    let final_width = calculate_box_width(
+    calculate_box_width(
         &all_content,
         config.width.h_padding,
         config.width.fixed_width,
         config.width.enable_wrapping,
-    );
-    let inner_width = final_width.saturating_sub(2); // Account for borders
+    )
+}
+
+fn estimate_capacity(final_width: usize, config: &BoxyConfig) -> usize {
+    let line_hint = config
+        .fixed_height
+        .unwrap_or_else(|| config.text.lines().count().max(1) + 4);
+    final_width.saturating_mul(line_hint + 2)
+}
+
+fn render_box_with_width(config: &BoxyConfig, final_width: usize, target: &mut RenderTarget) {
+    let inner_width = final_width.saturating_sub(2);
     let color_code = get_color_code(&config.colors.box_color);
 
-    // Determine text color: "auto" means match box color, "none" means default
     let text_color_code = match config.colors.text_color.as_str() {
-        "auto" => get_color_code(&config.colors.box_color), // Use same color as box
-        "none" => "",                                       // Default terminal color
-        _ => get_color_code(&config.colors.text_color),     // Explicit color
+        "auto" => color_code,
+        "none" => "",
+        other => get_color_code(other),
     };
 
-    // pad removed - now handled by components
     let title_color_code = config
         .colors
         .title_color
@@ -216,71 +239,51 @@ pub fn draw_box(config: BoxyConfig) {
         .map(|n| get_color_code(n))
         .unwrap_or("");
 
-    // Use Header component for top border rendering
-    let header = Header::new(&config);
-    println!("{}", header.render(inner_width, &color_code));
+    let header = Header::new(config);
+    target.push_line(&header.render(inner_width, color_code));
 
-    // Use Body component for content rendering with preserved emoji/width calculations
-    let body = Body::new(&config);
-    let body_lines = body.render(
+    let body = Body::new(config);
+    let body_lines = body.render_into(
+        target,
         inner_width,
-        &color_code,
-        &text_color_code,
-        &title_color_code,
+        color_code,
+        text_color_code,
+        title_color_code,
     );
-    for line in &body_lines {
-        println!("{}", line);
-    }
 
-    // Use Status component for status bar rendering
-    let status = Status::new(&config);
-    let mut status_lines = Vec::new();
-    if status.should_render() {
-        status_lines = status.render(
+    let status = Status::new(config);
+    let status_lines = if status.should_render() {
+        status.render_into(
+            target,
             inner_width,
-            &color_code,
-            &text_color_code,
-            &status_color_code,
-        );
-        for line in &status_lines {
-            println!("{}", line);
-        }
-    }
+            color_code,
+            text_color_code,
+            status_color_code,
+        )
+    } else {
+        0
+    };
 
-    // Height padding: add blank lines if fixed_height is set and needs more lines
     if let Some(target_height) = config.fixed_height {
-        // Calculate current total lines: header(1) + body + status + footer(1)
-        let current_total = 1 + body_lines.len() + status_lines.len() + 1;
-
+        let current_total = 1 + body_lines + status_lines + 1;
         if target_height > current_total {
             let filler_needed = target_height - current_total;
-            let pad = " ".repeat(config.width.h_padding);
-
-            // Add blank padding lines before footer using same format as other components
+            let pad_cache = " ".repeat(config.width.h_padding);
+            let blank_cache = " ".repeat(inner_width.saturating_sub(2 * config.width.h_padding));
+            let padding_line = crate::status_padding_line!(
+                config,
+                color_code,
+                pad_cache.as_str(),
+                blank_cache.as_str()
+            );
             for _ in 0..filler_needed {
-                let available_content_width =
-                    inner_width.saturating_sub(2 * config.width.h_padding);
-                let blank_line = format!(
-                    "{}{}{}{}{}{}{}",
-                    color_code,
-                    config.style.vertical,
-                    pad,
-                    " ".repeat(available_content_width),
-                    pad,
-                    config.style.vertical,
-                    RESET
-                );
-                println!("{}", blank_line);
+                target.push_line(&padding_line);
             }
         }
     }
 
-    // Use Footer component for bottom border rendering
-    let footer = Footer::new(&config);
-    println!("{}", footer.render(inner_width, &color_code));
-
-    // Note: header_color and footer_color are stored in config but not yet implemented
-    // body_align, body_pad_emoji, pad_body_above, pad_body_below are stored in config but not yet implemented
+    let footer = Footer::new(config);
+    target.push_line(&footer.render(inner_width, color_code));
 }
 
 pub fn strip_box(text: &str, strict: bool) -> String {
@@ -493,6 +496,7 @@ impl<'a> Status<'a> {
     }
 
     /// Render status bar lines
+    #[allow(dead_code)] // Pending removal once Vec adapters are retired (TASKS [SP-2]).
     pub fn render(
         &self,
         inner_width: usize,
@@ -500,64 +504,15 @@ impl<'a> Status<'a> {
         text_color_code: &str,
         status_color_code: &str,
     ) -> Vec<String> {
-        let mut lines = Vec::new();
-
-        if let Some(status_text) = &self.config.status_bar {
-            let available_content_width =
-                inner_width.saturating_sub(2 * self.config.width.h_padding);
-            let pad_cache = " ".repeat(self.config.width.h_padding);
-            let blank_cache = " ".repeat(available_content_width);
-            let divider_cache = self.config.style.horizontal.repeat(inner_width);
-
-            if self.config.padding.pad_before_status {
-                lines.push(crate::status_padding_line!(
-                    self.config,
-                    color_code,
-                    pad_cache.as_str(),
-                    blank_cache.as_str()
-                ));
-            }
-
-            if self.config.dividers.divider_before_status {
-                if self.config.dividers.pad_before_status_divider {
-                    lines.push(crate::status_padding_line!(
-                        self.config,
-                        color_code,
-                        pad_cache.as_str(),
-                        blank_cache.as_str()
-                    ));
-                }
-                lines.push(crate::status_divider_line!(
-                    self.config,
-                    color_code,
-                    divider_cache.as_str()
-                ));
-            }
-
-            let expanded_status = expand_variables(status_text);
-            let (alignment, clean_status) = self.parse_status_alignment(&expanded_status);
-            lines.push(crate::status_content_line!(
-                self.config,
-                color_code,
-                text_color_code,
-                status_color_code,
-                alignment.as_str(),
-                clean_status,
-                pad_cache.as_str(),
-                available_content_width
-            ));
-
-            if self.config.padding.pad_after_status {
-                lines.push(crate::status_padding_line!(
-                    self.config,
-                    color_code,
-                    pad_cache.as_str(),
-                    blank_cache.as_str()
-                ));
-            }
-        }
-
-        lines
+        let mut target = RenderTarget::new();
+        self.render_into(
+            &mut target,
+            inner_width,
+            color_code,
+            text_color_code,
+            status_color_code,
+        );
+        target.into_lines()
     }
 
     /// Parse status alignment from status text
@@ -592,6 +547,81 @@ impl<'a> Status<'a> {
             ("left".to_string(), expanded_status.to_string())
         }
     }
+
+    pub fn render_into(
+        &self,
+        target: &mut RenderTarget,
+        inner_width: usize,
+        color_code: &str,
+        text_color_code: &str,
+        status_color_code: &str,
+    ) -> usize {
+        let mut line_count = 0usize;
+
+        if let Some(status_text) = &self.config.status_bar {
+            let available_content_width =
+                inner_width.saturating_sub(2 * self.config.width.h_padding);
+            let pad_cache = " ".repeat(self.config.width.h_padding);
+            let blank_cache = " ".repeat(available_content_width);
+            let divider_cache = self.config.style.horizontal.repeat(inner_width);
+
+            if self.config.padding.pad_before_status {
+                let padding_line = crate::status_padding_line!(
+                    self.config,
+                    color_code,
+                    pad_cache.as_str(),
+                    blank_cache.as_str()
+                );
+                target.push_line(&padding_line);
+                line_count += 1;
+            }
+
+            if self.config.dividers.divider_before_status {
+                if self.config.dividers.pad_before_status_divider {
+                    let padding_line = crate::status_padding_line!(
+                        self.config,
+                        color_code,
+                        pad_cache.as_str(),
+                        blank_cache.as_str()
+                    );
+                    target.push_line(&padding_line);
+                    line_count += 1;
+                }
+                let divider_line =
+                    crate::status_divider_line!(self.config, color_code, divider_cache.as_str());
+                target.push_line(&divider_line);
+                line_count += 1;
+            }
+
+            let expanded_status = expand_variables(status_text);
+            let (alignment, clean_status) = self.parse_status_alignment(&expanded_status);
+            let content_line = crate::status_content_line!(
+                self.config,
+                color_code,
+                text_color_code,
+                status_color_code,
+                alignment.as_str(),
+                clean_status,
+                pad_cache.as_str(),
+                available_content_width
+            );
+            target.push_line(&content_line);
+            line_count += 1;
+
+            if self.config.padding.pad_after_status {
+                let padding_line = crate::status_padding_line!(
+                    self.config,
+                    color_code,
+                    pad_cache.as_str(),
+                    blank_cache.as_str()
+                );
+                target.push_line(&padding_line);
+                line_count += 1;
+            }
+        }
+
+        line_count
+    }
 }
 
 /// Body component that renders the main content with preserved emoji/width calculations
@@ -605,14 +635,15 @@ impl<'a> Body<'a> {
     }
 
     /// Render the body content preserving existing emoji and width calculations
-    pub fn render(
+    pub fn render_into(
         &self,
+        target: &mut RenderTarget,
         inner_width: usize,
         color_code: &str,
         text_color_code: &str,
         title_color_code: &str,
-    ) -> Vec<String> {
-        let mut lines = Vec::new();
+    ) -> usize {
+        let mut line_count = 0usize;
         let composed_lines = self.compose_content_lines();
         let pad = " ".repeat(self.config.width.h_padding);
 
@@ -631,16 +662,13 @@ impl<'a> Body<'a> {
         // Available space for content within the box
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
 
-        // Debug: uncomment to see width calculations
-        // eprintln!("DEBUG: content_max_width={}, available_content_width={}", content_max_width, available_content_width);
-
-        // Optional padding blank line before title
         if self.config.padding.pad_before_title && self.config.title.is_some() {
-            lines.push(self.render_padding_line(inner_width, color_code, &pad));
+            let padding_line = self.render_padding_line(inner_width, color_code, &pad);
+            target.push_line(&padding_line);
+            line_count += 1;
         }
 
         for (i, line) in composed_lines.iter().enumerate() {
-            // Only truncate if there are explicit width constraints (fixed_width) AND wrapping is disabled
             let line_width = get_display_width(&line);
             let should_truncate = self.config.width.fixed_width.is_some()
                 && !self.config.width.enable_wrapping
@@ -652,17 +680,12 @@ impl<'a> Body<'a> {
             };
 
             let width = get_display_width(&display_line);
-            // IMPROVED: Use parallel solution for better inner content width calculation
             let target_width = inner_content_target_width;
             let spaces = " ".repeat(target_width.saturating_sub(width));
-
-            // DEBUG: Show line width info
-            // let debug_prefix = format!("[w:{:2} t:{:2}] ", width, target_width);
             let debug_prefix = "";
 
-            // CRITICAL: Preserve existing icon handling logic (lines 128-170 from original draw.rs)
             if i == 0 && self.config.icon.is_some() {
-                lines.push(self.render_first_line_with_icon(
+                let first_line = self.render_first_line_with_icon(
                     line,
                     &display_line,
                     available_content_width,
@@ -670,12 +693,12 @@ impl<'a> Body<'a> {
                     &pad,
                     text_color_code,
                     title_color_code,
-                ));
+                );
+                target.push_line(&first_line);
+                line_count += 1;
             } else {
-                // DEBUG: Prepend width info to the display line
                 let debug_display = format!("{}{}", debug_prefix, display_line);
-
-                lines.push(self.render_regular_line(
+                let regular_line = self.render_regular_line(
                     i,
                     &debug_display,
                     &spaces,
@@ -683,21 +706,47 @@ impl<'a> Body<'a> {
                     &pad,
                     text_color_code,
                     title_color_code,
-                ));
+                );
+                target.push_line(&regular_line);
+                line_count += 1;
             }
 
-            // Handle dividers and padding after title
             if self.config.dividers.divider_after_title && i == 0 {
-                lines.push(self.render_title_divider(inner_width, color_code));
+                let divider_line = self.render_title_divider(inner_width, color_code);
+                target.push_line(&divider_line);
+                line_count += 1;
                 if self.config.dividers.pad_after_title_divider {
-                    lines.push(self.render_padding_line(inner_width, color_code, &pad));
+                    let padding_line = self.render_padding_line(inner_width, color_code, &pad);
+                    target.push_line(&padding_line);
+                    line_count += 1;
                 }
             } else if self.config.padding.pad_after_title && i == 0 {
-                lines.push(self.render_padding_line(inner_width, color_code, &pad));
+                let padding_line = self.render_padding_line(inner_width, color_code, &pad);
+                target.push_line(&padding_line);
+                line_count += 1;
             }
         }
 
-        lines
+        line_count
+    }
+
+    #[allow(dead_code)] // Pending removal once Vec adapters are retired (TASKS [SP-2]).
+    pub fn render(
+        &self,
+        inner_width: usize,
+        color_code: &str,
+        text_color_code: &str,
+        title_color_code: &str,
+    ) -> Vec<String> {
+        let mut target = RenderTarget::new();
+        self.render_into(
+            &mut target,
+            inner_width,
+            color_code,
+            text_color_code,
+            title_color_code,
+        );
+        target.into_lines()
     }
 
     /// Compose content lines with optional title as first line (preserves existing logic)

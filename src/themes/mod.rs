@@ -15,6 +15,8 @@ pub mod helpers;
 pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
+// Allow unused lint since the CLI touches only part of the theme surface.
+#[allow(unused_imports)]
 pub use utils::{
     // Legacy compatibility
     Theme,

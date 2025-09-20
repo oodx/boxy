@@ -31,8 +31,15 @@
 
     
 # BACKLOG
-    
+
 - EPIC 2: Eventual alignment with RSB. Requires large refactor and knowledge transfer
 
 
 + application mapping
+
+# PERFORMANCE TRACKER
+
+- [SP-3] Prototype render buffer (`RenderTarget`) that implements `fmt::Write` and `io::Write` so full renders can stream into a single allocation.
+- [SP-5] Migrate `Header`, `Body`, `Status`, and `Footer` to write into the shared buffer while keeping existing colour and padding rules intact.
+- [SP-2] Provide an adapter that returns `Vec<String>` for callers/tests that still expect line-by-line output (until the wider API is updated).
+- [SP-1] Extend the Criterion `render_full` bench to run pre/post snapshots and record deltas (store results in `target/criterion/render_full/report/`).

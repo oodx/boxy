@@ -15,9 +15,18 @@
 
 pub mod calc_macros;
 pub mod helpers;
+pub mod render_target;
 pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
+// Retain RenderTarget in the public surface even if the binary does not use it directly yet.
+#[allow(unused_imports)]
+pub use render_target::RenderTarget;
+
+// Allow unused import lint here because library users depend on the broader API
+// while the CLI binary only touches a subset. This will be revisited when the
+// streaming-to-Write work lands.
+#[allow(unused_imports)]
 pub use utils::{
     ASCII,
 
@@ -36,6 +45,7 @@ pub use utils::{
     // Drawing functions with PROTECTED width calculations
     calculate_box_width,
     draw_box,
+    render_to_string,
     strip_box,
 
     // Box style system
