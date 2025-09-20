@@ -1,11 +1,9 @@
-
 /// Height plugin for terminal height detection and management
 ///
 /// This module provides terminal height detection using multiple methods,
 /// similar to the width_plugin.rs patterns. It supports terminal multiplexers,
 /// TUI frameworks, and layout engines requiring predictable vertical spacing.
-
-use crate::{File, Command, Stdio};
+use crate::{Command, File, Stdio};
 
 /// Validate height input string
 ///
@@ -51,7 +49,9 @@ pub fn handle_height_command() {
         if let Ok(tty) = File::open("/dev/tty") {
             let _ = cmd.stdin(Stdio::from(tty));
         }
-        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
+        cmd.output()
+            .ok()
+            .and_then(|o| String::from_utf8(o.stdout).ok())
     }
 
     // Gather tput lines (tty)
@@ -67,7 +67,11 @@ pub fn handle_height_command() {
         c.arg("size");
         run_with_tty(c).and_then(|s| {
             let parts: Vec<&str> = s.split_whitespace().collect();
-            if parts.len() == 2 { parts[0].parse::<usize>().ok() } else { None }
+            if parts.len() == 2 {
+                parts[0].parse::<usize>().ok()
+            } else {
+                None
+            }
         })
     };
 
@@ -75,8 +79,18 @@ pub fn handle_height_command() {
 
     println!("Height diagnostics:");
     println!("  effective (get_terminal_height): {}", effective);
-    println!("  tput lines (tty): {}", tput_lines_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
-    println!("  stty size rows (tty): {}", stty_rows_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
+    println!(
+        "  tput lines (tty): {}",
+        tput_lines_tty
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "N/A".to_string())
+    );
+    println!(
+        "  stty size rows (tty): {}",
+        stty_rows_tty
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "N/A".to_string())
+    );
 }
 
 /// Get terminal height with automatic fallback
@@ -99,7 +113,9 @@ pub fn get_terminal_height() -> usize {
         if let Ok(tty) = File::open("/dev/tty") {
             let _ = cmd.stdin(Stdio::from(tty));
         }
-        cmd.output().ok().and_then(|o| String::from_utf8(o.stdout).ok())
+        cmd.output()
+            .ok()
+            .and_then(|o| String::from_utf8(o.stdout).ok())
     }
 
     // Try tput lines with tty
@@ -108,7 +124,9 @@ pub fn get_terminal_height() -> usize {
         c.arg("lines");
         if let Some(out) = run_with_tty(c) {
             if let Ok(height) = out.trim().parse::<usize>() {
-                if height >= 5 { return height; }
+                if height >= 5 {
+                    return height;
+                }
             }
         }
     }
@@ -121,7 +139,9 @@ pub fn get_terminal_height() -> usize {
             let parts: Vec<&str> = out.split_whitespace().collect();
             if parts.len() == 2 {
                 if let Ok(height) = parts[0].parse::<usize>() {
-                    if height >= 5 { return height; }
+                    if height >= 5 {
+                        return height;
+                    }
                 }
             }
         }
@@ -130,7 +150,9 @@ pub fn get_terminal_height() -> usize {
     // Try environment variables
     if let Ok(env_lines) = std::env::var("LINES") {
         if let Ok(height) = env_lines.parse::<usize>() {
-            if height >= 5 { return height; }
+            if height >= 5 {
+                return height;
+            }
         }
     }
 

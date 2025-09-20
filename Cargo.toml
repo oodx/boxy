@@ -1,6 +1,6 @@
 [package]
 name = "boxy"
-version = "0.18.0"
+version = "0.18.1"
 edition = "2024"
 authors = ["qodeninja <1043235+qodeninja@users.noreply.github.com>"]
 description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"
@@ -18,6 +18,9 @@ chrono = { version = "0.4", features = ["serde"] }
 # RSB (Rebel String-Based) framework for stream bridges
 rsb = { git = "https://github.com/oodx/rsb", branch = "main" }
 
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["html_reports", "rayon"] }
+
 [package.metadata.notes]
 todo = "RSB integration in progress"
 
@@ -34,3 +37,7 @@ panic = "abort"     # Smaller panic handler
 [[bin]]
 name = "boxy"
 path = "src/main.rs"
+
+[[bench]]
+name = "status_render"
+harness = false

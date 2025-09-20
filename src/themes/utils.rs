@@ -3,12 +3,12 @@
 //! This module contains the public API for theme operations that users may
 //! explicitly use. Functions here are the main interface for theme functionality.
 
+use crate::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
+use crate::{HashMap, Write, core::*, visual::*};
+use crate::{JynxPlugin, jynx_println};
+use crate::{fs, io};
+use crate::{validate_color, validate_width};
 use std::path::PathBuf;
-use crate::{ fs, io };
-use crate::{ HashMap, Write, visual::*, core::*};
-use crate::{ JynxPlugin, jynx_println };
-use crate::{ validate_color, validate_width};
-use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};
 
 use super::helpers::*;
 
@@ -18,18 +18,21 @@ pub fn validate_theme_file(path: &PathBuf) -> Result<(), String> {
 }
 
 /// Comprehensive theme file validation with optional duplicate checking
-pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates: bool) -> Result<(), String> {
+pub fn validate_theme_file_with_duplicate_check(
+    path: &PathBuf,
+    check_duplicates: bool,
+) -> Result<(), String> {
     // Enhanced YAML structure validation
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read theme file: {}", e))?;
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read theme file: {}", e))?;
 
     // Pre-validate YAML structure
     if content.trim().is_empty() {
         return Err("Theme file is empty".to_string());
     }
 
-    let yaml_value: serde_yaml::Value = serde_yaml::from_str(&content)
-        .map_err(|e| format!("Invalid YAML format: {}", e))?;
+    let yaml_value: serde_yaml::Value =
+        serde_yaml::from_str(&content).map_err(|e| format!("Invalid YAML format: {}", e))?;
 
     // Validate top-level structure
     if !yaml_value.is_mapping() {
@@ -39,8 +42,8 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
     let theme_file: ThemeFile = serde_yaml::from_str(&content)
         .map_err(|e| format!("Failed to parse theme file structure: {}", e))?;
 
-    let temp_engine = ThemeEngine::new()
-        .map_err(|e| format!("Failed to initialize validator: {}", e))?;
+    let temp_engine =
+        ThemeEngine::new().map_err(|e| format!("Failed to initialize validator: {}", e))?;
 
     let mut validation_errors = Vec::new();
     let mut warnings = Vec::new();
@@ -58,7 +61,10 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
     if !theme_file.metadata.version.is_empty() {
         let version_regex = regex::Regex::new(r"^\d+\.\d+\.\d+").unwrap();
         if !version_regex.is_match(&theme_file.metadata.version) {
-            warnings.push(format!("Version '{}' doesn't follow semantic versioning (e.g., '1.0.0')", theme_file.metadata.version));
+            warnings.push(format!(
+                "Version '{}' doesn't follow semantic versioning (e.g., '1.0.0')",
+                theme_file.metadata.version
+            ));
         }
     }
 
@@ -78,14 +84,20 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
         // Check for reserved theme names
         let reserved_names = vec!["none", "auto", "default", "base", "template"];
         if reserved_names.contains(&theme_name.as_str()) {
-            warnings.push(format!("Theme '{}' uses a reserved name - may conflict with built-in themes", theme_name));
+            warnings.push(format!(
+                "Theme '{}' uses a reserved name - may conflict with built-in themes",
+                theme_name
+            ));
         }
 
         // Required properties validation
         let mut missing_required = Vec::new();
 
         // Color is required (unless it's a template/base theme)
-        if theme.color.is_empty() && !theme_name.contains("template") && !theme_name.contains("base") {
+        if theme.color.is_empty()
+            && !theme_name.contains("template")
+            && !theme_name.contains("base")
+        {
             missing_required.push("color");
         }
 
@@ -95,8 +107,11 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
         }
 
         if !missing_required.is_empty() {
-            validation_errors.push(format!("Theme '{}': Missing required properties: {}",
-                                          theme_name, missing_required.join(", ")));
+            validation_errors.push(format!(
+                "Theme '{}': Missing required properties: {}",
+                theme_name,
+                missing_required.join(", ")
+            ));
         }
 
         // Validate theme using engine validator
@@ -114,7 +129,10 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
         if let Ok(engine) = ThemeEngine::new() {
             for theme_name in theme_file.themes.keys() {
                 if engine.get_theme(theme_name).is_some() {
-                    warnings.push(format!("Theme '{}' already exists in loaded configurations - will be overridden", theme_name));
+                    warnings.push(format!(
+                        "Theme '{}' already exists in loaded configurations - will be overridden",
+                        theme_name
+                    ));
                 }
             }
         }
@@ -122,7 +140,10 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
 
     // Report errors and warnings
     if !validation_errors.is_empty() {
-        return Err(format!("❌ Validation errors:\n  • {}", validation_errors.join("\n  • ")));
+        return Err(format!(
+            "❌ Validation errors:\n  • {}",
+            validation_errors.join("\n  • ")
+        ));
     }
 
     if !warnings.is_empty() {
@@ -139,7 +160,10 @@ pub fn validate_theme_file_with_duplicate_check(path: &PathBuf, check_duplicates
 /// Handle theme subcommands: list, show, etc.
 pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin, opt_dev_level: Option<u8>) {
     if args.is_empty() {
-        eprintln!("Theme command requires an action. Usage: {} theme <action>", NAME);
+        eprintln!(
+            "Theme command requires an action. Usage: {} theme <action>",
+            NAME
+        );
         eprintln!("Available actions: list, show <theme>, hierarchy, dryrun <theme>, init, help");
         std::process::exit(1);
     }
@@ -181,49 +205,62 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin, opt_dev_level: O
         }
         "create" => {
             if args.len() < 2 {
-                eprintln!("Error: Theme create requires a name. Usage: {} theme create <name>", NAME);
+                eprintln!(
+                    "Error: Theme create requires a name. Usage: {} theme create <name>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_theme_create(&args[1], jynx);
         }
         "import" => {
             if args.len() < 2 {
-                eprintln!("Error: Theme import requires a path. Usage: {} theme import <path>", NAME);
+                eprintln!(
+                    "Error: Theme import requires a path. Usage: {} theme import <path>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_theme_import(&args[1]);
         }
         "export" => {
             if args.len() < 2 {
-                eprintln!("Error: Theme export requires a name. Usage: {} theme export <name>", NAME);
+                eprintln!(
+                    "Error: Theme export requires a name. Usage: {} theme export <name>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_theme_export(&args[1]);
         }
         "edit" => {
             if args.len() < 2 {
-                eprintln!("Error: Theme edit requires a name. Usage: {} theme edit <name>", NAME);
+                eprintln!(
+                    "Error: Theme edit requires a name. Usage: {} theme edit <name>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_theme_edit(&args[1]);
         }
-        "hierarchy" => {
-            match ThemeEngine::new_with_override(opt_dev_level) {
-                Ok(theme_engine) => {
-                    theme_engine.print_theme_hierarchy();
-                }
-                Err(e) => {
-                    eprintln!("Error: Failed to load theme engine: {}", e);
-                    std::process::exit(1);
-                }
+        "hierarchy" => match ThemeEngine::new_with_override(opt_dev_level) {
+            Ok(theme_engine) => {
+                theme_engine.print_theme_hierarchy();
             }
-        }
+            Err(e) => {
+                eprintln!("Error: Failed to load theme engine: {}", e);
+                std::process::exit(1);
+            }
+        },
         "init" => {
             handle_theme_init();
         }
         "dryrun" | "test" => {
             if args.len() < 2 {
-                eprintln!("Error: Theme dryrun requires a theme name. Usage: {} theme dryrun <theme>", NAME);
+                eprintln!(
+                    "Error: Theme dryrun requires a theme name. Usage: {} theme dryrun <theme>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_theme_dryrun(&args[1]);
@@ -233,7 +270,9 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin, opt_dev_level: O
         }
         action => {
             eprintln!("Unknown theme action: {}", action);
-            eprintln!("Available actions: list, show, hierarchy, dryrun, init, create, import, export, edit, help");
+            eprintln!(
+                "Available actions: list, show, hierarchy, dryrun, init, create, import, export, edit, help"
+            );
             eprintln!("Use '{} theme help' for more information", NAME);
             std::process::exit(1);
         }
@@ -260,7 +299,10 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level:
         eprintln!();
         eprintln!("💡 Examples:");
         eprintln!("   {} engine status         # Check system health", NAME);
-        eprintln!("   {} engine list           # Browse available themes", NAME);
+        eprintln!(
+            "   {} engine list           # Browse available themes",
+            NAME
+        );
         eprintln!("   {} engine init           # Set up theme system", NAME);
         std::process::exit(1);
     }
@@ -269,22 +311,23 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level:
         "init" => {
             handle_engine_init();
         }
-        "list" => {
-            match ThemeEngine::new_with_override(opt_dev_level) {
-                Ok(theme_engine) => {
-                    handle_engine_list_enhanced(&theme_engine);
-                }
-                Err(e) => {
-                    eprintln!("Error: Failed to load theme engine: {}", e);
-                    std::process::exit(1);
-                }
+        "list" => match ThemeEngine::new_with_override(opt_dev_level) {
+            Ok(theme_engine) => {
+                handle_engine_list_enhanced(&theme_engine);
             }
-        }
+            Err(e) => {
+                eprintln!("Error: Failed to load theme engine: {}", e);
+                std::process::exit(1);
+            }
+        },
         "import" => {
             if args.len() < 2 {
                 eprintln!("❌ Engine import requires a theme name");
                 eprintln!();
-                eprintln!("📖 Usage: {} engine import <NAME> [--overwrite] [--dry-run]", NAME);
+                eprintln!(
+                    "📖 Usage: {} engine import <NAME> [--overwrite] [--dry-run]",
+                    NAME
+                );
                 eprintln!();
                 eprintln!("🔍 What this does:");
                 eprintln!("   • Looks for 'boxy_<NAME>.yml' in current directory");
@@ -292,14 +335,24 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level:
                 eprintln!("   • Validates YAML structure before importing");
                 eprintln!();
                 eprintln!("💡 Examples:");
-                eprintln!("   {} engine import my_theme        # Import boxy_my_theme.yml", NAME);
-                eprintln!("   {} engine import work --overwrite # Force overwrite existing", NAME);
-                eprintln!("   {} engine import test --dry-run   # Preview import without changes", NAME);
+                eprintln!(
+                    "   {} engine import my_theme        # Import boxy_my_theme.yml",
+                    NAME
+                );
+                eprintln!(
+                    "   {} engine import work --overwrite # Force overwrite existing",
+                    NAME
+                );
+                eprintln!(
+                    "   {} engine import test --dry-run   # Preview import without changes",
+                    NAME
+                );
                 eprintln!();
                 eprintln!("🔧 Need help? {} engine help", NAME);
                 std::process::exit(1);
             }
-            let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
+            let force_overwrite =
+                args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
             let dry_run = args.contains(&"--dry-run".to_string());
             handle_engine_import(&args[1], force_overwrite, dry_run);
         }
@@ -307,7 +360,10 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level:
             if args.len() < 2 {
                 eprintln!("❌ Engine export requires a theme name");
                 eprintln!();
-                eprintln!("📖 Usage: {} engine export <NAME> [--overwrite] [--dry-run]", NAME);
+                eprintln!(
+                    "📖 Usage: {} engine export <NAME> [--overwrite] [--dry-run]",
+                    NAME
+                );
                 eprintln!();
                 eprintln!("🔍 What this does:");
                 eprintln!("   • Finds 'boxy_<NAME>.yml' in global themes directory");
@@ -315,35 +371,46 @@ pub fn handle_engine_command(args: &[String], _jynx: &JynxPlugin, opt_dev_level:
                 eprintln!("   • Creates backup (.bak) if overwriting existing file");
                 eprintln!();
                 eprintln!("💡 Examples:");
-                eprintln!("   {} engine export default           # Export boxy_default.yml", NAME);
-                eprintln!("   {} engine export custom --overwrite # Force overwrite", NAME);
-                eprintln!("   {} engine export theme --dry-run    # Preview export without changes", NAME);
+                eprintln!(
+                    "   {} engine export default           # Export boxy_default.yml",
+                    NAME
+                );
+                eprintln!(
+                    "   {} engine export custom --overwrite # Force overwrite",
+                    NAME
+                );
+                eprintln!(
+                    "   {} engine export theme --dry-run    # Preview export without changes",
+                    NAME
+                );
                 eprintln!();
                 eprintln!("🔧 Available themes: {} engine list", NAME);
                 std::process::exit(1);
             }
-            let force_overwrite = args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
+            let force_overwrite =
+                args.contains(&"--overwrite".to_string()) || args.contains(&"--force".to_string());
             let dry_run = args.contains(&"--dry-run".to_string());
             handle_engine_export(&args[1], force_overwrite, dry_run);
         }
         "edit" => {
             if args.len() < 2 {
-                eprintln!("Error: Engine edit requires a name. Usage: {} engine edit <name>", NAME);
+                eprintln!(
+                    "Error: Engine edit requires a name. Usage: {} engine edit <name>",
+                    NAME
+                );
                 std::process::exit(1);
             }
             handle_engine_edit(&args[1]);
         }
-        "debug" => {
-            match ThemeEngine::new() {
-                Ok(theme_engine) => {
-                    theme_engine.print_theme_hierarchy();
-                }
-                Err(e) => {
-                    eprintln!("Error: Failed to load theme engine: {}", e);
-                    std::process::exit(1);
-                }
+        "debug" => match ThemeEngine::new() {
+            Ok(theme_engine) => {
+                theme_engine.print_theme_hierarchy();
             }
-        }
+            Err(e) => {
+                eprintln!("Error: Failed to load theme engine: {}", e);
+                std::process::exit(1);
+            }
+        },
         "status" => {
             handle_engine_status();
         }
@@ -402,15 +469,23 @@ pub fn validate_theme_name(name: &str) -> Result<(), String> {
     }
 
     // Allow alphanumeric, underscore, hyphen, and dot
-    if !name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.') {
-        return Err("Theme name can only contain letters, numbers, underscore, hyphen, and dot".to_string());
+    if !name
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.')
+    {
+        return Err(
+            "Theme name can only contain letters, numbers, underscore, hyphen, and dot".to_string(),
+        );
     }
 
     // Don't allow names that start with reserved prefixes
     let reserved_prefixes = vec!["builtin_", "system_", "default_"];
     for prefix in reserved_prefixes {
         if name.starts_with(prefix) {
-            return Err(format!("Theme name cannot start with reserved prefix '{}'", prefix));
+            return Err(format!(
+                "Theme name cannot start with reserved prefix '{}'",
+                prefix
+            ));
         }
     }
 
@@ -443,7 +518,11 @@ pub fn create_theme_interactively(name: &str) -> BoxyTheme {
     let mut text_color_input = String::new();
     io::stdin().read_line(&mut text_color_input).unwrap();
     let text_color = text_color_input.trim();
-    let text_color = if text_color.is_empty() { "auto" } else { text_color };
+    let text_color = if text_color.is_empty() {
+        "auto"
+    } else {
+        text_color
+    };
 
     // Style selection with validation loop
     let style = loop {
@@ -467,7 +546,11 @@ pub fn create_theme_interactively(name: &str) -> BoxyTheme {
     let mut icon_input = String::new();
     io::stdin().read_line(&mut icon_input).unwrap();
     let icon = icon_input.trim();
-    let icon = if icon.is_empty() { None } else { Some(icon.to_string()) };
+    let icon = if icon.is_empty() {
+        None
+    } else {
+        Some(icon.to_string())
+    };
 
     // Width with validation loop
     let width = loop {
@@ -511,7 +594,11 @@ pub fn edit_theme_interactively(name: &str, existing: &BoxyTheme) -> BoxyTheme {
     let mut color_input = String::new();
     io::stdin().read_line(&mut color_input).unwrap();
     let color = color_input.trim();
-    let color = if color.is_empty() { &existing.color } else { color };
+    let color = if color.is_empty() {
+        &existing.color
+    } else {
+        color
+    };
 
     // Text color
     print!("Text color [current: {}]: ", existing.text_color);
@@ -519,7 +606,11 @@ pub fn edit_theme_interactively(name: &str, existing: &BoxyTheme) -> BoxyTheme {
     let mut text_color_input = String::new();
     io::stdin().read_line(&mut text_color_input).unwrap();
     let text_color = text_color_input.trim();
-    let text_color = if text_color.is_empty() { &existing.text_color } else { text_color };
+    let text_color = if text_color.is_empty() {
+        &existing.text_color
+    } else {
+        text_color
+    };
 
     // Style
     print!("Border style [current: {}]: ", existing.style);
@@ -527,7 +618,11 @@ pub fn edit_theme_interactively(name: &str, existing: &BoxyTheme) -> BoxyTheme {
     let mut style_input = String::new();
     io::stdin().read_line(&mut style_input).unwrap();
     let style = style_input.trim();
-    let style = if style.is_empty() { &existing.style } else { style };
+    let style = if style.is_empty() {
+        &existing.style
+    } else {
+        style
+    };
 
     // Icon
     let current_icon = existing.icon.as_deref().unwrap_or("none");
@@ -545,7 +640,10 @@ pub fn edit_theme_interactively(name: &str, existing: &BoxyTheme) -> BoxyTheme {
     };
 
     // Width
-    let current_width = existing.width.map(|w| w.to_string()).unwrap_or_else(|| "auto".to_string());
+    let current_width = existing
+        .width
+        .map(|w| w.to_string())
+        .unwrap_or_else(|| "auto".to_string());
     print!("Fixed width [current: {}]: ", current_width);
     io::stdout().flush().unwrap();
     let mut width_input = String::new();
@@ -604,8 +702,7 @@ pub fn save_theme_to_file(path: &PathBuf, name: &str, theme: &BoxyTheme) -> Resu
     let yaml_content = serde_yaml::to_string(&theme_file)
         .map_err(|e| format!("Failed to serialize theme: {}", e))?;
 
-    fs::write(path, yaml_content)
-        .map_err(|e| format!("Failed to write theme file: {}", e))?;
+    fs::write(path, yaml_content).map_err(|e| format!("Failed to write theme file: {}", e))?;
 
     Ok(())
 }
@@ -690,27 +787,174 @@ pub fn convert_boxy_theme_to_legacy(boxy_theme: BoxyTheme) -> Theme {
 pub fn get_fallback_legacy_themes() -> HashMap<&'static str, Theme> {
     let mut themes = HashMap::new();
 
-    themes.insert("fatal", Theme { icon: "💀", color: "red2", width: None });
-    themes.insert("error", Theme { icon: "❌", color: "red", width: None });
-    themes.insert("warn", Theme { icon: "⚠️", color: "orange", width: None });
-    themes.insert("success", Theme { icon: "✅", color: "green", width: None });
-    themes.insert("info", Theme { icon: "ℹ️", color: "blue2", width: None });
-    themes.insert("debug", Theme { icon: "🐛", color: "grey", width: None });
-    themes.insert("trace", Theme { icon: "👣", color: "grey2", width: None });
-    themes.insert("dev", Theme { icon: "🪛", color: "cyan", width: None });
-    themes.insert("new", Theme { icon: "✨", color: "green2", width: None });
-    themes.insert("silly", Theme { icon: "🪀", color: "purple", width: None });
-    themes.insert("magic", Theme { icon: "🌈", color: "purple2", width: None });
-    themes.insert("think", Theme { icon: "💭", color: "cyan", width: None });
-    themes.insert("notif", Theme { icon: "📣", color: "green", width: None });
-    themes.insert("lore", Theme { icon: "🪬", color: "grey", width: None });
-    themes.insert("blocked", Theme { icon: "🚧", color: "orange", width: None });
-    themes.insert("help", Theme { icon: "💡", color: "blue2", width: None });
-    themes.insert("oops", Theme { icon: "👻", color: "purple", width: None });
-    themes.insert("lab", Theme { icon: "🧪", color: "cyan", width: None });
-    themes.insert("lock", Theme { icon: "🔒", color: "grey2", width: None });
-    themes.insert("unlock", Theme { icon: "🔓", color: "green", width: None });
-    themes.insert("key", Theme { icon: "🔑", color: "orange", width: None });
+    themes.insert(
+        "fatal",
+        Theme {
+            icon: "💀",
+            color: "red2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "error",
+        Theme {
+            icon: "❌",
+            color: "red",
+            width: None,
+        },
+    );
+    themes.insert(
+        "warn",
+        Theme {
+            icon: "⚠️",
+            color: "orange",
+            width: None,
+        },
+    );
+    themes.insert(
+        "success",
+        Theme {
+            icon: "✅",
+            color: "green",
+            width: None,
+        },
+    );
+    themes.insert(
+        "info",
+        Theme {
+            icon: "ℹ️",
+            color: "blue2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "debug",
+        Theme {
+            icon: "🐛",
+            color: "grey",
+            width: None,
+        },
+    );
+    themes.insert(
+        "trace",
+        Theme {
+            icon: "👣",
+            color: "grey2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "dev",
+        Theme {
+            icon: "🪛",
+            color: "cyan",
+            width: None,
+        },
+    );
+    themes.insert(
+        "new",
+        Theme {
+            icon: "✨",
+            color: "green2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "silly",
+        Theme {
+            icon: "🪀",
+            color: "purple",
+            width: None,
+        },
+    );
+    themes.insert(
+        "magic",
+        Theme {
+            icon: "🌈",
+            color: "purple2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "think",
+        Theme {
+            icon: "💭",
+            color: "cyan",
+            width: None,
+        },
+    );
+    themes.insert(
+        "notif",
+        Theme {
+            icon: "📣",
+            color: "green",
+            width: None,
+        },
+    );
+    themes.insert(
+        "lore",
+        Theme {
+            icon: "🪬",
+            color: "grey",
+            width: None,
+        },
+    );
+    themes.insert(
+        "blocked",
+        Theme {
+            icon: "🚧",
+            color: "orange",
+            width: None,
+        },
+    );
+    themes.insert(
+        "help",
+        Theme {
+            icon: "💡",
+            color: "blue2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "oops",
+        Theme {
+            icon: "👻",
+            color: "purple",
+            width: None,
+        },
+    );
+    themes.insert(
+        "lab",
+        Theme {
+            icon: "🧪",
+            color: "cyan",
+            width: None,
+        },
+    );
+    themes.insert(
+        "lock",
+        Theme {
+            icon: "🔒",
+            color: "grey2",
+            width: None,
+        },
+    );
+    themes.insert(
+        "unlock",
+        Theme {
+            icon: "🔓",
+            color: "green",
+            width: None,
+        },
+    );
+    themes.insert(
+        "key",
+        Theme {
+            icon: "🔑",
+            color: "orange",
+            width: None,
+        },
+    );
 
     themes
 }
@@ -735,18 +979,39 @@ pub fn print_theme_help() {
     println!("    help              Show this help message");
     println!();
     println!("MODERN WORKFLOW:");
-    println!("    For theme file management, use `{} engine` commands:", NAME);
+    println!(
+        "    For theme file management, use `{} engine` commands:",
+        NAME
+    );
     println!("    • {} engine list      # Visual theme catalog", NAME);
-    println!("    • {} engine debug     # Theme loading diagnostics", NAME);
-    println!("    • {} engine import    # Import theme config files", NAME);
-    println!("    • {} engine export    # Export theme config files", NAME);
+    println!(
+        "    • {} engine debug     # Theme loading diagnostics",
+        NAME
+    );
+    println!(
+        "    • {} engine import    # Import theme config files",
+        NAME
+    );
+    println!(
+        "    • {} engine export    # Export theme config files",
+        NAME
+    );
     println!();
     println!("EXAMPLES:");
-    println!("    {} theme show error           # Display error theme properties", NAME);
-    println!("    {} theme dryrun success       # Test success theme", NAME);
+    println!(
+        "    {} theme show error           # Display error theme properties",
+        NAME
+    );
+    println!(
+        "    {} theme dryrun success       # Test success theme",
+        NAME
+    );
     println!("    {} theme create my_style      # Create new theme", NAME);
     println!();
-    println!("💡 TIP: Use `{} engine --help` for config file management", NAME);
+    println!(
+        "💡 TIP: Use `{} engine --help` for config file management",
+        NAME
+    );
 }
 
 /// Print engine help (ENGINE-002: Separate help menus)
@@ -776,12 +1041,36 @@ pub fn print_engine_help() {
     println!("    These are separate from individual theme usage commands.");
     println!();
     println!("EXAMPLES:");
-    println!("    {} engine init                   # Set up global theme system", NAME);
-    println!("    {} engine list                   # Show all available themes", NAME);
-    println!("    {} engine debug                  # Debug theme loading", NAME);
-    println!("    {} engine validate theme.yml     # Validate theme file", NAME);
-    println!("    {} engine import myproject       # Import boxy_myproject.yml", NAME);
-    println!("    {} engine import test --dry-run  # Preview import without changes", NAME);
-    println!("    {} engine export default         # Export boxy_default.yml", NAME);
-    println!("    {} engine export theme --dry-run # Preview export without changes", NAME);
+    println!(
+        "    {} engine init                   # Set up global theme system",
+        NAME
+    );
+    println!(
+        "    {} engine list                   # Show all available themes",
+        NAME
+    );
+    println!(
+        "    {} engine debug                  # Debug theme loading",
+        NAME
+    );
+    println!(
+        "    {} engine validate theme.yml     # Validate theme file",
+        NAME
+    );
+    println!(
+        "    {} engine import myproject       # Import boxy_myproject.yml",
+        NAME
+    );
+    println!(
+        "    {} engine import test --dry-run  # Preview import without changes",
+        NAME
+    );
+    println!(
+        "    {} engine export default         # Export boxy_default.yml",
+        NAME
+    );
+    println!(
+        "    {} engine export theme --dry-run # Preview export without changes",
+        NAME
+    );
 }

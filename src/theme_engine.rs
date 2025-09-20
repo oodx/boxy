@@ -1,11 +1,11 @@
 // Advanced Theme Engine - YAML-based theme system for boxy vCURR
 // Inherits complete jynx architecture patterns with XDG+ directory support
 
+use crate::colors::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use crate::colors::*;
 
 // Note: RSB integration deferred until proper alignment
 
@@ -20,13 +20,12 @@ pub fn get_current_dir() -> String {
         .unwrap_or_else(|_| ".".to_string())
 }
 
-
 /// Main theme engine - manages all theme operations
 pub struct ThemeEngine {
     themes: HashMap<String, BoxyTheme>,
     theme_files: Vec<PathBuf>,
     theme_hierarchy: Vec<String>, // Track loading hierarchy for debug
-    file_trail: Vec<String>, // Track each individual file found
+    file_trail: Vec<String>,      // Track each individual file found
     xdg_base_dir: PathBuf,
 }
 
@@ -35,21 +34,21 @@ pub struct ThemeEngine {
 pub struct BoxyTheme {
     // === CORE VISUAL PROPERTIES ===
     #[serde(default = "default_color")]
-    pub color: String,                    // Box border color (required, but can be inherited)
+    pub color: String, // Box border color (required, but can be inherited)
     #[serde(default = "default_text_color")]
-    pub text_color: String,               // Text color: "auto", "none", or color name
+    pub text_color: String, // Text color: "auto", "none", or color name
     #[serde(default = "default_style")]
-    pub style: String,                    // Border style: normal, rounded, double, heavy, ascii
-    
+    pub style: String, // Border style: normal, rounded, double, heavy, ascii
+
     // === TEXT STYLING (v0.6+ feature) ===
     #[serde(default = "default_text_style")]
-    pub text_style: String,               // Text formatting: normal, bold, italic, etc.
-    
+    pub text_style: String, // Text formatting: normal, bold, italic, etc.
+
     // === BOX CONTENT ===
-    pub title: Option<String>,            // Internal title with icon
-    pub header: Option<String>,           // External header above box
-    pub footer: Option<String>,           // Footer below box
-    pub icon: Option<String>,             // Leading icon for content
+    pub title: Option<String>,  // Internal title with icon
+    pub header: Option<String>, // External header above box
+    pub footer: Option<String>, // Footer below box
+    pub icon: Option<String>,   // Leading icon for content
     // Section colors (optional)
     #[serde(default)]
     pub title_color: Option<String>,
@@ -59,33 +58,33 @@ pub struct BoxyTheme {
     pub header_color: Option<String>,
     #[serde(default)]
     pub footer_color: Option<String>,
-    
+
     // === LAYOUT PROPERTIES ===
-    pub width: Option<usize>,             // Fixed width in characters
+    pub width: Option<usize>, // Fixed width in characters
     #[serde(default = "default_padding")]
-    pub padding: usize,                   // Internal padding (default: 1)
-    
+    pub padding: usize, // Internal padding (default: 1)
+
     // === LAYOUT ALIGNMENT ===
     #[serde(default = "default_align")]
-    pub title_align: String,              // Title alignment: left, center, right
+    pub title_align: String, // Title alignment: left, center, right
     #[serde(default = "default_align")]
-    pub header_align: String,             // Header alignment: left, center, right
+    pub header_align: String, // Header alignment: left, center, right
     #[serde(default = "default_align")]
-    pub footer_align: String,             // Footer alignment: left, center, right
-    
+    pub footer_align: String, // Footer alignment: left, center, right
+
     // === ADVANCED FEATURES ===
-    pub status_bar: Option<String>,       // Status bar below box
+    pub status_bar: Option<String>, // Status bar below box
     #[serde(default = "default_status_align")]
-    pub status_align: String,             // Status alignment: left, center, right
+    pub status_align: String, // Status alignment: left, center, right
     #[serde(default)]
-    pub layout: Option<String>,           // Default layout tokens (e.g., "hc,fr,sc,dt,dsn")
-    
+    pub layout: Option<String>, // Default layout tokens (e.g., "hc,fr,sc,dt,dsn")
+
     // === INHERITANCE ===
-    pub inherits: Option<String>,         // Inherit from another theme
-    
+    pub inherits: Option<String>, // Inherit from another theme
+
     // === METADATA ===
     #[serde(skip_serializing, skip_deserializing)]
-    pub metadata: Option<ThemeMetadata>,  // Theme metadata (populated at runtime)
+    pub metadata: Option<ThemeMetadata>, // Theme metadata (populated at runtime)
 }
 
 /// Theme file structure - complete YAML theme configuration
@@ -93,14 +92,14 @@ pub struct BoxyTheme {
 pub struct ThemeFile {
     pub metadata: ThemeMetadata,
     #[serde(default)]
-    pub colors: HashMap<String, String>,     // Custom color definitions
-    pub themes: HashMap<String, BoxyTheme>,  // Theme definitions
+    pub colors: HashMap<String, String>, // Custom color definitions
+    pub themes: HashMap<String, BoxyTheme>, // Theme definitions
     #[serde(default)]
-    pub presets: HashMap<String, String>,    // Quick preset mappings
+    pub presets: HashMap<String, String>, // Quick preset mappings
     #[serde(default)]
     pub text_styles: HashMap<String, String>, // Text style definitions
     #[serde(default)]
-    pub settings: ThemeSettings,             // Theme file settings
+    pub settings: ThemeSettings, // Theme file settings
 }
 
 /// Theme metadata for versioning and attribution
@@ -150,18 +149,42 @@ impl Default for ThemeSettings {
 }
 
 // Default value functions for serde
-fn default_color() -> String { "".to_string() }  // Empty color means inherit from parent
-fn default_text_color() -> String { "auto".to_string() }
-fn default_style() -> String { "".to_string() }  // Empty style means inherit from parent
-fn default_text_style() -> String { "normal".to_string() }
-fn default_padding() -> usize { 1 }
-fn default_align() -> String { "center".to_string() }
-fn default_status_align() -> String { "left".to_string() }
-fn default_theme_name() -> String { "info".to_string() }
-fn default_fallback_color() -> String { "slate".to_string() }
-fn default_max_width() -> usize { 120 }
-fn default_min_width() -> usize { 10 }
-fn default_true() -> bool { true }
+fn default_color() -> String {
+    "".to_string()
+} // Empty color means inherit from parent
+fn default_text_color() -> String {
+    "auto".to_string()
+}
+fn default_style() -> String {
+    "".to_string()
+} // Empty style means inherit from parent
+fn default_text_style() -> String {
+    "normal".to_string()
+}
+fn default_padding() -> usize {
+    1
+}
+fn default_align() -> String {
+    "center".to_string()
+}
+fn default_status_align() -> String {
+    "left".to_string()
+}
+fn default_theme_name() -> String {
+    "info".to_string()
+}
+fn default_fallback_color() -> String {
+    "slate".to_string()
+}
+fn default_max_width() -> usize {
+    120
+}
+fn default_min_width() -> usize {
+    10
+}
+fn default_true() -> bool {
+    true
+}
 
 impl ThemeEngine {
     /// Create new theme engine with XDG+ directory support
@@ -180,7 +203,7 @@ impl ThemeEngine {
             file_trail: Vec::new(),
             xdg_base_dir,
         };
-        
+
         // Load built-in themes first (lowest priority - fallback)
         engine.load_builtin_themes(dev_level_override);
 
@@ -190,20 +213,23 @@ impl ThemeEngine {
             // Continue with built-in themes
         }
 
-        
         Ok(engine)
     }
-    
+
     /// Get XDG+ base directory following jynx architecture
     fn get_xdg_base_dir() -> PathBuf {
         // Follow jynx XDG+ pattern: ~/.local/etc/odx/boxy/ (ODX for proper utils/apps)
         let home = get_home_dir();
 
         //= env::var("BOXY_THEME")// boxy isnt using RSB correctly this wont work param!("HOME");
-        let home = if home.is_empty() { "/tmp".to_string() } else { home };
+        let home = if home.is_empty() {
+            "/tmp".to_string()
+        } else {
+            home
+        };
         PathBuf::from(home).join(".local/etc/odx/boxy")
     }
-    
+
     /// Load built-in themes based on BOXY_DEFAULTS_LEVEL
     fn load_builtin_themes(&mut self, dev_level_override: Option<u8>) {
         let defaults_level = crate::themes_builtin::parse_defaults_level(dev_level_override);
@@ -216,17 +242,19 @@ impl ThemeEngine {
             _ => "Level ? (Unknown)",
         };
 
-        self.theme_hierarchy.push(format!("Built-in themes (BOXY_DEFAULTS_LEVEL={}): {}", defaults_level, level_description));
+        self.theme_hierarchy.push(format!(
+            "Built-in themes (BOXY_DEFAULTS_LEVEL={}): {}",
+            defaults_level, level_description
+        ));
         self.file_trail.extend(trail);
 
         for (name, theme) in builtin_themes {
             self.themes.insert(name, theme);
         }
     }
-    
+
     /// Load theme files from XDG+ directories and project themes directory
     fn load_theme_files(&mut self, dev_level_override: Option<u8>) -> Result<(), String> {
-      
         // Create XDG+ directory structure if it doesn't exist
         let themes_dir = self.xdg_base_dir.join("themes");
         if !themes_dir.exists() {
@@ -238,8 +266,10 @@ impl ThemeEngine {
 
         // First, load theme files from XDG+ themes directory (lowest external priority)
         if themes_dir.exists() {
-            self.theme_hierarchy.push(format!("XDG themes directory: {}", themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&themes_dir, "XDG", dev_level_override) {
+            self.theme_hierarchy
+                .push(format!("XDG themes directory: {}", themes_dir.display()));
+            if let Err(e) = self.load_themes_from_directory(&themes_dir, "XDG", dev_level_override)
+            {
                 eprintln!("Warning: Failed to load themes from XDG directory: {}", e);
             }
         }
@@ -247,8 +277,15 @@ impl ThemeEngine {
         // Second, try to load from project's local themes directory
         let local_themes_dir = PathBuf::from("themes");
         if local_themes_dir.exists() {
-            self.theme_hierarchy.push(format!("Local themes directory: {}", local_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&local_themes_dir, "local themes", dev_level_override) {
+            self.theme_hierarchy.push(format!(
+                "Local themes directory: {}",
+                local_themes_dir.display()
+            ));
+            if let Err(e) = self.load_themes_from_directory(
+                &local_themes_dir,
+                "local themes",
+                dev_level_override,
+            ) {
                 eprintln!("Warning: Failed to load themes from local directory: {}", e);
             }
         }
@@ -256,18 +293,33 @@ impl ThemeEngine {
         // Third, try to load from .themes directory
         let dot_themes_dir = PathBuf::from(".themes");
         if dot_themes_dir.exists() {
-            self.theme_hierarchy.push(format!("Local .themes directory: {}", dot_themes_dir.display()));
-            if let Err(e) = self.load_themes_from_directory(&dot_themes_dir, ".themes", dev_level_override) {
-                eprintln!("Warning: Failed to load themes from .themes directory: {}", e);
+            self.theme_hierarchy.push(format!(
+                "Local .themes directory: {}",
+                dot_themes_dir.display()
+            ));
+            if let Err(e) =
+                self.load_themes_from_directory(&dot_themes_dir, ".themes", dev_level_override)
+            {
+                eprintln!(
+                    "Warning: Failed to load themes from .themes directory: {}",
+                    e
+                );
             }
         }
 
         // Finally, check for local single boxy*.yaml file (highest priority)
         if let Some(boxy_file) = self.find_local_boxy_file()? {
-            self.theme_hierarchy.push(format!("Local boxy file: {} (alphabetically first)", boxy_file.display()));
-            self.file_trail.push(format!("  📄 {}", boxy_file.display()));
+            self.theme_hierarchy.push(format!(
+                "Local boxy file: {} (alphabetically first)",
+                boxy_file.display()
+            ));
+            self.file_trail
+                .push(format!("  📄 {}", boxy_file.display()));
             if let Err(e) = self.load_theme_file(&boxy_file) {
-                eprintln!("Warning: Failed to load local boxy file {:?}: {}", boxy_file, e);
+                eprintln!(
+                    "Warning: Failed to load local boxy file {:?}: {}",
+                    boxy_file, e
+                );
             }
         }
 
@@ -293,7 +345,9 @@ impl ThemeEngine {
             if path.is_file() {
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
                     // ENGINE-006: Enforce boxy_ prefix (with underscore)
-                    if filename.starts_with("boxy_") && (filename.ends_with(".yaml") || filename.ends_with(".yml")) {
+                    if filename.starts_with("boxy_")
+                        && (filename.ends_with(".yaml") || filename.ends_with(".yml"))
+                    {
                         // Skip template files
                         if filename.contains("template") || filename.contains("tmpl") {
                             continue;
@@ -316,7 +370,12 @@ impl ThemeEngine {
     }
 
     /// Load theme files from a specific directory
-    fn load_themes_from_directory(&mut self, themes_dir: &PathBuf, dir_type: &str, dev_level_override: Option<u8>) -> Result<(), String> {
+    fn load_themes_from_directory(
+        &mut self,
+        themes_dir: &PathBuf,
+        dir_type: &str,
+        dev_level_override: Option<u8>,
+    ) -> Result<(), String> {
         let defaults_level = crate::themes_builtin::parse_defaults_level(dev_level_override);
         let entries = fs::read_dir(themes_dir)
             .map_err(|e| format!("Failed to read themes directory {:?}: {}", themes_dir, e))?;
@@ -324,8 +383,13 @@ impl ThemeEngine {
         let mut theme_files_found = Vec::new();
 
         for entry in entries {
-            let path = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?.path();
-            if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
+            let path = entry
+                .map_err(|e| format!("Failed to read directory entry: {}", e))?
+                .path();
+            if path
+                .extension()
+                .map_or(false, |ext| ext == "yml" || ext == "yaml")
+            {
                 // ENGINE-006: Enforce boxy_ prefix for engine files
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
                     // Skip files that don't start with boxy_
@@ -338,7 +402,10 @@ impl ThemeEngine {
                     }
                     // At level 0, skip boxy_default.yml to enforce minimal theme set
                     if defaults_level == 0 && filename == "boxy_default.yml" {
-                        self.file_trail.push(format!("  ⚠️  Skipped {} (disabled at BOXY_DEFAULTS_LEVEL=0)", filename));
+                        self.file_trail.push(format!(
+                            "  ⚠️  Skipped {} (disabled at BOXY_DEFAULTS_LEVEL=0)",
+                            filename
+                        ));
                         continue;
                     }
                     theme_files_found.push(filename.to_string());
@@ -352,26 +419,33 @@ impl ThemeEngine {
 
         // Add files found to trail
         if theme_files_found.is_empty() {
-            self.file_trail.push(format!("  📁 {} directory: (no theme files found)", dir_type));
+            self.file_trail.push(format!(
+                "  📁 {} directory: (no theme files found)",
+                dir_type
+            ));
         } else {
             theme_files_found.sort();
-            self.file_trail.push(format!("  📁 {} directory: {}", dir_type, theme_files_found.join(", ")));
+            self.file_trail.push(format!(
+                "  📁 {} directory: {}",
+                dir_type,
+                theme_files_found.join(", ")
+            ));
         }
 
         Ok(())
     }
-    
+
     /// Load individual theme file
     fn load_theme_file(&mut self, path: &PathBuf) -> Result<(), String> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| format!("Failed to read theme file: {}", e))?;
-            
-        let theme_file: ThemeFile = serde_yaml::from_str(&content)
-            .map_err(|e| format!("Failed to parse YAML: {}", e))?;
-            
+        let content =
+            fs::read_to_string(path).map_err(|e| format!("Failed to read theme file: {}", e))?;
+
+        let theme_file: ThemeFile =
+            serde_yaml::from_str(&content).map_err(|e| format!("Failed to parse YAML: {}", e))?;
+
         // Note: Skip validation here since themes may need inheritance resolution first
         // Validation will happen when themes are retrieved via get_theme()
-        
+
         // Add themes to engine (later loads override earlier loads)
         for (name, mut theme) in theme_file.themes {
             // Set metadata
@@ -380,44 +454,55 @@ impl ThemeEngine {
             // Always insert - later loads have higher priority
             self.themes.insert(name, theme);
         }
-        
+
         self.theme_files.push(path.clone());
         Ok(())
     }
-    
+
     /// Validate theme configuration
     pub fn validate_theme(&self, theme: &BoxyTheme) -> Result<(), String> {
         // Validate color (skip if empty - it should be resolved through inheritance)
         if !theme.color.is_empty() {
             validate_color(&theme.color)?;
         }
-        
+
         // Validate text color
         if theme.text_color != "auto" && theme.text_color != "none" {
             validate_color(&theme.text_color)?;
         }
         // Validate section colors if present
-        if let Some(c) = &theme.title_color { validate_color(c)?; }
-        if let Some(c) = &theme.status_color { validate_color(c)?; }
-        if let Some(c) = &theme.header_color { validate_color(c)?; }
-        if let Some(c) = &theme.footer_color { validate_color(c)?; }
-        
+        if let Some(c) = &theme.title_color {
+            validate_color(c)?;
+        }
+        if let Some(c) = &theme.status_color {
+            validate_color(c)?;
+        }
+        if let Some(c) = &theme.header_color {
+            validate_color(c)?;
+        }
+        if let Some(c) = &theme.footer_color {
+            validate_color(c)?;
+        }
+
         // Validate style
         let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];
         if !valid_styles.contains(&theme.style.as_str()) {
-            return Err(format!("Invalid style '{}'. Valid styles: {:?}", theme.style, valid_styles));
+            return Err(format!(
+                "Invalid style '{}'. Valid styles: {:?}",
+                theme.style, valid_styles
+            ));
         }
-        
+
         // Validate width constraints
         if let Some(width) = theme.width {
             if width < 10 || width > 200 {
                 return Err(format!("Width {} out of range (10-200)", width));
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Get theme by name with inheritance resolution
     pub fn get_theme(&self, name: &str) -> Option<BoxyTheme> {
         // Direct theme lookup
@@ -425,34 +510,40 @@ impl ThemeEngine {
             let resolved_theme = self.resolve_inheritance(theme.clone());
             // Validate the resolved theme has a valid color
             if resolved_theme.color.is_empty() {
-                eprintln!("Warning: Theme '{}' has no color after inheritance resolution", name);
+                eprintln!(
+                    "Warning: Theme '{}' has no color after inheritance resolution",
+                    name
+                );
                 return None;
             }
             return Some(resolved_theme);
         }
-        
+
         // Smart resolution: "error" -> "theme_error" -> "error_theme"
         let variations = vec![
             format!("theme_{}", name),
             format!("{}_theme", name),
             format!("{}_box", name),
         ];
-        
+
         for variation in variations {
             if let Some(theme) = self.themes.get(&variation) {
                 let resolved_theme = self.resolve_inheritance(theme.clone());
                 // Validate the resolved theme has a valid color
                 if resolved_theme.color.is_empty() {
-                    eprintln!("Warning: Theme '{}' has no color after inheritance resolution", variation);
+                    eprintln!(
+                        "Warning: Theme '{}' has no color after inheritance resolution",
+                        variation
+                    );
                     continue;
                 }
                 return Some(resolved_theme);
             }
         }
-        
+
         None
     }
-    
+
     /// Resolve theme inheritance
     fn resolve_inheritance(&self, mut theme: BoxyTheme) -> BoxyTheme {
         if let Some(parent_name) = &theme.inherits {
@@ -463,18 +554,39 @@ impl ThemeEngine {
         }
         theme
     }
-    
+
     /// Merge parent and child themes (child takes precedence)
     fn merge_themes(&self, parent: BoxyTheme, child: BoxyTheme) -> BoxyTheme {
         BoxyTheme {
-            color: if child.color.is_empty() { parent.color } else { child.color },
-            text_color: if child.text_color == "auto" && parent.text_color != "auto" { parent.text_color } else { child.text_color },
+            color: if child.color.is_empty() {
+                parent.color
+            } else {
+                child.color
+            },
+            text_color: if child.text_color == "auto" && parent.text_color != "auto" {
+                parent.text_color
+            } else {
+                child.text_color
+            },
             // For style inheritance: if child style is empty or "inherit", use parent style
             style: if child.style.is_empty() || child.style == "inherit" {
-                if !parent.style.is_empty() && parent.style != "inherit" { parent.style } else { "normal".to_string() }
-            } else { child.style },
-            // For text_style inheritance: if child text_style is default and different from parent, use parent  
-            text_style: if child.text_style == "normal" && !parent.text_style.is_empty() && parent.text_style != "normal" { parent.text_style } else { child.text_style },
+                if !parent.style.is_empty() && parent.style != "inherit" {
+                    parent.style
+                } else {
+                    "normal".to_string()
+                }
+            } else {
+                child.style
+            },
+            // For text_style inheritance: if child text_style is default and different from parent, use parent
+            text_style: if child.text_style == "normal"
+                && !parent.text_style.is_empty()
+                && parent.text_style != "normal"
+            {
+                parent.text_style
+            } else {
+                child.text_style
+            },
             title: child.title.or(parent.title),
             header: child.header.or(parent.header),
             footer: child.footer.or(parent.footer),
@@ -484,33 +596,57 @@ impl ThemeEngine {
             footer_color: child.footer_color.or(parent.footer_color),
             icon: child.icon.or(parent.icon),
             width: child.width.or(parent.width),
-            padding: if child.padding == 1 && parent.padding != 1 { parent.padding } else { child.padding },
-            title_align: if child.title_align == "center" && parent.title_align != "center" { parent.title_align } else { child.title_align },
-            header_align: if child.header_align == "center" && parent.header_align != "center" { parent.header_align } else { child.header_align },
-            footer_align: if child.footer_align == "center" && parent.footer_align != "center" { parent.footer_align } else { child.footer_align },
+            padding: if child.padding == 1 && parent.padding != 1 {
+                parent.padding
+            } else {
+                child.padding
+            },
+            title_align: if child.title_align == "center" && parent.title_align != "center" {
+                parent.title_align
+            } else {
+                child.title_align
+            },
+            header_align: if child.header_align == "center" && parent.header_align != "center" {
+                parent.header_align
+            } else {
+                child.header_align
+            },
+            footer_align: if child.footer_align == "center" && parent.footer_align != "center" {
+                parent.footer_align
+            } else {
+                child.footer_align
+            },
             status_bar: child.status_bar.or(parent.status_bar),
-            status_align: if child.status_align == "left" && parent.status_align != "left" { parent.status_align } else { child.status_align },
+            status_align: if child.status_align == "left" && parent.status_align != "left" {
+                parent.status_align
+            } else {
+                child.status_align
+            },
             layout: child.layout.or(parent.layout),
             inherits: None, // Clear inheritance to prevent cycles
             metadata: child.metadata.or(parent.metadata),
         }
     }
-    
+
     /// List all available themes
     pub fn list_themes(&self) -> Vec<(String, String)> {
-        let mut themes: Vec<(String, String)> = self.themes.iter()
+        let mut themes: Vec<(String, String)> = self
+            .themes
+            .iter()
             .map(|(name, theme)| {
-                let description = theme.metadata.as_ref()
+                let description = theme
+                    .metadata
+                    .as_ref()
                     .map(|m| m.description.clone())
                     .unwrap_or_else(|| format!("Theme with {} border", theme.color));
                 (name.clone(), description)
             })
             .collect();
-            
+
         themes.sort_by(|a, b| a.0.cmp(&b.0));
         themes
     }
-    
+
     /// Get XDG+ themes directory path
     pub fn get_themes_directory(&self) -> PathBuf {
         self.xdg_base_dir.join("themes")
@@ -544,12 +680,14 @@ impl ThemeEngine {
                     let yaml_files: Vec<_> = entries
                         .filter_map(|e| e.ok())
                         .filter(|e| {
-                            e.file_name().to_str()
+                            e.file_name()
+                                .to_str()
                                 .map(|name| {
                                     // ENGINE-006: Enforce boxy_ prefix for engine files
-                                    name.starts_with("boxy_") &&
-                                    (name.ends_with(".yml") || name.ends_with(".yaml")) &&
-                                    !name.contains("template") && !name.contains("tmpl")
+                                    name.starts_with("boxy_")
+                                        && (name.ends_with(".yml") || name.ends_with(".yaml"))
+                                        && !name.contains("template")
+                                        && !name.contains("tmpl")
                                 })
                                 .unwrap_or(false)
                         })
@@ -558,13 +696,20 @@ impl ThemeEngine {
                     if yaml_files.is_empty() {
                         println!("  ⚠️  Empty: {} (no theme files)", global_dir.display());
                     } else {
-                        println!("  ✅ Active: {} ({} theme files)", global_dir.display(), yaml_files.len());
+                        println!(
+                            "  ✅ Active: {} ({} theme files)",
+                            global_dir.display(),
+                            yaml_files.len()
+                        );
                     }
                 }
                 Err(e) => println!("  ❌ Error reading directory: {}", e),
             }
         } else {
-            println!("  ❌ Missing: {} (run `boxy engine init`)", global_dir.display());
+            println!(
+                "  ❌ Missing: {} (run `boxy engine init`)",
+                global_dir.display()
+            );
         }
         println!();
 
@@ -615,7 +760,8 @@ impl ThemeEngine {
         // Group themes for better display
         let cols = 4;
         for chunk in theme_names.chunks(cols) {
-            let line = chunk.iter()
+            let line = chunk
+                .iter()
                 .map(|name| format!("{:12}", name))
                 .collect::<Vec<_>>()
                 .join(" ");
@@ -678,7 +824,7 @@ mod tests {
     #[test]
     fn test_builtin_themes() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Test that built-in themes are loaded
         assert!(engine.get_theme("error").is_some());
         assert!(engine.get_theme("success").is_some());
@@ -689,7 +835,7 @@ mod tests {
     #[test]
     fn test_theme_validation() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Valid theme
         let valid_theme = BoxyTheme {
             color: "crimson".to_string(),
@@ -697,7 +843,7 @@ mod tests {
             ..Default::default()
         };
         assert!(engine.validate_theme(&valid_theme).is_ok());
-        
+
         // Invalid color
         let invalid_theme = BoxyTheme {
             color: "invalid_color".to_string(),
@@ -709,10 +855,10 @@ mod tests {
     #[test]
     fn test_smart_theme_resolution() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Direct lookup
         assert!(engine.get_theme("error").is_some());
-        
+
         // Should fallback gracefully for unknown themes
         assert!(engine.get_theme("unknown_theme").is_none());
     }
@@ -744,7 +890,7 @@ mod tests {
     #[test]
     fn test_theme_validation_comprehensive() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Test invalid style
         let invalid_style_theme = BoxyTheme {
             color: "azure".to_string(),
@@ -752,7 +898,7 @@ mod tests {
             ..Default::default()
         };
         assert!(engine.validate_theme(&invalid_style_theme).is_err());
-        
+
         // Test invalid text color
         let invalid_text_color_theme = BoxyTheme {
             color: "azure".to_string(),
@@ -760,7 +906,7 @@ mod tests {
             ..Default::default()
         };
         assert!(engine.validate_theme(&invalid_text_color_theme).is_err());
-        
+
         // Test invalid width constraints
         let invalid_width_theme = BoxyTheme {
             color: "azure".to_string(),
@@ -768,7 +914,7 @@ mod tests {
             ..Default::default()
         };
         assert!(engine.validate_theme(&invalid_width_theme).is_err());
-        
+
         let invalid_width_large_theme = BoxyTheme {
             color: "azure".to_string(),
             width: Some(300), // Too large
@@ -781,10 +927,10 @@ mod tests {
     fn test_theme_list() {
         let engine = ThemeEngine::new().unwrap();
         let themes = engine.list_themes();
-        
+
         // Should have at least the built-in themes
         assert!(themes.len() >= 4);
-        
+
         // Check that themes are returned as (name, description) pairs
         let theme_names: Vec<String> = themes.iter().map(|(name, _)| name.clone()).collect();
         assert!(theme_names.contains(&"error".to_string()));
@@ -796,7 +942,7 @@ mod tests {
     #[test]
     fn test_theme_inheritance() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Create a theme with inheritance (simulated)
         let parent_theme = BoxyTheme {
             color: "azure".to_string(),
@@ -805,16 +951,16 @@ mod tests {
             padding: 2,
             ..Default::default()
         };
-        
+
         let child_theme = BoxyTheme {
             color: "crimson".to_string(), // Override parent color
             text_style: "bold".to_string(),
             inherits: Some("parent".to_string()),
             ..Default::default()
         };
-        
+
         let merged = engine.merge_themes(parent_theme, child_theme);
-        
+
         // Child should override parent properties
         assert_eq!(merged.color, "crimson");
         assert_eq!(merged.text_style, "bold");
@@ -853,12 +999,12 @@ settings:
         // Parse YAML
         let result: Result<ThemeFile, _> = serde_yaml::from_str(test_yaml);
         assert!(result.is_ok());
-        
+
         let theme_file = result.unwrap();
         assert_eq!(theme_file.metadata.name, "test-theme");
         assert_eq!(theme_file.metadata.version, "1.0.0");
         assert!(theme_file.themes.contains_key("test_theme"));
-        
+
         let theme = &theme_file.themes["test_theme"];
         assert_eq!(theme.color, "azure");
         assert_eq!(theme.style, "rounded");
@@ -869,7 +1015,7 @@ settings:
     fn test_theme_default_values() {
         // Test that theme defaults work correctly
         let default_theme = BoxyTheme::default();
-        
+
         assert_eq!(default_theme.color, "azure");
         assert_eq!(default_theme.text_color, "auto");
         assert_eq!(default_theme.style, "normal");
@@ -885,15 +1031,19 @@ settings:
     fn test_xdg_directory_path() {
         let engine = ThemeEngine::new().unwrap();
         let themes_dir = engine.get_themes_directory();
-        
+
         // Should end with the correct path structure
-        assert!(themes_dir.to_string_lossy().contains(".local/etc/odx/boxy/themes"));
+        assert!(
+            themes_dir
+                .to_string_lossy()
+                .contains(".local/etc/odx/boxy/themes")
+        );
     }
 
     #[test]
     fn test_theme_file_validation() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Valid theme
         let valid_theme = BoxyTheme {
             color: "emerald".to_string(),
@@ -903,7 +1053,7 @@ settings:
             ..Default::default()
         };
         assert!(engine.validate_theme(&valid_theme).is_ok());
-        
+
         // Test edge case width values
         let min_width_theme = BoxyTheme {
             color: "azure".to_string(),
@@ -911,7 +1061,7 @@ settings:
             ..Default::default()
         };
         assert!(engine.validate_theme(&min_width_theme).is_ok());
-        
+
         let max_width_theme = BoxyTheme {
             color: "azure".to_string(),
             width: Some(200), // Maximum valid
@@ -931,13 +1081,13 @@ settings:
             updated: "2024-09-03".to_string(),
             compatibility: "boxy v0.6+".to_string(),
         };
-        
+
         let theme = BoxyTheme {
             color: "violet".to_string(),
             metadata: Some(metadata.clone()),
             ..Default::default()
         };
-        
+
         assert!(theme.metadata.is_some());
         let theme_meta = theme.metadata.unwrap();
         assert_eq!(theme_meta.name, "Test Theme");
@@ -948,10 +1098,10 @@ settings:
     #[test]
     fn test_theme_settings_defaults() {
         let settings = ThemeSettings::default();
-        
+
         // Debug what we actually get
         println!("Actual default_theme: '{}'", settings.default_theme);
-        
+
         assert_eq!(settings.default_theme, "info");
         assert_eq!(settings.fallback_color, "slate");
         assert_eq!(settings.max_width, 120);
@@ -963,15 +1113,15 @@ settings:
     #[test]
     fn test_theme_resolution_variations() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Direct theme resolution should work
         assert!(engine.get_theme("error").is_some());
         assert!(engine.get_theme("success").is_some());
-        
+
         // Non-existent themes should return None
         assert!(engine.get_theme("nonexistent").is_none());
         assert!(engine.get_theme("").is_none());
-        
+
         // Case sensitivity test
         assert!(engine.get_theme("ERROR").is_none()); // Should be case sensitive
     }
@@ -979,37 +1129,53 @@ settings:
     #[test]
     fn test_color_validation_in_themes() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Test all built-in theme colors are valid
         for (theme_name, _) in engine.list_themes() {
             let theme = engine.get_theme(&theme_name).unwrap();
-            assert!(engine.validate_theme(&theme).is_ok(), "Theme {} should be valid", theme_name);
+            assert!(
+                engine.validate_theme(&theme).is_ok(),
+                "Theme {} should be valid",
+                theme_name
+            );
         }
     }
 
     #[test]
     fn test_comprehensive_theme_structure() {
         let engine = ThemeEngine::new().unwrap();
-        
+
         // Test that all built-in themes have required properties
         let required_themes = vec!["error", "success", "warning", "info"];
-        
+
         for theme_name in required_themes {
-            let theme = engine.get_theme(theme_name)
+            let theme = engine
+                .get_theme(theme_name)
                 .expect(&format!("Theme {} should exist", theme_name));
-            
+
             // All themes should have valid colors
-            assert!(!theme.color.is_empty(), "Theme {} should have a color", theme_name);
-            
+            assert!(
+                !theme.color.is_empty(),
+                "Theme {} should have a color",
+                theme_name
+            );
+
             // Text color should be valid
-            assert!(theme.text_color == "auto" || theme.text_color == "none" || 
-                   validate_color(&theme.text_color).is_ok(), 
-                   "Theme {} should have valid text color", theme_name);
-            
+            assert!(
+                theme.text_color == "auto"
+                    || theme.text_color == "none"
+                    || validate_color(&theme.text_color).is_ok(),
+                "Theme {} should have valid text color",
+                theme_name
+            );
+
             // Style should be valid
             let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];
-            assert!(valid_styles.contains(&theme.style.as_str()), 
-                   "Theme {} should have valid style", theme_name);
+            assert!(
+                valid_styles.contains(&theme.style.as_str()),
+                "Theme {} should have valid style",
+                theme_name
+            );
         }
     }
 }

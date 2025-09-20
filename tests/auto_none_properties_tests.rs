@@ -3,8 +3,8 @@
 //! This test suite validates that "auto" and "none" property behaviors work correctly
 //! across the newly restructured RSB MODULE_SPEC modules.
 
-use std::process::{Command, Stdio};
 use std::io::Write;
+use std::process::{Command, Stdio};
 
 /// Helper function to run boxy command and capture output
 fn run_boxy_command(args: &[&str], input: &str) -> Result<String, String> {
@@ -21,11 +21,13 @@ fn run_boxy_command(args: &[&str], input: &str) -> Result<String, String> {
     // Write input to stdin
     if let Some(stdin) = cmd.stdin.take() {
         let mut stdin = stdin;
-        stdin.write_all(input.as_bytes())
+        stdin
+            .write_all(input.as_bytes())
             .map_err(|e| format!("Failed to write to stdin: {}", e))?;
     }
 
-    let output = cmd.wait_with_output()
+    let output = cmd
+        .wait_with_output()
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
     if output.status.success() {
@@ -45,7 +47,11 @@ fn test_text_color_auto_with_themes() {
         assert!(result.is_ok(), "Theme {} should work", theme);
 
         let output = result.unwrap();
-        assert!(output.contains("Auto color test"), "Theme {} should contain content", theme);
+        assert!(
+            output.contains("Auto color test"),
+            "Theme {} should contain content",
+            theme
+        );
     }
 }
 
@@ -79,9 +85,15 @@ fn test_width_auto_vs_fixed() {
 fn test_auto_width_with_long_content() {
     // Test that auto width expands for long content
     let short_result = run_boxy_command(&[], "Short");
-    let long_result = run_boxy_command(&[], "This is a very long piece of content that should make the box wider");
+    let long_result = run_boxy_command(
+        &[],
+        "This is a very long piece of content that should make the box wider",
+    );
 
-    assert!(short_result.is_ok() && long_result.is_ok(), "Both commands should work");
+    assert!(
+        short_result.is_ok() && long_result.is_ok(),
+        "Both commands should work"
+    );
 
     let short_output = short_result.unwrap();
     let long_output = long_result.unwrap();
@@ -96,7 +108,7 @@ fn test_auto_properties_with_title_status() {
     // Test auto width with title and status
     let result = run_boxy_command(
         &["--title", "📦 Test Title", "--status", "v1.0"],
-        "Content with title and status"
+        "Content with title and status",
     );
 
     assert!(result.is_ok(), "Title/status command should work");
@@ -104,7 +116,10 @@ fn test_auto_properties_with_title_status() {
     let output = result.unwrap();
     assert!(output.contains("Test Title"), "Should contain title");
     assert!(output.contains("v1.0"), "Should contain status");
-    assert!(output.contains("Content with title"), "Should contain content");
+    assert!(
+        output.contains("Content with title"),
+        "Should contain content"
+    );
 }
 
 #[test]
@@ -117,7 +132,11 @@ fn test_theme_inheritance_auto_properties() {
         assert!(result.is_ok(), "Theme {} inheritance should work", theme);
 
         let output = result.unwrap();
-        assert!(output.contains("Inheritance test"), "Theme {} should render content", theme);
+        assert!(
+            output.contains("Inheritance test"),
+            "Theme {} should render content",
+            theme
+        );
     }
 }
 
@@ -148,7 +167,15 @@ fn test_auto_none_regression_suite() {
         assert!(result.is_ok(), "Command {:?} should succeed", args);
 
         let output = result.unwrap();
-        assert!(output.contains(content), "Output should contain content for {:?}", args);
-        assert!(!output.trim().is_empty(), "Output should not be empty for {:?}", args);
+        assert!(
+            output.contains(content),
+            "Output should contain content for {:?}",
+            args
+        );
+        assert!(
+            !output.trim().is_empty(),
+            "Output should not be empty for {:?}",
+            args
+        );
     }
 }

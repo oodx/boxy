@@ -4,7 +4,6 @@
 ///   cargo run --bin emoji_debug "✅"
 ///   cargo run --bin emoji_debug compare "✅" "ℹ️" "🚀" "🟢" "⚠" "✗"
 ///   echo -en 'á' | iconv -f utf-8 -t UNICODEBIG | xxd -g 2
-
 use std::env;
 
 // Import from the main boxy crate

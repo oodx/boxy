@@ -1,11 +1,10 @@
+use boxy::width_plugin::*;
 /// Width calculation comparison tool
 ///
 /// Usage:
 ///   cargo run --bin width_compare "✅"
 ///   cargo run --bin width_compare compare "X" "✅" "ℹ️" "🚀"
-
 use std::env;
-use boxy::width_plugin::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -43,7 +42,10 @@ fn compare_single(text: &str) {
 
 fn compare_width_implementations(chars: &[&str]) {
     println!("📊 WIDTH IMPLEMENTATION COMPARISON");
-    println!("{:<10} {:<12} {:<12} {:<12} {:<10}", "Text", "Unicode", "Custom", "Current", "Match?");
+    println!(
+        "{:<10} {:<12} {:<12} {:<12} {:<10}",
+        "Text", "Unicode", "Custom", "Current", "Match?"
+    );
     println!("{}", "─".repeat(60));
 
     for &text in chars {
@@ -52,12 +54,14 @@ fn compare_width_implementations(chars: &[&str]) {
         let current_width = get_display_width(text);
         let matches = unicode_width == custom_width;
 
-        println!("{:<10} {:<12} {:<12} {:<12} {:<10}",
-                 format!("'{}'", text),
-                 unicode_width,
-                 custom_width,
-                 current_width,
-                 if matches { "✅" } else { "❌" });
+        println!(
+            "{:<10} {:<12} {:<12} {:<12} {:<10}",
+            format!("'{}'", text),
+            unicode_width,
+            custom_width,
+            current_width,
+            if matches { "✅" } else { "❌" }
+        );
     }
 }
 

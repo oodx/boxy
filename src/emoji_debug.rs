@@ -72,11 +72,13 @@ impl EmojiDebugInfo {
     #[allow(dead_code)]
     pub fn new(text: &str) -> Self {
         let codepoints: Vec<u32> = text.chars().map(|c| c as u32).collect();
-        let unicode_names: Vec<String> = text.chars()
+        let unicode_names: Vec<String> = text
+            .chars()
             .map(|c| unicode_name(c).unwrap_or_else(|| format!("U+{:04X}", c as u32)))
             .collect();
 
-        let hex_dump = text.bytes()
+        let hex_dump = text
+            .bytes()
             .map(|b| format!("{:02x}", b))
             .collect::<Vec<_>>()
             .join(" ");
@@ -100,7 +102,13 @@ impl EmojiDebugInfo {
         println!("  Char Count: {}", self.char_count);
         println!("  Byte Count: {}", self.byte_count);
         println!("  Est Terminal Width: {}", self.estimated_terminal_width);
-        println!("  Codepoints: {:?}", self.codepoints.iter().map(|c| format!("U+{:04X}", c)).collect::<Vec<_>>());
+        println!(
+            "  Codepoints: {:?}",
+            self.codepoints
+                .iter()
+                .map(|c| format!("U+{:04X}", c))
+                .collect::<Vec<_>>()
+        );
         println!("  Hex: {}", self.hex_dump);
         println!("  Names: {:?}", self.unicode_names);
     }
@@ -138,10 +146,14 @@ pub fn compare_chars(chars: &[&str]) {
     println!("📊 CHARACTER WIDTH COMPARISON");
 
     // Pre-calculate all widths to determine proper column sizing
-    let infos: Vec<EmojiDebugInfo> = chars.iter().map(|&text| EmojiDebugInfo::new(text)).collect();
+    let infos: Vec<EmojiDebugInfo> = chars
+        .iter()
+        .map(|&text| EmojiDebugInfo::new(text))
+        .collect();
 
     // Calculate actual display widths for each text sample for proper alignment
-    let text_display_widths: Vec<usize> = chars.iter()
+    let text_display_widths: Vec<usize> = chars
+        .iter()
         .map(|&text| get_unicode_width(text) + 2) // +2 for quotes, using our fixed width calculation
         .collect();
 
@@ -149,33 +161,52 @@ pub fn compare_chars(chars: &[&str]) {
     let text_col_width = *text_display_widths.iter().max().unwrap_or(&6).max(&6);
 
     // Calculate other column widths based on content
-    let unicode_col_width = infos.iter()
+    let unicode_col_width = infos
+        .iter()
         .map(|info| info.unicode_width.to_string().len())
-        .max().unwrap_or(0).max(7); // minimum for "Unicode" header
+        .max()
+        .unwrap_or(0)
+        .max(7); // minimum for "Unicode" header
 
-    let chars_col_width = infos.iter()
+    let chars_col_width = infos
+        .iter()
         .map(|info| info.char_count.to_string().len())
-        .max().unwrap_or(0).max(5); // minimum for "Chars" header
+        .max()
+        .unwrap_or(0)
+        .max(5); // minimum for "Chars" header
 
-    let bytes_col_width = infos.iter()
+    let bytes_col_width = infos
+        .iter()
         .map(|info| info.byte_count.to_string().len())
-        .max().unwrap_or(0).max(5); // minimum for "Bytes" header
+        .max()
+        .unwrap_or(0)
+        .max(5); // minimum for "Bytes" header
 
-    let est_col_width = infos.iter()
+    let est_col_width = infos
+        .iter()
         .map(|info| info.estimated_terminal_width.to_string().len())
-        .max().unwrap_or(0).max(8); // minimum for "Est Term" header
+        .max()
+        .unwrap_or(0)
+        .max(8); // minimum for "Est Term" header
 
     // Print headers with calculated widths
-    println!("{:<width_text$} {:<width_uni$} {:<width_chars$} {:<width_bytes$} {:<width_est$}",
-             "Text", "Unicode", "Chars", "Bytes", "Est Term",
-             width_text = text_col_width,
-             width_uni = unicode_col_width,
-             width_chars = chars_col_width,
-             width_bytes = bytes_col_width,
-             width_est = est_col_width);
+    println!(
+        "{:<width_text$} {:<width_uni$} {:<width_chars$} {:<width_bytes$} {:<width_est$}",
+        "Text",
+        "Unicode",
+        "Chars",
+        "Bytes",
+        "Est Term",
+        width_text = text_col_width,
+        width_uni = unicode_col_width,
+        width_chars = chars_col_width,
+        width_bytes = bytes_col_width,
+        width_est = est_col_width
+    );
 
     // Print separator line
-    let total_width = text_col_width + unicode_col_width + chars_col_width + bytes_col_width + est_col_width + 4; // +4 for spaces
+    let total_width =
+        text_col_width + unicode_col_width + chars_col_width + bytes_col_width + est_col_width + 4; // +4 for spaces
     println!("{}", "─".repeat(total_width));
 
     // Print data rows with proper alignment
@@ -192,23 +223,37 @@ pub fn compare_chars(chars: &[&str]) {
         };
 
         print!("{}{}", text_display, " ".repeat(padding_needed));
-        print!(" {:<width_uni$}", info.unicode_width, width_uni = unicode_col_width);
-        print!(" {:<width_chars$}", info.char_count, width_chars = chars_col_width);
-        print!(" {:<width_bytes$}", info.byte_count, width_bytes = bytes_col_width);
-        println!(" {:<width_est$}", info.estimated_terminal_width, width_est = est_col_width);
+        print!(
+            " {:<width_uni$}",
+            info.unicode_width,
+            width_uni = unicode_col_width
+        );
+        print!(
+            " {:<width_chars$}",
+            info.char_count,
+            width_chars = chars_col_width
+        );
+        print!(
+            " {:<width_bytes$}",
+            info.byte_count,
+            width_bytes = bytes_col_width
+        );
+        println!(
+            " {:<width_est$}",
+            info.estimated_terminal_width,
+            width_est = est_col_width
+        );
     }
 }
 
 /// Macro for quick emoji debugging
 #[macro_export]
 macro_rules! debug_emoji {
-    ($text:expr) => {
-        {
-            let info = $crate::emoji_debug::EmojiDebugInfo::new($text);
-            info.print_debug();
-            info
-        }
-    };
+    ($text:expr) => {{
+        let info = $crate::emoji_debug::EmojiDebugInfo::new($text);
+        info.print_debug();
+        info
+    }};
 }
 
 /// Macro for comparing multiple emojis

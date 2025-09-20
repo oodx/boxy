@@ -12,40 +12,40 @@
 //!
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
-pub mod utils;
 pub mod helpers;
+pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
 pub use utils::{
-    // Constants
-    VERSION,
-    NAME,
-    DESCRIPTION,
-
+    AlignmentConfig,
     // Configuration types
     BodyAlignment,
-    WidthConfig,
     BoxColors,
-    DividerConfig,
-    PaddingConfig,
-    AlignmentConfig,
     BoxyConfig,
+    DESCRIPTION,
+
+    DividerConfig,
+    NAME,
+    PaddingConfig,
     ParsedContent,
+
+    // Constants
+    VERSION,
+    WidthConfig,
+    // Parser functions with CRITICAL icon detection logic
+    expand_variables,
+    parse_content_stream,
+    render_title_or_footer,
 
     // Configuration functions
     resolve_box_config,
 
-    // Parser functions with CRITICAL icon detection logic
-    expand_variables,
-    unescape_stream_value,
-    parse_content_stream,
-    wrap_text_at_word_boundaries,
-    truncate_with_ellipsis,
-    render_title_or_footer,
-
     // Help functions
     show_comprehensive_help,
     show_usage_examples,
+    truncate_with_ellipsis,
+    unescape_stream_value,
+    wrap_text_at_word_boundaries,
 };
 
 // Test module access to helpers
@@ -70,18 +70,38 @@ mod tests {
 
         let config = resolve_box_config(
             "test content",
-            2, 1,
+            2,
+            1,
             &BoxStyle::default(),
             "blue",
             "white",
             Some("Test Title"),
-            None, None, None, None, None, None,
-            "left", "left", None,
-            false, false, false, false,
-            false, false, false, false,
-            None, None,
-            "left", false, false, false,
-            None, None, false,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "left",
+            "left",
+            None,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            None,
+            None,
+            "left",
+            false,
+            false,
+            false,
+            None,
+            None,
+            false,
         );
 
         assert_eq!(config.text, "test content");

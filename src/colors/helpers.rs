@@ -19,9 +19,15 @@ pub fn get_color_suggestion(color: &str) -> Result<&'static str, String> {
     };
 
     if let Some(fallback) = suggestion {
-        Err(format!("Unknown color '{}'. Did you mean '{}'?", color, fallback))
+        Err(format!(
+            "Unknown color '{}'. Did you mean '{}'?",
+            color, fallback
+        ))
     } else {
-        Err(format!("Unknown color '{}'. Use --help to see available colors.", color))
+        Err(format!(
+            "Unknown color '{}'. Use --help to see available colors.",
+            color
+        ))
     }
 }
 

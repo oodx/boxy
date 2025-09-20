@@ -2,9 +2,8 @@
 // Enhanced output formatting with jynx integration for beautiful CLI experience
 // Falls back gracefully when jynx is not available
 
-
-use std::process::{Command};
-use std::io::{Write};
+use std::io::Write;
+use std::process::Command;
 
 /// Enhanced print function with jynx integration
 pub fn jynx_println(content: &str, template: &str, jynx: &JynxPlugin) {
@@ -18,10 +17,10 @@ pub fn pipe_to_jynx(content: &str, template: &str, jynx: &JynxPlugin) -> String 
     if !jynx.is_active() {
         return content.to_string();
     }
-    
+
     // Use jynx for enhanced formatting
     let mut cmd = Command::new("jynx");
-    
+
     // Configure jynx command based on template type
     match template {
         "help" => {
@@ -53,7 +52,7 @@ pub fn pipe_to_jynx(content: &str, template: &str, jynx: &JynxPlugin) -> String 
             cmd.args(&["--enhance"]);
         }
     }
-    
+
     // Execute jynx with content as stdin
     match cmd
         .stdin(std::process::Stdio::piped())
@@ -66,7 +65,7 @@ pub fn pipe_to_jynx(content: &str, template: &str, jynx: &JynxPlugin) -> String 
             if let Some(stdin) = child.stdin.as_mut() {
                 let _ = stdin.write_all(content.as_bytes());
             }
-            
+
             // Get jynx output
             match child.wait_with_output() {
                 Ok(output) => {
@@ -83,7 +82,6 @@ pub fn pipe_to_jynx(content: &str, template: &str, jynx: &JynxPlugin) -> String 
         Err(_) => content.to_string(),
     }
 }
-
 
 /// Jynx availability detection with version checking
 pub struct JynxPlugin {
@@ -112,32 +110,32 @@ impl JynxPlugin {
             supports_templates: false,
             no_color_requested: no_color,
         };
-        
+
         // Skip jynx detection if --no-color is explicitly requested
         if no_color {
             return integration;
         }
-        
+
         // Check if jynx is available in PATH
         if let Ok(output) = Command::new("jynx").arg("--version").output() {
             if output.status.success() {
                 if let Ok(version_output) = String::from_utf8(output.stdout) {
                     integration.available = true;
                     integration.version = Some(version_output.trim().to_string());
-                    
+
                     // Check for template support (jynx 0.3.0+)
-                    integration.supports_templates = version_output.contains("0.3") || 
-                        version_output.contains("0.4") || 
-                        version_output.contains("0.5") ||
-                        version_output.contains("1.") ||
-                        version_output.contains("2.");
+                    integration.supports_templates = version_output.contains("0.3")
+                        || version_output.contains("0.4")
+                        || version_output.contains("0.5")
+                        || version_output.contains("1.")
+                        || version_output.contains("2.");
                 }
             }
         }
-        
+
         integration
     }
-    
+
     /// Check if jynx is available and color is enabled
     pub fn is_active(&self) -> bool {
         self.available && !self.no_color_requested

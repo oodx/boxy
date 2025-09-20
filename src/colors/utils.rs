@@ -35,102 +35,102 @@ pub fn get_color_code(color: &str) -> &'static str {
         "grey3" => "\x1B[38;5;237m",
 
         // === EXTENDED RED SPECTRUM ===
-        "crimson" => "\x1B[38;5;196m",        // Pure red - critical alerts
-        "ruby" => "\x1B[38;5;160m",           // Dark red - errors
-        "coral" => "\x1B[38;5;203m",          // Red-orange - warnings
-        "salmon" => "\x1B[38;5;209m",         // Light red-orange - notices
-        "rose" => "\x1B[38;5;217m",           // Pink-red - highlights
-        "brick" => "\x1B[38;5;124m",          // Dark brick red - severe
+        "crimson" => "\x1B[38;5;196m", // Pure red - critical alerts
+        "ruby" => "\x1B[38;5;160m",    // Dark red - errors
+        "coral" => "\x1B[38;5;203m",   // Red-orange - warnings
+        "salmon" => "\x1B[38;5;209m",  // Light red-orange - notices
+        "rose" => "\x1B[38;5;217m",    // Pink-red - highlights
+        "brick" => "\x1B[38;5;124m",   // Dark brick red - severe
 
         // === EXTENDED ORANGE SPECTRUM ===
-        "amber" => "\x1B[38;5;220m",          // Golden orange - attention
-        "tangerine" => "\x1B[38;5;208m",      // Bright orange - active
-        "peach" => "\x1B[38;5;216m",          // Light orange - soft alerts
-        "rust" => "\x1B[38;5;166m",           // Dark orange - deprecation
-        "bronze" => "\x1B[38;5;130m",         // Brown-orange - legacy
-        "gold" => "\x1B[38;5;178m",           // Golden - achievements
+        "amber" => "\x1B[38;5;220m",     // Golden orange - attention
+        "tangerine" => "\x1B[38;5;208m", // Bright orange - active
+        "peach" => "\x1B[38;5;216m",     // Light orange - soft alerts
+        "rust" => "\x1B[38;5;166m",      // Dark orange - deprecation
+        "bronze" => "\x1B[38;5;130m",    // Brown-orange - legacy
+        "gold" => "\x1B[38;5;178m",      // Golden - achievements
 
         // === EXTENDED YELLOW SPECTRUM ===
-        "lemon" => "\x1B[38;5;226m",          // Bright yellow - warnings
-        "mustard" => "\x1B[38;5;184m",        // Muted yellow - caution
-        "sand" => "\x1B[38;5;223m",           // Beige-yellow - neutral
-        "cream" => "\x1B[38;5;230m",          // Light yellow - info
-        "khaki" => "\x1B[38;5;143m",          // Olive-yellow - pending
+        "lemon" => "\x1B[38;5;226m",   // Bright yellow - warnings
+        "mustard" => "\x1B[38;5;184m", // Muted yellow - caution
+        "sand" => "\x1B[38;5;223m",    // Beige-yellow - neutral
+        "cream" => "\x1B[38;5;230m",   // Light yellow - info
+        "khaki" => "\x1B[38;5;143m",   // Olive-yellow - pending
 
         // === EXTENDED GREEN SPECTRUM ===
-        "lime" => "\x1B[38;5;46m",            // Bright green - success
-        "emerald" => "\x1B[38;5;34m",         // Pure green - completed
-        "forest" => "\x1B[38;5;22m",          // Dark green - stable
-        "mint" => "\x1B[38;5;121m",           // Light green - fresh
-        "sage" => "\x1B[38;5;108m",           // Muted green - accepted
-        "jade" => "\x1B[38;5;35m",            // Blue-green - verified
-        "olive" => "\x1B[38;5;58m",           // Brown-green - archived
+        "lime" => "\x1B[38;5;46m",    // Bright green - success
+        "emerald" => "\x1B[38;5;34m", // Pure green - completed
+        "forest" => "\x1B[38;5;22m",  // Dark green - stable
+        "mint" => "\x1B[38;5;121m",   // Light green - fresh
+        "sage" => "\x1B[38;5;108m",   // Muted green - accepted
+        "jade" => "\x1B[38;5;35m",    // Blue-green - verified
+        "olive" => "\x1B[38;5;58m",   // Brown-green - archived
 
         // === EXTENDED BLUE SPECTRUM ===
-        "azure" => "\x1B[38;5;33m",           // Sky blue - information
-        "navy" => "\x1B[38;5;17m",            // Dark blue - system
-        "royal" => "\x1B[38;5;21m",           // Royal blue - primary
-        "ice" => "\x1B[38;5;159m",            // Light blue - secondary
-        "steel" => "\x1B[38;5;67m",           // Grey-blue - infrastructure
-        "teal" => "\x1B[38;5;30m",            // Blue-green - data
-        "indigo" => "\x1B[38;5;54m",          // Deep blue - configuration
+        "azure" => "\x1B[38;5;33m",  // Sky blue - information
+        "navy" => "\x1B[38;5;17m",   // Dark blue - system
+        "royal" => "\x1B[38;5;21m",  // Royal blue - primary
+        "ice" => "\x1B[38;5;159m",   // Light blue - secondary
+        "steel" => "\x1B[38;5;67m",  // Grey-blue - infrastructure
+        "teal" => "\x1B[38;5;30m",   // Blue-green - data
+        "indigo" => "\x1B[38;5;54m", // Deep blue - configuration
 
         // === EXTENDED PURPLE SPECTRUM ===
-        "violet" => "\x1B[38;5;129m",         // Blue-purple - special
-        "plum" => "\x1B[38;5;96m",            // Dark purple - reserved
-        "lavender" => "\x1B[38;5;183m",       // Light purple - optional
-        "orchid" => "\x1B[38;5;170m",         // Pink-purple - enhanced
-        "mauve" => "\x1B[38;5;139m",          // Muted purple - metadata
-        "amethyst" => "\x1B[38;5;98m",        // Deep purple - advanced
+        "violet" => "\x1B[38;5;129m",   // Blue-purple - special
+        "plum" => "\x1B[38;5;96m",      // Dark purple - reserved
+        "lavender" => "\x1B[38;5;183m", // Light purple - optional
+        "orchid" => "\x1B[38;5;170m",   // Pink-purple - enhanced
+        "mauve" => "\x1B[38;5;139m",    // Muted purple - metadata
+        "amethyst" => "\x1B[38;5;98m",  // Deep purple - advanced
 
         // === EXTENDED CYAN SPECTRUM ===
-        "aqua" => "\x1B[38;5;51m",            // Bright cyan - active data
-        "turquoise" => "\x1B[38;5;45m",       // Blue-cyan - processing
-        "sky" => "\x1B[38;5;117m",            // Light cyan - status
-        "ocean" => "\x1B[38;5;31m",           // Deep cyan - persistence
+        "aqua" => "\x1B[38;5;51m",      // Bright cyan - active data
+        "turquoise" => "\x1B[38;5;45m", // Blue-cyan - processing
+        "sky" => "\x1B[38;5;117m",      // Light cyan - status
+        "ocean" => "\x1B[38;5;31m",     // Deep cyan - persistence
 
         // === MONOCHROME SPECTRUM ===
-        "black" => "\x1B[38;5;16m",           // Pure black - disabled
-        "charcoal" => "\x1B[38;5;235m",       // Dark grey - inactive
-        "slate" => "\x1B[38;5;244m",          // Medium grey - secondary
-        "silver" => "\x1B[38;5;250m",         // Light grey - tertiary
-        "pearl" => "\x1B[38;5;253m",          // Very light grey - background
-        "snow" => "\x1B[38;5;255m",           // Pure white - emphasis
+        "black" => "\x1B[38;5;16m",     // Pure black - disabled
+        "charcoal" => "\x1B[38;5;235m", // Dark grey - inactive
+        "slate" => "\x1B[38;5;244m",    // Medium grey - secondary
+        "silver" => "\x1B[38;5;250m",   // Light grey - tertiary
+        "pearl" => "\x1B[38;5;253m",    // Very light grey - background
+        "snow" => "\x1B[38;5;255m",     // Pure white - emphasis
 
         // === SEMANTIC GROUPINGS ===
 
         // Error/Alert semantic colors
-        "error" => "\x1B[38;5;196m",          // Critical error
-        "warning" => "\x1B[38;5;220m",        // Warning state
-        "danger" => "\x1B[38;5;160m",         // Dangerous operation
-        "alert" => "\x1B[38;5;208m",          // Alert state
+        "error" => "\x1B[38;5;196m",   // Critical error
+        "warning" => "\x1B[38;5;220m", // Warning state
+        "danger" => "\x1B[38;5;160m",  // Dangerous operation
+        "alert" => "\x1B[38;5;208m",   // Alert state
 
         // Success/Positive semantic colors
-        "success" => "\x1B[38;5;46m",         // Success state
-        "complete" => "\x1B[38;5;34m",        // Completion
-        "verified" => "\x1B[38;5;35m",        // Verification
-        "approved" => "\x1B[38;5;121m",       // Approval
+        "success" => "\x1B[38;5;46m",   // Success state
+        "complete" => "\x1B[38;5;34m",  // Completion
+        "verified" => "\x1B[38;5;35m",  // Verification
+        "approved" => "\x1B[38;5;121m", // Approval
 
         // Info/Neutral semantic colors
-        "info" => "\x1B[38;5;33m",            // Information
-        "note" => "\x1B[38;5;159m",           // Note/annotation
-        "hint" => "\x1B[38;5;117m",           // Hint/tip
-        "debug" => "\x1B[38;5;67m",           // Debug information
+        "info" => "\x1B[38;5;33m",  // Information
+        "note" => "\x1B[38;5;159m", // Note/annotation
+        "hint" => "\x1B[38;5;117m", // Hint/tip
+        "debug" => "\x1B[38;5;67m", // Debug information
 
         // Process/State semantic colors
-        "pending" => "\x1B[38;5;184m",        // Pending state
-        "progress" => "\x1B[38;5;214m",       // In progress
-        "blocked" => "\x1B[38;5;197m",        // Blocked state
-        "queued" => "\x1B[38;5;143m",         // Queued state
-        "active" => "\x1B[38;5;51m",          // Active state
-        "inactive" => "\x1B[38;5;240m",       // Inactive state
+        "pending" => "\x1B[38;5;184m",  // Pending state
+        "progress" => "\x1B[38;5;214m", // In progress
+        "blocked" => "\x1B[38;5;197m",  // Blocked state
+        "queued" => "\x1B[38;5;143m",   // Queued state
+        "active" => "\x1B[38;5;51m",    // Active state
+        "inactive" => "\x1B[38;5;240m", // Inactive state
 
         // Priority semantic colors
-        "critical" => "\x1B[38;5;196m",       // Critical priority
-        "high" => "\x1B[38;5;208m",           // High priority
-        "medium" => "\x1B[38;5;220m",         // Medium priority
-        "low" => "\x1B[38;5;250m",            // Low priority
-        "trivial" => "\x1B[38;5;237m",        // Trivial priority
+        "critical" => "\x1B[38;5;196m", // Critical priority
+        "high" => "\x1B[38;5;208m",     // High priority
+        "medium" => "\x1B[38;5;220m",   // Medium priority
+        "low" => "\x1B[38;5;250m",      // Low priority
+        "trivial" => "\x1B[38;5;237m",  // Trivial priority
 
         // === ADVANCED VARIATIONS ===
 
@@ -159,7 +159,7 @@ pub fn get_color_code(color: &str) -> &'static str {
         "pastel_orange" => "\x1B[38;5;223m",
 
         // Special control values
-        "none" | "default" | "auto" => "",    // No color (use default)
+        "none" | "default" | "auto" => "", // No color (use default)
 
         // Fallback for unknown colors - graceful degradation
         _ => "",
@@ -184,24 +184,78 @@ pub fn validate_color(color: &str) -> Result<&'static str, String> {
 /// Returns categorized color groups for help text generation.
 pub fn get_color_categories() -> Vec<(&'static str, Vec<&'static str>)> {
     vec![
-        ("Legacy Colors (v0.5.0)", vec![
-            "red", "red2", "deep", "deep_green", "orange", "yellow", "green", "green2",
-            "blue", "blue2", "cyan", "magenta", "purple", "purple2", "white", "white2",
-            "grey", "grey2", "grey3"
-        ]),
-        ("Red Spectrum", vec!["crimson", "ruby", "coral", "salmon", "rose", "brick"]),
-        ("Orange Spectrum", vec!["amber", "tangerine", "peach", "rust", "bronze", "gold"]),
-        ("Yellow Spectrum", vec!["lemon", "mustard", "sand", "cream", "khaki"]),
-        ("Green Spectrum", vec!["lime", "emerald", "forest", "mint", "sage", "jade", "olive"]),
-        ("Blue Spectrum", vec!["azure", "navy", "royal", "ice", "steel", "teal", "indigo"]),
-        ("Purple Spectrum", vec!["violet", "plum", "lavender", "orchid", "mauve", "amethyst"]),
+        (
+            "Legacy Colors (v0.5.0)",
+            vec![
+                "red",
+                "red2",
+                "deep",
+                "deep_green",
+                "orange",
+                "yellow",
+                "green",
+                "green2",
+                "blue",
+                "blue2",
+                "cyan",
+                "magenta",
+                "purple",
+                "purple2",
+                "white",
+                "white2",
+                "grey",
+                "grey2",
+                "grey3",
+            ],
+        ),
+        (
+            "Red Spectrum",
+            vec!["crimson", "ruby", "coral", "salmon", "rose", "brick"],
+        ),
+        (
+            "Orange Spectrum",
+            vec!["amber", "tangerine", "peach", "rust", "bronze", "gold"],
+        ),
+        (
+            "Yellow Spectrum",
+            vec!["lemon", "mustard", "sand", "cream", "khaki"],
+        ),
+        (
+            "Green Spectrum",
+            vec!["lime", "emerald", "forest", "mint", "sage", "jade", "olive"],
+        ),
+        (
+            "Blue Spectrum",
+            vec!["azure", "navy", "royal", "ice", "steel", "teal", "indigo"],
+        ),
+        (
+            "Purple Spectrum",
+            vec!["violet", "plum", "lavender", "orchid", "mauve", "amethyst"],
+        ),
         ("Cyan Spectrum", vec!["aqua", "turquoise", "sky", "ocean"]),
-        ("Monochrome", vec!["black", "charcoal", "slate", "silver", "pearl", "snow"]),
-        ("Semantic Alerts", vec!["error", "warning", "danger", "alert"]),
-        ("Semantic Success", vec!["success", "complete", "verified", "approved"]),
+        (
+            "Monochrome",
+            vec!["black", "charcoal", "slate", "silver", "pearl", "snow"],
+        ),
+        (
+            "Semantic Alerts",
+            vec!["error", "warning", "danger", "alert"],
+        ),
+        (
+            "Semantic Success",
+            vec!["success", "complete", "verified", "approved"],
+        ),
         ("Semantic Info", vec!["info", "note", "hint", "debug"]),
-        ("Semantic States", vec!["pending", "progress", "blocked", "queued", "active", "inactive"]),
-        ("Priority Levels", vec!["critical", "high", "medium", "low", "trivial"]),
+        (
+            "Semantic States",
+            vec![
+                "pending", "progress", "blocked", "queued", "active", "inactive",
+            ],
+        ),
+        (
+            "Priority Levels",
+            vec!["critical", "high", "medium", "low", "trivial"],
+        ),
     ]
 }
 
@@ -222,7 +276,9 @@ pub fn generate_color_help() -> String {
         while i < colors.len() {
             let mut row = String::new();
             for j in 0..cols {
-                if i + j >= colors.len() { break; }
+                if i + j >= colors.len() {
+                    break;
+                }
                 let name = colors[i + j];
                 let code = get_color_code(name);
                 let cell = if !code.is_empty() {

@@ -37,34 +37,34 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
-mod core;
 mod colors;
+mod core;
 mod emoji_debug;
-mod jynx_plugin;
-mod width_plugin;
 mod height_plugin;
+mod jynx_plugin;
 mod theme_engine;
 mod themes;
 mod themes_builtin;
 mod visual;
+mod width_plugin;
 
-use std::io::{self, Read, Write};
 use std::env;
-use std::process::{Command, Stdio};
 use std::fs::{self, File};
+use std::io::{self, Read, Write};
+use std::process::{Command, Stdio};
 
 use regex::Regex;
 use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
-use core::*;  // Import core module (consolidates config, parser, help)
 use colors::*;
-use width_plugin::*;
+use core::*; // Import core module (consolidates config, parser, help)
 use height_plugin::*;
 use jynx_plugin::*;
-use themes::{handle_theme_command, handle_engine_command}; // RSB MODULE_SPEC compliant imports
 use theme_engine::*;
+use themes::{handle_engine_command, handle_theme_command}; // RSB MODULE_SPEC compliant imports
 use visual::*;
+use width_plugin::*;
 
 // RSB (Rebel String-Based) framework imports
 // Note: RSB param! macro removed in favor of std::env::var for BOXY_THEME environment variable
@@ -72,14 +72,10 @@ use visual::*;
 // Simple error type for RSB integration
 type AppError = String;
 
-
-
-
-
 fn main() {
     // RSB bootstrap pattern - delegate to application logic
     match run_boxy_application() {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             eprintln!("Application error: {}", e);
             std::process::exit(1);
@@ -105,7 +101,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     let mut theme_name: Option<String> = None;
     let mut theme_from_env = false;
     let mut enable_wrapping = false;
-    
+
     // Check for BOXY_THEME environment variable as default (overridden by --theme)
     if let Ok(env_theme) = env::var("BOXY_THEME") {
         if !env_theme.is_empty() {
@@ -137,7 +133,6 @@ fn run_boxy_application() -> Result<(), AppError> {
     let mut params_flag: Option<String> = None;
     // Deprecated suggestions removed in v0.6.x -> simplified migration help view only
     let mut no_color_requested = false;
-    
 
     // PRIORITY 1: Handle subcommands first - these take absolute precedence over stdin
     // Subcommands should always execute regardless of piped input
@@ -156,7 +151,10 @@ fn run_boxy_application() -> Result<(), AppError> {
                     eprintln!("Warning: --dev-level={} invalid (>2), ignoring", level);
                 }
                 Err(_) => {
-                    eprintln!("Warning: --dev-level='{}' invalid (not a number), ignoring", level_str);
+                    eprintln!(
+                        "Warning: --dev-level='{}' invalid (not a number), ignoring",
+                        level_str
+                    );
                 }
             }
         }
@@ -173,7 +171,8 @@ fn run_boxy_application() -> Result<(), AppError> {
 
     if args.len() >= 2 && args[1] == "theme" {
         // Filter out --dev-level from subcommand args
-        let filtered_args: Vec<String> = args[2..].iter()
+        let filtered_args: Vec<String> = args[2..]
+            .iter()
             .filter(|arg| !arg.starts_with("--dev-level="))
             .cloned()
             .collect();
@@ -184,7 +183,8 @@ fn run_boxy_application() -> Result<(), AppError> {
 
     if args.len() >= 2 && args[1] == "engine" {
         // Filter out --dev-level from subcommand args
-        let filtered_args: Vec<String> = args[2..].iter()
+        let filtered_args: Vec<String> = args[2..]
+            .iter()
             .filter(|arg| !arg.starts_with("--dev-level="))
             .cloned()
             .collect();
@@ -203,21 +203,22 @@ fn run_boxy_application() -> Result<(), AppError> {
     // }
     // PRIORITY 2: Check for other subcommands that should prevent stdin reading
     // This explicit check ensures no ambiguity about input precedence
-    let has_subcommand = args.len() >= 2 && matches!(args[1].as_str(), "width" | "height" | "theme" | "engine" );
+    let has_subcommand =
+        args.len() >= 2 && matches!(args[1].as_str(), "width" | "height" | "theme" | "engine");
     if has_subcommand {
         // This should never be reached due to early returns above, but serves as a safety net
         return Ok(());
     }
-    
+
     // Initialize jynx integration early
     let jynx = JynxPlugin::new(no_color_requested);
-    
+
     for (i, arg) in args.iter().enumerate().skip(1) {
         if skip_next {
             skip_next = false;
             continue;
         }
-        
+
         match arg.as_str() {
             "--help" | "-h" => {
                 show_comprehensive_help(&jynx);
@@ -381,7 +382,7 @@ fn run_boxy_application() -> Result<(), AppError> {
                 if i + 1 < args.len() {
                     let status_text = &args[i + 1];
                     status_bar = Some(status_text.clone());
-                    
+
                     // Check for deprecation patterns
                     // if !status_text.starts_with("sl:") && !status_text.starts_with("sc:") && !status_text.starts_with("sr:") &&
                     //    !status_text.starts_with("hl:") && !status_text.starts_with("hc:") && !status_text.starts_with("hr:") &&
@@ -391,35 +392,43 @@ fn run_boxy_application() -> Result<(), AppError> {
                     //         "Long status text without alignment prefix. Consider using sl:, sc:, or sr: prefixes for better control."
                     //     ));
                     //}
-                    
+
                     skip_next = true;
                 }
             }
             "--title-color" => {
                 if i + 1 < args.len() {
                     let c = &args[i + 1];
-                    if validate_color(c).is_ok() { title_color = Some(c.clone()); }
+                    if validate_color(c).is_ok() {
+                        title_color = Some(c.clone());
+                    }
                     skip_next = true;
                 }
             }
             "--status-color" => {
                 if i + 1 < args.len() {
                     let c = &args[i + 1];
-                    if validate_color(c).is_ok() { status_color = Some(c.clone()); }
+                    if validate_color(c).is_ok() {
+                        status_color = Some(c.clone());
+                    }
                     skip_next = true;
                 }
             }
             "--header-color" => {
                 if i + 1 < args.len() {
                     let c = &args[i + 1];
-                    if validate_color(c).is_ok() { header_color = Some(c.clone()); }
+                    if validate_color(c).is_ok() {
+                        header_color = Some(c.clone());
+                    }
                     skip_next = true;
                 }
             }
             "--footer-color" => {
                 if i + 1 < args.len() {
                     let c = &args[i + 1];
-                    if validate_color(c).is_ok() { footer_color = Some(c.clone()); }
+                    if validate_color(c).is_ok() {
+                        footer_color = Some(c.clone());
+                    }
                     skip_next = true;
                 }
             }
@@ -443,12 +452,26 @@ fn run_boxy_application() -> Result<(), AppError> {
                             "bp" => body_pad_emoji = true,
                             "dt" => divider_after_title = true,
                             "ds" => divider_before_status = true,
-                            "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
-                            "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
-                            "stn" => { pad_before_title = true; },
-                            "ssn" => { pad_after_status = true; },
-                            "ptn" => { pad_after_title = true; },
-                            "psn" => { pad_before_status = true; },
+                            "dtn" => {
+                                divider_after_title = true;
+                                pad_after_title_divider = true;
+                            }
+                            "dsn" => {
+                                divider_before_status = true;
+                                pad_before_status_divider = true;
+                            }
+                            "stn" => {
+                                pad_before_title = true;
+                            }
+                            "ssn" => {
+                                pad_after_status = true;
+                            }
+                            "ptn" => {
+                                pad_after_title = true;
+                            }
+                            "psn" => {
+                                pad_before_status = true;
+                            }
                             _ => { /* ignore unknown tokens */ }
                         }
                     }
@@ -457,10 +480,10 @@ fn run_boxy_application() -> Result<(), AppError> {
             }
             "--pad" => {
                 if i + 1 < args.len() {
-                    for t in args[i+1].split(',') {
+                    for t in args[i + 1].split(',') {
                         match t.trim() {
-                            "a"|"above" => pad_body_above = true,
-                            "b"|"below" => pad_body_below = true,
+                            "a" | "above" => pad_body_above = true,
+                            "b" | "below" => pad_body_below = true,
                             _ => {}
                         }
                     }
@@ -483,30 +506,47 @@ fn run_boxy_application() -> Result<(), AppError> {
             }
         }
     }
-    
 
-
-    
     // PRIORITY 3: Read from stdin only if no subcommands were processed
     // At this point, all subcommands and utility flags (--help, --version, etc.) have been handled
     // This ensures clear precedence: subcommands > utility flags > stdin processing
     let mut input = String::new();
-    io::stdin().read_to_string(&mut input).expect("Failed to read input");
-    
+    io::stdin()
+        .read_to_string(&mut input)
+        .expect("Failed to read input");
+
     let mut text = input.trim_end_matches('\n').to_string();
 
     // Params stream parsing: ONLY via --params flag. Piped stdin remains the body.
     if let Some(ref blob) = params_flag {
         if let Some(pc) = parse_content_stream(blob) {
-            if header.is_none() { header = pc.header; }
-            if footer.is_none() { footer = pc.footer; }
-            if status_bar.is_none() { status_bar = pc.status; }
-            if title.is_none() { title = pc.title; }
-            if let Some(ic) = pc.icon { icon = Some(ic); }
-            if title_color.is_none() { title_color = pc.title_color; }
-            if status_color.is_none() { status_color = pc.status_color; } // ? why
-            if header_color.is_none() { header_color = pc.header_color; }
-            if footer_color.is_none() { footer_color = pc.footer_color; }
+            if header.is_none() {
+                header = pc.header;
+            }
+            if footer.is_none() {
+                footer = pc.footer;
+            }
+            if status_bar.is_none() {
+                status_bar = pc.status;
+            }
+            if title.is_none() {
+                title = pc.title;
+            }
+            if let Some(ic) = pc.icon {
+                icon = Some(ic);
+            }
+            if title_color.is_none() {
+                title_color = pc.title_color;
+            }
+            if status_color.is_none() {
+                status_color = pc.status_color;
+            } // ? why
+            if header_color.is_none() {
+                header_color = pc.header_color;
+            }
+            if footer_color.is_none() {
+                footer_color = pc.footer_color;
+            }
             // Map layout tokens if provided via params
             if let Some(spec) = pc.layout.as_deref() {
                 for token in spec.split(',') {
@@ -526,12 +566,26 @@ fn run_boxy_application() -> Result<(), AppError> {
                         "bp" => body_pad_emoji = true,
                         "dt" => divider_after_title = true,
                         "ds" => divider_before_status = true,
-                        "dtn" => { divider_after_title = true; pad_after_title_divider = true; },
-                        "dsn" => { divider_before_status = true; pad_before_status_divider = true; },
-                        "stn" => { pad_before_title = true; },
-                        "ssn" => { pad_after_status = true; },
-                        "ptn" => { pad_after_title = true; },
-                        "psn" => { pad_before_status = true; },
+                        "dtn" => {
+                            divider_after_title = true;
+                            pad_after_title_divider = true;
+                        }
+                        "dsn" => {
+                            divider_before_status = true;
+                            pad_before_status_divider = true;
+                        }
+                        "stn" => {
+                            pad_before_title = true;
+                        }
+                        "ssn" => {
+                            pad_after_status = true;
+                        }
+                        "ptn" => {
+                            pad_after_title = true;
+                        }
+                        "psn" => {
+                            pad_before_status = true;
+                        }
                         _ => {}
                     }
                 }
@@ -554,7 +608,7 @@ fn run_boxy_application() -> Result<(), AppError> {
             // Body remains the piped stdin text
         }
     }
-    
+
     //TODO: refactor to themes.rs => handle_theme_enigne(&theme_name)
     //      needs to return the right values for icon, fixed_width etc.
     // Apply theme if specified - using new theme engine
@@ -574,7 +628,8 @@ fn run_boxy_application() -> Result<(), AppError> {
                         if let Some(icon_str) = &boxy_theme.icon {
                             apply_theme_icon_to_text(&mut text, icon_str);
                         } else if let Some(title_str) = &boxy_theme.title {
-                            let emoji_part: String = title_str.chars().take_while(|c| !c.is_ascii()).collect();
+                            let emoji_part: String =
+                                title_str.chars().take_while(|c| !c.is_ascii()).collect();
                             if !emoji_part.trim().is_empty() {
                                 apply_theme_icon_to_text(&mut text, emoji_part.trim());
                             }
@@ -597,7 +652,10 @@ fn run_boxy_application() -> Result<(), AppError> {
                 } else {
                     if theme_from_env {
                         // For environment themes, warn but continue with default
-                        eprintln!("Warning: Unknown theme '{}' from BOXY_THEME environment variable.", theme_name_str);
+                        eprintln!(
+                            "Warning: Unknown theme '{}' from BOXY_THEME environment variable.",
+                            theme_name_str
+                        );
                         eprintln!("Falling back to default theme.");
                         // Reset theme_name to None to use default behavior
                         #[allow(unused_assignments)]
@@ -618,10 +676,12 @@ fn run_boxy_application() -> Result<(), AppError> {
                             eprintln!("   2. Import custom themes: boxy engine import <name>");
                             eprintln!("   3. Check system status: boxy engine debug");
                         } else {
-                            let theme_names: Vec<String> = theme_list.iter().map(|(name, _)| name.clone()).collect();
+                            let theme_names: Vec<String> =
+                                theme_list.iter().map(|(name, _)| name.clone()).collect();
                             eprintln!("📚 Available themes ({} total):", theme_names.len());
                             for (i, name) in theme_names.iter().enumerate() {
-                                if i < 8 { // Show first 8 themes inline
+                                if i < 8 {
+                                    // Show first 8 themes inline
                                     eprintln!("   • {}", name);
                                 }
                             }
@@ -652,7 +712,7 @@ fn run_boxy_application() -> Result<(), AppError> {
             }
         }
     }
-    
+
     let _status_color_str = status_color.as_deref().unwrap_or("");
     // DEBUG: Status color selection (commented for clean output)
     // eprintln!("Status Color: {}", status_color_str);
@@ -678,75 +738,81 @@ fn run_boxy_application() -> Result<(), AppError> {
     // 🔒 PROTECTED ICON POSITIONING - DO NOT MODIFY MANUALLY! 🔒
     apply_icon_to_text!(text, icon);
 
-
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
         println!("{}", stripped);
     } else {
         let config = resolve_box_config(
-          &text,
-          1, 1,
-          style, color, text_color,
-          title.as_deref(),
-          footer.as_deref(),
-          icon.as_deref(),
-          fixed_width,
-          fixed_height,
-          status_bar.as_deref(),
-          header.as_deref(),
-          header_align, footer_align,
-          status_align_override.as_deref(),
-          divider_after_title, divider_before_status,
-          pad_after_title_divider, pad_before_status_divider,
-          pad_before_title, pad_after_status,
-          pad_after_title, pad_before_status,
-          title_color.as_deref(),
-          status_color.as_deref(),
-          body_align,
-          body_pad_emoji,
-          pad_body_above,
-          pad_body_below,
-          header_color.as_deref(),
-          footer_color.as_deref(),
-          enable_wrapping
+            &text,
+            1,
+            1,
+            style,
+            color,
+            text_color,
+            title.as_deref(),
+            footer.as_deref(),
+            icon.as_deref(),
+            fixed_width,
+            fixed_height,
+            status_bar.as_deref(),
+            header.as_deref(),
+            header_align,
+            footer_align,
+            status_align_override.as_deref(),
+            divider_after_title,
+            divider_before_status,
+            pad_after_title_divider,
+            pad_before_status_divider,
+            pad_before_title,
+            pad_after_status,
+            pad_after_title,
+            pad_before_status,
+            title_color.as_deref(),
+            status_color.as_deref(),
+            body_align,
+            body_pad_emoji,
+            pad_body_above,
+            pad_body_below,
+            header_color.as_deref(),
+            footer_color.as_deref(),
+            enable_wrapping,
         );
         draw_box(config);
     }
-    
+
     Ok(())
 }
 
 // KEEP THE COMMENTS BELOW THIS POINT, THEY ARE HERE FOR REPAIR REFERENCE
 
 // fn draw_box(
-//   text: &str, 
-//   h_padding: usize, 
-//   _v_padding: usize, 
-//   style: &BoxStyle, 
-//   color: &str, 
-//   text_color: &str, 
-//   title: Option<&str>, 
-//   footer: Option<&str>, 
-//   icon: Option<&str>, 
-//   fixed_width: Option<usize>, 
-//   status_bar: Option<&str>, 
-//   header: Option<&str>, 
-//   header_align: &str, 
-//   footer_align: &str, 
-//   status_align_override: Option<&str>, 
-//   divider_after_title: bool, 
-//   divider_before_status: bool, 
-//   pad_after_title_divider: bool, 
-//   pad_before_status_divider: bool, 
-//   pad_before_title: bool, 
-//   pad_after_status: bool, 
-//   pad_after_title: bool, 
-//   pad_before_status: bool, 
-//   title_color_name: Option<&str>, 
-//   status_color_name: Option<&str>, 
-//   body_align: Option<&str>, 
-//   body_pad_emoji: Option<&str>, 
-//   pad_body_above: bool, 
+//   text: &str,
+//   h_padding: usize,
+//   _v_padding: usize,
+//   style: &BoxStyle,
+//   color: &str,
+//   text_color: &str,
+//   title: Option<&str>,
+//   footer: Option<&str>,
+//   icon: Option<&str>,
+//   fixed_width: Option<usize>,
+//   status_bar: Option<&str>,
+//   header: Option<&str>,
+//   header_align: &str,
+//   footer_align: &str,
+//   status_align_override: Option<&str>,
+//   divider_after_title: bool,
+//   divider_before_status: bool,
+//   pad_after_title_divider: bool,
+//   pad_before_status_divider: bool,
+//   pad_before_title: bool,
+//   pad_after_status: bool,
+//   pad_after_title: bool,
+//   pad_before_status: bool,
+//   title_color_name: Option<&str>,
+//   status_color_name: Option<&str>,
+//   body_align: Option<&str>,
+//   body_pad_emoji: Option<&str>,
+//   pad_body_above: bool,
 //   pad_body_below: bool
 // )
-

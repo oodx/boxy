@@ -10,8 +10,11 @@
 //!
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
-use crate::{expand_variables, render_title_or_footer, RESET, get_display_width, get_terminal_width, get_color_code, truncate_with_ellipsis};
 use crate::core::BoxyConfig;
+use crate::{
+    RESET, expand_variables, get_color_code, get_display_width, get_terminal_width,
+    render_title_or_footer, truncate_with_ellipsis,
+};
 
 // ============================================================================
 // BOX STYLE SYSTEM (from boxes.rs)
@@ -24,7 +27,11 @@ pub const BOX_CHARS: &str = "┌┐└┘─│├┤┼╭╮╰╯═║╠╣
 pub fn validate_box_style(style: &str) -> Result<(), String> {
     let valid_styles = vec!["normal", "rounded", "double", "heavy", "ascii"];
     if !valid_styles.contains(&style) {
-        return Err(format!("Invalid style '{}'. Valid styles: {}", style, valid_styles.join(", ")));
+        return Err(format!(
+            "Invalid style '{}'. Valid styles: {}",
+            style,
+            valid_styles.join(", ")
+        ));
     }
     Ok(())
 }
@@ -44,38 +51,63 @@ pub struct BoxStyle {
 }
 
 pub const NORMAL: BoxStyle = BoxStyle {
-    top_left: "┌", top_right: "┐",
-    bottom_left: "└", bottom_right: "┘",
-    horizontal: "─", vertical: "│",
-    tee_left: "├", tee_right: "┤", cross: "┼",
+    top_left: "┌",
+    top_right: "┐",
+    bottom_left: "└",
+    bottom_right: "┘",
+    horizontal: "─",
+    vertical: "│",
+    tee_left: "├",
+    tee_right: "┤",
+    cross: "┼",
 };
 
 pub const ROUNDED: BoxStyle = BoxStyle {
-    top_left: "╭", top_right: "╮",
-    bottom_left: "╰", bottom_right: "╯",
-    horizontal: "─", vertical: "│",
-    tee_left: "├", tee_right: "┤", cross: "┼",
+    top_left: "╭",
+    top_right: "╮",
+    bottom_left: "╰",
+    bottom_right: "╯",
+    horizontal: "─",
+    vertical: "│",
+    tee_left: "├",
+    tee_right: "┤",
+    cross: "┼",
 };
 
 pub const DOUBLE: BoxStyle = BoxStyle {
-    top_left: "╔", top_right: "╗",
-    bottom_left: "╚", bottom_right: "╝",
-    horizontal: "═", vertical: "║",
-    tee_left: "╠", tee_right: "╣", cross: "╬",
+    top_left: "╔",
+    top_right: "╗",
+    bottom_left: "╚",
+    bottom_right: "╝",
+    horizontal: "═",
+    vertical: "║",
+    tee_left: "╠",
+    tee_right: "╣",
+    cross: "╬",
 };
 
 pub const HEAVY: BoxStyle = BoxStyle {
-    top_left: "┏", top_right: "┓",
-    bottom_left: "┗", bottom_right: "┛",
-    horizontal: "━", vertical: "┃",
-    tee_left: "┣", tee_right: "┫", cross: "╋",
+    top_left: "┏",
+    top_right: "┓",
+    bottom_left: "┗",
+    bottom_right: "┛",
+    horizontal: "━",
+    vertical: "┃",
+    tee_left: "┣",
+    tee_right: "┫",
+    cross: "╋",
 };
 
 pub const ASCII: BoxStyle = BoxStyle {
-    top_left: "+", top_right: "+",
-    bottom_left: "+", bottom_right: "+",
-    horizontal: "-", vertical: "|",
-    tee_left: "+", tee_right: "+", cross: "+",
+    top_left: "+",
+    top_right: "+",
+    bottom_left: "+",
+    bottom_right: "+",
+    horizontal: "-",
+    vertical: "|",
+    tee_left: "+",
+    tee_right: "+",
+    cross: "+",
 };
 
 impl Default for BoxStyle {
@@ -102,11 +134,12 @@ macro_rules! box_width {
                 } else {
                     w
                 }
-            },
+            }
             None => {
                 // Auto-size but constrain to terminal width - SIMPLE VERSION
                 let lines: Vec<&str> = $text.lines().collect();
-                let content_max_width = lines.iter()
+                let content_max_width = lines
+                    .iter()
                     .map(|line| get_display_width(line))
                     .max()
                     .unwrap_or(0);
@@ -126,13 +159,22 @@ macro_rules! box_width {
         let min_width: usize = min_width_str.parse().unwrap_or(5);
 
         // Ensure minimum viable box size (user configurable via BOXY_MIN_WIDTH)
-        if box_width < min_width { min_width } else { box_width }
-    }}
+        if box_width < min_width {
+            min_width
+        } else {
+            box_width
+        }
+    }};
 }
 
 /// Calculate optimal box width based on content and terminal constraints
 /// Uses protected macro to preserve working logic
-pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usize>, _enable_wrapping: bool) -> usize {
+pub fn calculate_box_width(
+    text: &str,
+    h_padding: usize,
+    fixed_width: Option<usize>,
+    _enable_wrapping: bool,
+) -> usize {
     box_width!(text, h_padding, fixed_width)
 }
 
@@ -144,20 +186,35 @@ pub fn draw_box(config: BoxyConfig) {
         all_content.push_str(title);
     }
 
-    let final_width = calculate_box_width(&all_content, config.width.h_padding, config.width.fixed_width, config.width.enable_wrapping);
+    let final_width = calculate_box_width(
+        &all_content,
+        config.width.h_padding,
+        config.width.fixed_width,
+        config.width.enable_wrapping,
+    );
     let inner_width = final_width.saturating_sub(2); // Account for borders
     let color_code = get_color_code(&config.colors.box_color);
 
     // Determine text color: "auto" means match box color, "none" means default
     let text_color_code = match config.colors.text_color.as_str() {
         "auto" => get_color_code(&config.colors.box_color), // Use same color as box
-        "none" => "",                    // Default terminal color
-        _ => get_color_code(&config.colors.text_color), // Explicit color
+        "none" => "",                                       // Default terminal color
+        _ => get_color_code(&config.colors.text_color),     // Explicit color
     };
 
     // pad removed - now handled by components
-    let title_color_code = config.colors.title_color.as_ref().map(|n| get_color_code(n)).unwrap_or("");
-    let status_color_code = config.colors.status_color.as_ref().map(|n| get_color_code(n)).unwrap_or("");
+    let title_color_code = config
+        .colors
+        .title_color
+        .as_ref()
+        .map(|n| get_color_code(n))
+        .unwrap_or("");
+    let status_color_code = config
+        .colors
+        .status_color
+        .as_ref()
+        .map(|n| get_color_code(n))
+        .unwrap_or("");
 
     // Use Header component for top border rendering
     let header = Header::new(&config);
@@ -165,7 +222,12 @@ pub fn draw_box(config: BoxyConfig) {
 
     // Use Body component for content rendering with preserved emoji/width calculations
     let body = Body::new(&config);
-    let body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
+    let body_lines = body.render(
+        inner_width,
+        &color_code,
+        &text_color_code,
+        &title_color_code,
+    );
     for line in &body_lines {
         println!("{}", line);
     }
@@ -174,7 +236,12 @@ pub fn draw_box(config: BoxyConfig) {
     let status = Status::new(&config);
     let mut status_lines = Vec::new();
     if status.should_render() {
-        status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
+        status_lines = status.render(
+            inner_width,
+            &color_code,
+            &text_color_code,
+            &status_color_code,
+        );
         for line in &status_lines {
             println!("{}", line);
         }
@@ -191,7 +258,8 @@ pub fn draw_box(config: BoxyConfig) {
 
             // Add blank padding lines before footer using same format as other components
             for _ in 0..filler_needed {
-                let available_content_width = inner_width.saturating_sub(2 * config.width.h_padding);
+                let available_content_width =
+                    inner_width.saturating_sub(2 * config.width.h_padding);
                 let blank_line = format!(
                     "{}{}{}{}{}{}{}",
                     color_code,
@@ -230,7 +298,10 @@ pub fn strip_box(text: &str, strict: bool) -> String {
 
         // Skip lines that look like box borders (first and last)
         if i == 0 || i == lines.len() - 1 {
-            if trimmed_clean.chars().all(|c| box_chars.contains(c) || c.is_whitespace()) {
+            if trimmed_clean
+                .chars()
+                .all(|c| box_chars.contains(c) || c.is_whitespace())
+            {
                 continue;
             }
         }
@@ -269,7 +340,8 @@ pub fn strip_box(text: &str, strict: bool) -> String {
             if clean_chars.len() > 2 {
                 // Check if clean version starts/ends with box characters
                 let starts_with_box = box_chars.contains(clean_chars[0]);
-                let ends_with_box = !clean_chars.is_empty() && box_chars.contains(clean_chars[clean_chars.len() - 1]);
+                let ends_with_box = !clean_chars.is_empty()
+                    && box_chars.contains(clean_chars[clean_chars.len() - 1]);
 
                 if starts_with_box || ends_with_box {
                     // Use the clean version as the template, but extract from original preserving ANSI
@@ -302,9 +374,7 @@ pub fn strip_box(text: &str, strict: bool) -> String {
 
         if strict {
             // Remove emojis and special Unicode (keep basic ASCII)
-            content = content.chars()
-                .filter(|c| c.is_ascii())
-                .collect();
+            content = content.chars().filter(|c| c.is_ascii()).collect();
         } else {
             // For normal mode, clean up leading/trailing ANSI codes that might be left over
             // after box character removal
@@ -345,7 +415,7 @@ impl<'a> Header<'a> {
                 &expanded_header,
                 inner_width,
                 self.config.style.horizontal,
-                &self.config.alignment.header_align
+                &self.config.alignment.header_align,
             );
             format!(
                 "{}{}{}{}{}",
@@ -359,11 +429,7 @@ impl<'a> Header<'a> {
             let border = self.config.style.horizontal.repeat(inner_width);
             format!(
                 "{}{}{}{}{}",
-                color_code,
-                self.config.style.top_left,
-                border,
-                self.config.style.top_right,
-                RESET
+                color_code, self.config.style.top_left, border, self.config.style.top_right, RESET
             )
         }
     }
@@ -387,7 +453,7 @@ impl<'a> Footer<'a> {
                 &expanded_footer,
                 inner_width,
                 self.config.style.horizontal,
-                &self.config.alignment.footer_align
+                &self.config.alignment.footer_align,
             );
             format!(
                 "{}{}{}{}{}",
@@ -437,31 +503,57 @@ impl<'a> Status<'a> {
         let mut lines = Vec::new();
 
         if let Some(status_text) = &self.config.status_bar {
+            let available_content_width =
+                inner_width.saturating_sub(2 * self.config.width.h_padding);
+            let pad_cache = " ".repeat(self.config.width.h_padding);
+            let blank_cache = " ".repeat(available_content_width);
+            let divider_cache = self.config.style.horizontal.repeat(inner_width);
+
             if self.config.padding.pad_before_status {
-                lines.push(crate::status_padding_line!(self.config, inner_width, color_code));
+                lines.push(crate::status_padding_line!(
+                    self.config,
+                    color_code,
+                    pad_cache.as_str(),
+                    blank_cache.as_str()
+                ));
             }
 
             if self.config.dividers.divider_before_status {
                 if self.config.dividers.pad_before_status_divider {
-                    lines.push(crate::status_padding_line!(self.config, inner_width, color_code));
+                    lines.push(crate::status_padding_line!(
+                        self.config,
+                        color_code,
+                        pad_cache.as_str(),
+                        blank_cache.as_str()
+                    ));
                 }
-                lines.push(crate::status_divider_line!(self.config, inner_width, color_code));
+                lines.push(crate::status_divider_line!(
+                    self.config,
+                    color_code,
+                    divider_cache.as_str()
+                ));
             }
 
             let expanded_status = expand_variables(status_text);
             let (alignment, clean_status) = self.parse_status_alignment(&expanded_status);
             lines.push(crate::status_content_line!(
                 self.config,
-                inner_width,
                 color_code,
                 text_color_code,
                 status_color_code,
                 alignment.as_str(),
-                clean_status
+                clean_status,
+                pad_cache.as_str(),
+                available_content_width
             ));
 
             if self.config.padding.pad_after_status {
-                lines.push(crate::status_padding_line!(self.config, inner_width, color_code));
+                lines.push(crate::status_padding_line!(
+                    self.config,
+                    color_code,
+                    pad_cache.as_str(),
+                    blank_cache.as_str()
+                ));
             }
         }
 
@@ -473,16 +565,33 @@ impl<'a> Status<'a> {
         if let Some(override_align) = &self.config.alignment.status_align_override {
             (override_align.clone(), expanded_status.to_string())
         } else if expanded_status.starts_with("sl:") {
-            ("left".to_string(), expanded_status.strip_prefix("sl:").unwrap_or(expanded_status).to_string())
+            (
+                "left".to_string(),
+                expanded_status
+                    .strip_prefix("sl:")
+                    .unwrap_or(expanded_status)
+                    .to_string(),
+            )
         } else if expanded_status.starts_with("sc:") {
-            ("center".to_string(), expanded_status.strip_prefix("sc:").unwrap_or(expanded_status).to_string())
+            (
+                "center".to_string(),
+                expanded_status
+                    .strip_prefix("sc:")
+                    .unwrap_or(expanded_status)
+                    .to_string(),
+            )
         } else if expanded_status.starts_with("sr:") {
-            ("right".to_string(), expanded_status.strip_prefix("sr:").unwrap_or(expanded_status).to_string())
+            (
+                "right".to_string(),
+                expanded_status
+                    .strip_prefix("sr:")
+                    .unwrap_or(expanded_status)
+                    .to_string(),
+            )
         } else {
             ("left".to_string(), expanded_status.to_string())
         }
     }
-
 }
 
 /// Body component that renders the main content with preserved emoji/width calculations
@@ -509,13 +618,15 @@ impl<'a> Body<'a> {
 
         // PROTECTED: Calculate the actual max content width - DO NOT MODIFY
         // This macro preserves the exact working logic for content width calculation
-        let _content_max_width = composed_lines.iter()
+        let _content_max_width = composed_lines
+            .iter()
             .map(|line| get_display_width(line))
             .max()
             .unwrap_or(0);
 
         // PARALLEL SOLUTION: Calculate proper inner content width including title/status
-        let inner_content_target_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
+        let inner_content_target_width =
+            inner_width.saturating_sub(2 * self.config.width.h_padding);
 
         // Available space for content within the box
         let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
@@ -586,7 +697,6 @@ impl<'a> Body<'a> {
             }
         }
 
-
         lines
     }
 
@@ -607,14 +717,16 @@ impl<'a> Body<'a> {
 
             // For auto width, wrap at terminal width minus padding and borders
             let terminal_width = get_terminal_width();
-            let available_width = terminal_width.saturating_sub(2 * self.config.width.h_padding + 2);
+            let available_width =
+                terminal_width.saturating_sub(2 * self.config.width.h_padding + 2);
 
             // Clean hints from text for auto width mode (but preserve #NL# as newlines)
             // Both #W# and #T# should normalize to spaces for consistent width calculation
             let cleaned_text = self.config.text.replace("#W#", " ").replace("#T#", " ");
             // Normalize whitespace within lines but preserve #NL# markers
             let lines: Vec<&str> = cleaned_text.lines().collect();
-            let normalized_lines: Vec<String> = lines.iter()
+            let normalized_lines: Vec<String> = lines
+                .iter()
                 .map(|line| line.split_whitespace().collect::<Vec<_>>().join(" "))
                 .collect();
             let cleaned_text = normalized_lines.join("\n").replace("#NL#", "\n");
@@ -635,7 +747,12 @@ impl<'a> Body<'a> {
 
             // Calculate max content width available for wrapping
             // Use the same width calculation as the main box
-            let final_width = calculate_box_width(&self.config.text, self.config.width.h_padding, self.config.width.fixed_width, true);
+            let final_width = calculate_box_width(
+                &self.config.text,
+                self.config.width.h_padding,
+                self.config.width.fixed_width,
+                true,
+            );
             let available_width = final_width.saturating_sub(2); // Account for borders
 
             let wrapped_lines = wrap_text_at_word_boundaries(&self.config.text, available_width);
@@ -692,20 +809,35 @@ impl<'a> Body<'a> {
         text_color_code: &str,
         title_color_code: &str,
     ) -> String {
-        use crate::{get_display_width, truncate_with_ellipsis, expand_variables};
+        use crate::{expand_variables, get_display_width, truncate_with_ellipsis};
 
         // Avoid duplicate icon if the title line already starts with an emoji/non-ASCII
         let starts_with_emoji = line.chars().next().map(|c| !c.is_ascii()).unwrap_or(false);
         if starts_with_emoji {
             // Fall through to normal rendering without icon injection
-            let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
-            let colored_display_line = if line_code.is_empty() { display_line.to_string() } else { format!("{}{}{}", line_code, display_line, RESET) };
+            let line_code = if !title_color_code.is_empty() {
+                title_color_code
+            } else {
+                text_color_code
+            };
+            let colored_display_line = if line_code.is_empty() {
+                display_line.to_string()
+            } else {
+                format!("{}{}{}", line_code, display_line, RESET)
+            };
             let width = get_display_width(&display_line);
             let spaces = " ".repeat(available_content_width.saturating_sub(width));
-            return format!("{}{}{}{}{}{}{}{}",
-                color_code, self.config.style.vertical, RESET,
-                pad, colored_display_line, spaces, pad,
-                format!("{}{}{}", color_code, self.config.style.vertical, RESET));
+            return format!(
+                "{}{}{}{}{}{}{}{}",
+                color_code,
+                self.config.style.vertical,
+                RESET,
+                pad,
+                colored_display_line,
+                spaces,
+                pad,
+                format!("{}{}{}", color_code, self.config.style.vertical, RESET)
+            );
         }
 
         // First line with icon - LIPSIFIED
@@ -715,14 +847,20 @@ impl<'a> Body<'a> {
         // Only truncate icon content if there are explicit width constraints
         let icon_width = get_display_width(&icon_expanded) + 1; // +1 for space
         let line_width = get_display_width(line);
-        let final_line = if self.config.width.fixed_width.is_some() && line_width > available_content_width.saturating_sub(icon_width) {
+        let final_line = if self.config.width.fixed_width.is_some()
+            && line_width > available_content_width.saturating_sub(icon_width)
+        {
             truncate_with_ellipsis(line, available_content_width.saturating_sub(icon_width))
         } else {
             display_line.to_string()
         };
 
         // Apply text color to the text part only (not icon)
-        let line_code = if !title_color_code.is_empty() { title_color_code } else { text_color_code };
+        let line_code = if !title_color_code.is_empty() {
+            title_color_code
+        } else {
+            text_color_code
+        };
         let colored_final_line = if line_code.is_empty() {
             final_line.to_string()
         } else {
@@ -730,13 +868,21 @@ impl<'a> Body<'a> {
         };
 
         let final_width = get_display_width(&final_line);
-        let final_spaces = " ".repeat(available_content_width.saturating_sub(final_width + icon_width));
+        let final_spaces =
+            " ".repeat(available_content_width.saturating_sub(final_width + icon_width));
 
-        format!("{}{} {}{}{}{}{}{}{}",
-            color_code, self.config.style.vertical, RESET,
-            icon_expanded, " ",
-            colored_final_line, final_spaces, pad,
-            format!("{}{}{}", color_code, self.config.style.vertical, RESET))
+        format!(
+            "{}{} {}{}{}{}{}{}{}",
+            color_code,
+            self.config.style.vertical,
+            RESET,
+            icon_expanded,
+            " ",
+            colored_final_line,
+            final_spaces,
+            pad,
+            format!("{}{}{}", color_code, self.config.style.vertical, RESET)
+        )
     }
 
     fn render_regular_line(
@@ -750,17 +896,28 @@ impl<'a> Body<'a> {
         title_color_code: &str,
     ) -> String {
         // Apply text/status/title color to the display line
-        let line_code = if line_index == 0 && !title_color_code.is_empty() { title_color_code } else { text_color_code };
+        let line_code = if line_index == 0 && !title_color_code.is_empty() {
+            title_color_code
+        } else {
+            text_color_code
+        };
         let colored_display_line = if line_code.is_empty() {
             display_line.to_string()
         } else {
             format!("{}{}{}", line_code, display_line, RESET)
         };
 
-        format!("{}{}{}{}{}{}{}{}",
-            color_code, self.config.style.vertical, RESET,
-            pad, colored_display_line, spaces, pad,
-            format!("{}{}{}", color_code, self.config.style.vertical, RESET))
+        format!(
+            "{}{}{}{}{}{}{}{}",
+            color_code,
+            self.config.style.vertical,
+            RESET,
+            pad,
+            colored_display_line,
+            spaces,
+            pad,
+            format!("{}{}{}", color_code, self.config.style.vertical, RESET)
+        )
     }
 }
 
@@ -774,18 +931,17 @@ impl<'a> Body<'a> {
 #[macro_export]
 macro_rules! max_width {
     ($lines:expr) => {{
-        $lines.iter()
+        $lines
+            .iter()
             .map(|line| crate::get_display_width(line))
             .max()
             .unwrap_or(0)
-    }}
+    }};
 }
 
 #[macro_export]
 macro_rules! inner_target_width {
-    ($inner_width:expr, $h_padding:expr) => {{
-        ($inner_width as usize).saturating_sub(2 * ($h_padding as usize))
-    }}
+    ($inner_width:expr, $h_padding:expr) => {{ ($inner_width as usize).saturating_sub(2 * ($h_padding as usize)) }};
 }
 
 // Note: macros are exported via #[macro_export] and available globally

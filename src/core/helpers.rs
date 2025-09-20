@@ -30,11 +30,15 @@ pub fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
 
         // Clean the before part and check if hint is in a good position
         let clean_before = before_t.replace("#W#", " ");
-        let clean_before = clean_before.split_whitespace().collect::<Vec<_>>().join(" ");
+        let clean_before = clean_before
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
 
         // Only use the hint if it's at a reasonable position (not too far right)
         // If the cleaned before part fits with ellipsis space, use the hint
-        if get_display_width(&clean_before) <= max_width - 1 { // -1 for ellipsis space
+        if get_display_width(&clean_before) <= max_width - 1 {
+            // -1 for ellipsis space
             let ellipsified = clean_before.trim_end().to_string() + "…";
             let mut result = vec![ellipsified];
             // Wrap the after part recursively, trimming leading whitespace
@@ -113,7 +117,11 @@ pub fn wrap_single_line(line: &str, max_width: usize) -> Vec<String> {
 
         // Clean both parts - trim trailing/leading whitespace when wrapping
         let clean_before = before_w.split_whitespace().collect::<Vec<_>>().join(" ");
-        let clean_after = after_w.trim_start().split_whitespace().collect::<Vec<_>>().join(" ");
+        let clean_after = after_w
+            .trim_start()
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
 
         // Only use the hint if it's at a good position (before part fits)
         if get_display_width(&clean_before) <= max_width && !clean_after.is_empty() {

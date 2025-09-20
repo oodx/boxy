@@ -3,14 +3,14 @@
 //! This module contains internal implementations consumed by utils.rs.
 //! Functions here are not part of the public API.
 
-use std::path::PathBuf;
-use crate::{ fs, io };
-use crate::{ HashMap, Write };
-use crate::{ JynxPlugin, jynx_println };
-use crate::{ validate_color, validate_width};
-use crate::theme_engine::{ThemeEngine, BoxyTheme, ThemeFile, ThemeMetadata, ThemeSettings};
-use crate::visual::validate_box_style;
 use crate::core::{NAME, VERSION};
+use crate::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
+use crate::visual::validate_box_style;
+use crate::{HashMap, Write};
+use crate::{JynxPlugin, jynx_println};
+use crate::{fs, io};
+use crate::{validate_color, validate_width};
+use std::path::PathBuf;
 
 /// Handle `boxy theme create <name>` command
 pub fn handle_theme_create(name: &str, jynx: &JynxPlugin) {
@@ -51,7 +51,12 @@ pub fn handle_theme_create(name: &str, jynx: &JynxPlugin) {
             }
 
             println!();
-            let success_msg = format!("✅ Theme '{}' created successfully!\n   Saved to: {}\n\nTest your theme:\n   echo \"Hello World\" | boxy --use {}", name, theme_file_path.display(), name);
+            let success_msg = format!(
+                "✅ Theme '{}' created successfully!\n   Saved to: {}\n\nTest your theme:\n   echo \"Hello World\" | boxy --use {}",
+                name,
+                theme_file_path.display(),
+                name
+            );
 
             if jynx.is_active() {
                 jynx_println(&success_msg, "success", jynx);
@@ -75,7 +80,10 @@ pub fn handle_theme_import(path: &str) {
     }
 
     // Validate file extension
-    if !import_path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
+    if !import_path
+        .extension()
+        .map_or(false, |ext| ext == "yml" || ext == "yaml")
+    {
         eprintln!("Error: Only YAML files (.yml, .yaml) are supported for import");
         std::process::exit(1);
     }
@@ -97,14 +105,18 @@ pub fn handle_theme_import(path: &str) {
                 std::process::exit(1);
             }
 
-            let filename = import_path.file_name()
+            let filename = import_path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("imported_theme.yml");
 
             let target_path = themes_dir.join(filename);
 
             if target_path.exists() {
-                print!("Theme file '{}' already exists. Overwrite? (y/N): ", filename);
+                print!(
+                    "Theme file '{}' already exists. Overwrite? (y/N): ",
+                    filename
+                );
                 io::stdout().flush().unwrap();
 
                 let mut input = String::new();
@@ -178,7 +190,9 @@ pub fn handle_theme_edit(name: &str) {
                 }
 
                 let theme_file_path = themes_dir.join(format!("{}.yml", name));
-                if let Err(e) = super::utils::save_theme_to_file(&theme_file_path, name, &updated_theme) {
+                if let Err(e) =
+                    super::utils::save_theme_to_file(&theme_file_path, name, &updated_theme)
+                {
                     eprintln!("Error: Failed to save theme: {}", e);
                     std::process::exit(1);
                 }
@@ -242,7 +256,7 @@ pub fn handle_theme_dryrun(theme_name: &str) {
                     "This is a sample message",
                     "Theme testing with longer content to see how it wraps and displays",
                     "Short text",
-                    "🎯 Unicode and emoji test: ℹ️ 📦 ✅ ❌ ⚠️"
+                    "🎯 Unicode and emoji test: ℹ️ 📦 ✅ ❌ ⚠️",
                 ];
 
                 for sample in sample_texts {
@@ -343,12 +357,20 @@ pub fn handle_theme_init() {
     println!("✅ Created local theme template: {}", target_file.display());
     println!();
     println!("📝 Next steps:");
-    println!("  1. Edit {} to customize your themes", target_file.display());
+    println!(
+        "  1. Edit {} to customize your themes",
+        target_file.display()
+    );
     println!("  2. Test with: {} theme dryrun <theme_name>", NAME);
     println!("  3. Use with: echo \"text\" | {} --use <theme_name>", NAME);
     println!();
-    println!("💡 The .themes/ directory has the highest priority after individual boxy*.yaml files");
-    println!("   Use: {} theme hierarchy to see the complete loading order", NAME);
+    println!(
+        "💡 The .themes/ directory has the highest priority after individual boxy*.yaml files"
+    );
+    println!(
+        "   Use: {} theme hierarchy to see the complete loading order",
+        NAME
+    );
 }
 
 /// Get embedded theme template as fallback when not running from source
@@ -549,7 +571,8 @@ settings:
 # 4. Adjust padding and width for different content types
 # 5. Use layout tokens to reorder content sections
 # 6. Test with `boxy theme dryrun <name>` before using
-"#.to_string()
+"#
+    .to_string()
 }
 
 // ==================== ENGINE COMMAND HANDLERS ====================
@@ -586,7 +609,10 @@ pub fn handle_engine_init() {
     let default_config_path = global_themes_dir.join("boxy_default.yml");
 
     if default_config_path.exists() {
-        println!("ℹ️  Default config already exists: {}", default_config_path.display());
+        println!(
+            "ℹ️  Default config already exists: {}",
+            default_config_path.display()
+        );
     } else {
         let default_config_content = get_default_engine_config();
 
@@ -596,7 +622,10 @@ pub fn handle_engine_init() {
             std::process::exit(1);
         }
 
-        println!("✅ Created default config: {}", default_config_path.display());
+        println!(
+            "✅ Created default config: {}",
+            default_config_path.display()
+        );
     }
 
     println!();
@@ -606,7 +635,10 @@ pub fn handle_engine_init() {
     println!("  • Use `{} engine list` to see available themes", NAME);
     println!("  • Use `{} engine debug` to verify theme loading", NAME);
     println!("  • Use `{} --theme <name>` to apply themes", NAME);
-    println!("  • Edit {} to customize themes", default_config_path.display());
+    println!(
+        "  • Edit {} to customize themes",
+        default_config_path.display()
+    );
 }
 
 /// Handle `boxy engine import <name>` command - imports boxy_<name>.yml to global location
@@ -646,10 +678,18 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
         eprintln!("   2. Check filename spelling and ensure boxy_ prefix");
         eprintln!("   3. Verify you're in the correct directory");
         eprintln!();
-        eprintln!("📂 Current directory: {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        eprintln!(
+            "📂 Current directory: {}",
+            std::env::current_dir()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|_| "unknown".to_string())
+        );
         eprintln!();
         eprintln!("🔧 Alternative commands:");
-        eprintln!("   • boxy engine export {}    # Export from global themes", name);
+        eprintln!(
+            "   • boxy engine export {}    # Export from global themes",
+            name
+        );
         eprintln!("   • boxy engine list         # See available themes");
         eprintln!("   • boxy engine init         # Create default themes");
         std::process::exit(1);
@@ -668,7 +708,10 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
 
     // Check if target file exists and handle overwrite
     if global_file.exists() && !force_overwrite && !dry_run {
-        eprintln!("Error: Theme config already exists in global directory: {}", global_file.display());
+        eprintln!(
+            "Error: Theme config already exists in global directory: {}",
+            global_file.display()
+        );
         eprintln!("Use --overwrite flag to replace existing config:");
         eprintln!("  {} engine import {} --overwrite", NAME, name);
         std::process::exit(1);
@@ -688,7 +731,10 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
     println!("🔍 Validating theme config...");
     if let Err(e) = super::utils::validate_theme_file(&local_file) {
         eprintln!("Error: Theme config validation failed: {}", e);
-        eprintln!("Please fix the issues in {} before importing", local_file.display());
+        eprintln!(
+            "Please fix the issues in {} before importing",
+            local_file.display()
+        );
         std::process::exit(1);
     }
 
@@ -708,7 +754,11 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
 
     // Copy the file
     if dry_run {
-        println!("📄 Would copy: {} → {}", local_file.display(), global_file.display());
+        println!(
+            "📄 Would copy: {} → {}",
+            local_file.display(),
+            global_file.display()
+        );
         println!();
         println!("🎯 DRY RUN SUMMARY:");
         println!("   Source:      {}", local_file.display());
@@ -728,7 +778,11 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
             eprintln!("Target: {}", global_file.display());
             std::process::exit(1);
         }
-        println!("✅ Successfully imported: {} → {}", local_file.display(), global_file.display());
+        println!(
+            "✅ Successfully imported: {} → {}",
+            local_file.display(),
+            global_file.display()
+        );
     }
     println!();
     println!("🎯 Import complete!");
@@ -736,7 +790,10 @@ pub fn handle_engine_import(name: &str, force_overwrite: bool, dry_run: bool) {
     println!("📋 Next steps:");
     println!("  • Use `{} engine list` to see the imported themes", NAME);
     println!("  • Use `{} engine debug` to verify theme loading", NAME);
-    println!("  • Use `{} --theme <theme_name>` to test imported themes", NAME);
+    println!(
+        "  • Use `{} --theme <theme_name>` to test imported themes",
+        NAME
+    );
 }
 
 /// Handle `boxy engine export <name>` command - exports boxy_<name>.yml from global to local
@@ -777,7 +834,13 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool, dry_run: bool) {
                 .flatten()
                 .filter_map(|entry| entry.file_name().to_str().map(|s| s.to_string()))
                 .filter(|name| name.starts_with("boxy_") && name.ends_with(".yml"))
-                .map(|name| name.strip_prefix("boxy_").unwrap().strip_suffix(".yml").unwrap().to_string())
+                .map(|name| {
+                    name.strip_prefix("boxy_")
+                        .unwrap()
+                        .strip_suffix(".yml")
+                        .unwrap()
+                        .to_string()
+                })
                 .collect()
         } else {
             vec![]
@@ -832,7 +895,10 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool, dry_run: bool) {
     println!("🔍 Validating theme config...");
     if let Err(e) = super::utils::validate_theme_file(&global_file) {
         eprintln!("Error: Global theme config validation failed: {}", e);
-        eprintln!("The global theme file {} appears to be corrupted", global_file.display());
+        eprintln!(
+            "The global theme file {} appears to be corrupted",
+            global_file.display()
+        );
         eprintln!("Consider re-importing a valid theme file");
         std::process::exit(1);
     }
@@ -853,12 +919,21 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool, dry_run: bool) {
 
     // Copy the file
     if dry_run {
-        println!("📄 Would copy: {} → {}", global_file.display(), local_file.display());
+        println!(
+            "📄 Would copy: {} → {}",
+            global_file.display(),
+            local_file.display()
+        );
         println!();
         println!("🎯 DRY RUN SUMMARY:");
         println!("   Source:      {}", global_file.display());
         println!("   Target:      {}", local_file.display());
-        println!("   Directory:   {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        println!(
+            "   Directory:   {}",
+            std::env::current_dir()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|_| "unknown".to_string())
+        );
         if local_file.exists() {
             println!("   Action:      Overwrite existing file");
         } else {
@@ -873,15 +948,25 @@ pub fn handle_engine_export(name: &str, force_overwrite: bool, dry_run: bool) {
             eprintln!("Target: {}", local_file.display());
             std::process::exit(1);
         }
-        println!("✅ Successfully exported: {} → {}", global_file.display(), local_file.display());
+        println!(
+            "✅ Successfully exported: {} → {}",
+            global_file.display(),
+            local_file.display()
+        );
     }
     println!();
     println!("🎯 Export complete!");
     println!();
     println!("📋 Next steps:");
     println!("  • Edit {} to customize themes", local_file.display());
-    println!("  • Use `{} engine import {}` to import changes back to global", NAME, name);
-    println!("  • Use `{} engine debug` to verify theme loading hierarchy", NAME);
+    println!(
+        "  • Use `{} engine import {}` to import changes back to global",
+        NAME, name
+    );
+    println!(
+        "  • Use `{} engine debug` to verify theme loading hierarchy",
+        NAME
+    );
 }
 
 /// Handle `boxy engine edit <name>` command - edits a config file
@@ -908,7 +993,12 @@ pub fn handle_engine_validate(file_path: &str) {
         eprintln!();
         eprintln!("💡 Please check:");
         eprintln!("   • File path spelling: {}", file_path);
-        eprintln!("   • File exists in current directory: {}", std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| "unknown".to_string()));
+        eprintln!(
+            "   • File exists in current directory: {}",
+            std::env::current_dir()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|_| "unknown".to_string())
+        );
         eprintln!("   • File has correct extension (.yml or .yaml)");
         std::process::exit(1);
     }
@@ -978,11 +1068,16 @@ pub fn handle_engine_status() {
         if let Ok(entries) = std::fs::read_dir(&global_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().map_or(false, |ext| ext == "yml" || ext == "yaml") {
+                if path
+                    .extension()
+                    .map_or(false, |ext| ext == "yml" || ext == "yaml")
+                {
                     if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
                         // ENGINE-006: Only count boxy_ prefixed files
-                        if filename.starts_with("boxy_") &&
-                           !filename.contains("template") && !filename.contains("tmpl") {
+                        if filename.starts_with("boxy_")
+                            && !filename.contains("template")
+                            && !filename.contains("tmpl")
+                        {
                             config_count += 1;
                         }
                     }
@@ -1010,7 +1105,10 @@ pub fn handle_engine_status() {
     println!();
     println!("📊 Configuration Summary:");
     println!("   Global Directory: {}", global_dir.display());
-    println!("   Directory Exists: {}", if global_exists { "✅ Yes" } else { "❌ No" });
+    println!(
+        "   Directory Exists: {}",
+        if global_exists { "✅ Yes" } else { "❌ No" }
+    );
     println!("   Config Files:     {} boxy_*.yml files", config_count);
     println!("   Total Themes:     {} themes available", total_themes);
 
@@ -1021,7 +1119,10 @@ pub fn handle_engine_status() {
             println!("   • {}", warning);
         }
         println!();
-        println!("💡 To fix: Run `{} engine init` to create default themes", NAME);
+        println!(
+            "💡 To fix: Run `{} engine init` to create default themes",
+            NAME
+        );
     }
 
     if !errors.is_empty() {
@@ -1031,7 +1132,10 @@ pub fn handle_engine_status() {
             println!("   • {}", error);
         }
         println!();
-        println!("💡 To fix: Use `{} engine debug` for detailed diagnostics", NAME);
+        println!(
+            "💡 To fix: Use `{} engine debug` for detailed diagnostics",
+            NAME
+        );
     }
 
     if errors.is_empty() && warnings.is_empty() {
@@ -1045,19 +1149,22 @@ pub fn handle_engine_status() {
 
 /// Enhanced list output for ENGINE-011: Show themes with visual properties
 pub fn handle_engine_list_enhanced(theme_engine: &ThemeEngine) {
-
     println!("🎨 BOXY ENGINE THEME CATALOG");
     println!("============================");
     println!();
 
     let themes = theme_engine.list_themes();
     if themes.is_empty() {
-        println!("⚠️  No themes available. Run `{} engine init` to set up themes.", NAME);
+        println!(
+            "⚠️  No themes available. Run `{} engine init` to set up themes.",
+            NAME
+        );
         return;
     }
 
     // Group themes by source for organized display
-    let mut by_source: std::collections::HashMap<String, Vec<(String, String)>> = std::collections::HashMap::new();
+    let mut by_source: std::collections::HashMap<String, Vec<(String, String)>> =
+        std::collections::HashMap::new();
 
     for (name, description) in themes {
         // Determine source based on description patterns
@@ -1069,7 +1176,10 @@ pub fn handle_engine_list_enhanced(theme_engine: &ThemeEngine) {
             "Loaded Themes".to_string()
         };
 
-        by_source.entry(source).or_insert_with(Vec::new).push((name, description));
+        by_source
+            .entry(source)
+            .or_insert_with(Vec::new)
+            .push((name, description));
     }
 
     // Display each source group
@@ -1077,23 +1187,36 @@ pub fn handle_engine_list_enhanced(theme_engine: &ThemeEngine) {
         theme_list.sort_by(|a, b| a.0.cmp(&b.0));
 
         println!("📂 {}", source);
-        println!("{}",  "─".repeat(source.len() + 4));
+        println!("{}", "─".repeat(source.len() + 4));
 
         for (name, _description) in theme_list {
             // Get theme details for visual display
             if let Some(theme) = theme_engine.get_theme(&name) {
                 display_theme_with_visual_properties(&name, &theme);
             } else {
-                println!("  {} ❓ {} (theme not accessible)", get_icon_for_theme(&name), name);
+                println!(
+                    "  {} ❓ {} (theme not accessible)",
+                    get_icon_for_theme(&name),
+                    name
+                );
             }
         }
         println!();
     }
 
     println!("💡 Usage Examples:");
-    println!("  {} --use error \"Error occurred\"      # Apply error theme", NAME);
-    println!("  {} --use success \"Task complete\"     # Apply success theme", NAME);
-    println!("  {} engine debug                      # Debug theme loading", NAME);
+    println!(
+        "  {} --use error \"Error occurred\"      # Apply error theme",
+        NAME
+    );
+    println!(
+        "  {} --use success \"Task complete\"     # Apply success theme",
+        NAME
+    );
+    println!(
+        "  {} engine debug                      # Debug theme loading",
+        NAME
+    );
 }
 
 /// Display a single theme with visual properties (ENGINE-011 requirement)
@@ -1110,7 +1233,8 @@ fn display_theme_with_visual_properties(name: &str, theme: &crate::theme_engine:
     };
 
     // Get box drawing characters for the style
-    let (top_left, horizontal, top_right, vertical, bottom_left, bottom_right) = get_box_chars_for_style_full(&theme.style);
+    let (top_left, horizontal, top_right, vertical, bottom_left, bottom_right) =
+        get_box_chars_for_style_full(&theme.style);
 
     // Get layout tokens if present
     let layout_str = if let Some(ref layout) = theme.layout {
@@ -1125,7 +1249,11 @@ fn display_theme_with_visual_properties(name: &str, theme: &crate::theme_engine:
         "  {:14} │ {} {}Text{} {:8} {}{}{}{}{}{}{}{}{}{}",
         name,
         icon,
-        if theme.text_color != "none" { text_color_code } else { "" },
+        if theme.text_color != "none" {
+            text_color_code
+        } else {
+            ""
+        },
         crate::colors::RESET,
         theme.style,
         color_code,
@@ -1269,5 +1397,6 @@ themes:
     style: "double"
     color: "purple"
     description: "Base template for double borders"
-"#.to_string()
+"#
+    .to_string()
 }

@@ -13,34 +13,33 @@
 //!
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
-pub mod utils;
-pub mod helpers;
 pub mod calc_macros;
+pub mod helpers;
+pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
 pub use utils::{
-    // Box style system
-    validate_box_style,
-    BoxStyle,
-    BOX_CHARS,
-    NORMAL,
-    ROUNDED,
-    DOUBLE,
-    HEAVY,
     ASCII,
 
+    BOX_CHARS,
+    Body,
+    // CRITICAL: Protected macros for width calculations are exported via #[macro_export]
+    BoxStyle,
+    DOUBLE,
+    Footer,
+    HEAVY,
+    // Component system
+    Header,
+    NORMAL,
+    ROUNDED,
+    Status,
     // Drawing functions with PROTECTED width calculations
     calculate_box_width,
     draw_box,
     strip_box,
 
-    // Component system
-    Header,
-    Footer,
-    Status,
-    Body,
-
-    // CRITICAL: Protected macros for width calculations are exported via #[macro_export]
+    // Box style system
+    validate_box_style,
 };
 
 // Test module access

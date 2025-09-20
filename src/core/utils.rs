@@ -12,11 +12,11 @@
 //!
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
-use crate::visual::BoxStyle;
 use crate::colors::*;
 use crate::jynx_plugin::*;
-use crate::{HashMap, Regex};
+use crate::visual::BoxStyle;
 use crate::width_plugin::*;
+use crate::{HashMap, Regex};
 
 // =============== CONSTANTS ===============
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -229,7 +229,7 @@ pub struct ParsedContent {
     pub header_color: Option<String>,
     pub footer_color: Option<String>,
     pub width: Option<usize>,
-    pub height: Option<usize>
+    pub height: Option<usize>,
 }
 
 // =============== CONFIGURATION FUNCTIONS ===============
@@ -341,11 +341,18 @@ pub fn unescape_stream_value(s: &str) -> String {
             match chars.next() {
                 Some('n') => out.push('\n'),
                 Some('t') => out.push('\t'),
-                Some(other) => { out.push(other); },
+                Some(other) => {
+                    out.push(other);
+                }
                 None => break,
             }
         } else if c == '/' {
-            if let Some('n') = chars.peek().copied() { chars.next(); out.push('\n'); } else { out.push(c); }
+            if let Some('n') = chars.peek().copied() {
+                chars.next();
+                out.push('\n');
+            } else {
+                out.push(c);
+            }
         } else {
             out.push(c);
         }
@@ -359,7 +366,10 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
     // Regex for k='v' patterns with single quotes; non-greedy across newlines; optional trailing semicolon
     let re_quoted = Regex::new(r"(?s)([A-Za-z]{2})\s*=\s*'(.+?)'\s*;?").ok()?;
     for cap in re_quoted.captures_iter(input) {
-        let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let k = cap
+            .get(1)
+            .map(|m| m.as_str().to_lowercase())
+            .unwrap_or_default();
         let v_raw = cap.get(2).map(|m| m.as_str()).unwrap_or("");
         let v = unescape_stream_value(v_raw);
         map.insert(k, v);
@@ -368,7 +378,10 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
     // Regex for k=N patterns (single letter key, numeric value); optional trailing semicolon
     let re_numeric = Regex::new(r"([whHW])\s*=\s*(\d+)\s*;?").ok()?;
     for cap in re_numeric.captures_iter(input) {
-        let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let k = cap
+            .get(1)
+            .map(|m| m.as_str().to_lowercase())
+            .unwrap_or_default();
         let v = cap.get(2).map(|m| m.as_str()).unwrap_or("");
         map.insert(k, v.to_string());
     }
@@ -377,14 +390,28 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
         return None;
     }
     let mut pc = ParsedContent::default();
-    if let Some(v) = map.remove("hd") { pc.header = Some(v); }
-    if let Some(v) = map.remove("ft") { pc.footer = Some(v); }
-    if let Some(v) = map.remove("st") { pc.status = Some(v); }
-    if let Some(v) = map.remove("tl") { pc.title = Some(v); }
+    if let Some(v) = map.remove("hd") {
+        pc.header = Some(v);
+    }
+    if let Some(v) = map.remove("ft") {
+        pc.footer = Some(v);
+    }
+    if let Some(v) = map.remove("st") {
+        pc.status = Some(v);
+    }
+    if let Some(v) = map.remove("tl") {
+        pc.title = Some(v);
+    }
     // Body (bd) intentionally ignored; body should come from piped stdin
-    if let Some(v) = map.remove("ic") { pc.icon = Some(v); }
-    if let Some(v) = map.remove("tc") { pc.title_color = Some(v); }
-    if let Some(v) = map.remove("sc") { pc.status_color = Some(v); }
+    if let Some(v) = map.remove("ic") {
+        pc.icon = Some(v);
+    }
+    if let Some(v) = map.remove("tc") {
+        pc.title_color = Some(v);
+    }
+    if let Some(v) = map.remove("sc") {
+        pc.status_color = Some(v);
+    }
     // Parse numeric values for width and height
     if let Some(v) = map.remove("w") {
         if let Ok(width) = v.parse::<usize>() {
@@ -397,8 +424,15 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
         }
     }
     // If nothing recognized, return None to avoid hijacking arbitrary input
-    if pc.header.is_none() && pc.footer.is_none() && pc.status.is_none() && pc.title.is_none()
-        && pc.body.is_none() && pc.icon.is_none() && pc.width.is_none() && pc.height.is_none() {
+    if pc.header.is_none()
+        && pc.footer.is_none()
+        && pc.status.is_none()
+        && pc.title.is_none()
+        && pc.body.is_none()
+        && pc.icon.is_none()
+        && pc.width.is_none()
+        && pc.height.is_none()
+    {
         None
     } else {
         Some(pc)
@@ -489,7 +523,12 @@ pub fn truncate_with_ellipsis(text: &str, max_width: usize) -> String {
 ///
 /// This function contains the PROTECTED icon detection logic (lines 385-410 in original parser.rs)
 /// that automatically detects and formats icons in titles and footers.
-pub fn render_title_or_footer(text: &str, total_width: usize, style_char: &str, align: &str) -> String {
+pub fn render_title_or_footer(
+    text: &str,
+    total_width: usize,
+    style_char: &str,
+    align: &str,
+) -> String {
     if total_width < 4 {
         // Minimum viable box: just return style chars
         return style_char.repeat(total_width);
@@ -539,10 +578,12 @@ pub fn render_title_or_footer(text: &str, total_width: usize, style_char: &str, 
         }
     };
 
-    format!("{} {} {}",
+    format!(
+        "{} {} {}",
         style_char.repeat(left_pad),
         final_text,
-        style_char.repeat(right_pad))
+        style_char.repeat(right_pad)
+    )
 }
 
 // =============== HELP FUNCTIONS ===============
@@ -590,7 +631,9 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("    --footer <TEXT>            Footer text (inside bottom border)");
     println!("    --icon <ICON>              Add icon to content (deprecated - use --title)"); //??
     println!("    --status <TEXT>            Status line inside box (use sl:|sc:|sr: prefixes)");
-    println!("    --layout <spec>            Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp");
+    println!(
+        "    --layout <spec>            Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp"
+    );
     println!("    --pad <a|b>               Blank line above (a) and/or below (b) the body");
     println!("    --title-color <COLOR>      Color for title line (overrides --text)");
     println!("    --status-color <COLOR>     Color for status line (overrides --text)");
@@ -607,7 +650,9 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("    --no-boxy[=strict]         Strip box decoration (strict removes all formatting)");
     println!("    --no-color                 Disable jynx integration and color output");
     println!("    width                      Show terminal width diagnostics");
-    println!("    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin");
+    println!(
+        "    --params <stream>          Param stream: k='v'; pairs (hd, tl, st, ft, ic). Body comes from stdin"
+    );
     println!("    -h, --help                 Show this help message");
     println!("    --colors                   Preview all 90+ available colors");
     println!("    -v, --version              Show version information");
@@ -625,31 +670,72 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!();
 
     println!("  {}Engine Management:{}", get_color_code("cyan"), RESET);
-    println!("    {} engine init               Initialize global theme directory", NAME);
-    println!("    {} engine import <name>      Import boxy_<name>.yml to global location", NAME);
-    println!("    {} engine export <name>      Export boxy_<name>.yml from global to local", NAME);
-    println!("    {} engine list               List all available themes from all configs", NAME);
-    println!("    {} engine debug              Show loading hierarchy and diagnostics", NAME);
-    println!("    {} engine status             Show engine health and statistics", NAME);
-    println!("    {} engine edit <name>        Edit a theme config file", NAME);
-    println!("    {} engine help               Show engine commands help", NAME);
+    println!(
+        "    {} engine init               Initialize global theme directory",
+        NAME
+    );
+    println!(
+        "    {} engine import <name>      Import boxy_<name>.yml to global location",
+        NAME
+    );
+    println!(
+        "    {} engine export <name>      Export boxy_<name>.yml from global to local",
+        NAME
+    );
+    println!(
+        "    {} engine list               List all available themes from all configs",
+        NAME
+    );
+    println!(
+        "    {} engine debug              Show loading hierarchy and diagnostics",
+        NAME
+    );
+    println!(
+        "    {} engine status             Show engine health and statistics",
+        NAME
+    );
+    println!(
+        "    {} engine edit <name>        Edit a theme config file",
+        NAME
+    );
+    println!(
+        "    {} engine help               Show engine commands help",
+        NAME
+    );
     println!();
 
     println!("  {}Theme Usage:{}", get_color_code("cyan"), RESET);
-    println!("    {} theme show <name>         Show individual theme properties", NAME);
-    println!("    {} theme dryrun <name>       Test theme with sample content", NAME);
-    println!("    {} theme create <name>       Create new theme within a config", NAME);
+    println!(
+        "    {} theme show <name>         Show individual theme properties",
+        NAME
+    );
+    println!(
+        "    {} theme dryrun <name>       Test theme with sample content",
+        NAME
+    );
+    println!(
+        "    {} theme create <name>       Create new theme within a config",
+        NAME
+    );
     println!("    Env: BOXY_THEME=<name>      Set default theme (overridden by --theme)");
     println!();
 
     // =============== NEW IN V0.6 =============== //TODO:CLEANUP
     println!("{}NEW IN v0.6:{}", get_color_code("orchid"), RESET);
-    println!("  {}Header vs Title Distinction:{}", get_color_code("cyan"), RESET);
+    println!(
+        "  {}Header vs Title Distinction:{}",
+        get_color_code("cyan"),
+        RESET
+    );
     println!("    --header     External headers (app names, system labels)");
     println!("    --title      Internal titles (status, with icon integration)");
     println!();
 
-    println!("  {}Enhanced Icon Integration:{}", get_color_code("cyan"), RESET);
+    println!(
+        "  {}Enhanced Icon Integration:{}",
+        get_color_code("cyan"),
+        RESET
+    );
     println!("    --title \"📦 Status\"       Icon automatically spaced and aligned");
     println!("    Instead of: --icon 📦 --title \"Status\"");
     println!();
@@ -670,7 +756,10 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("{}EXAMPLES:{}", get_color_code("gold"), RESET);
 
     println!("  {}Basic Usage:{}", get_color_code("cyan"), RESET);
-    println!("    echo \"Hello World\" | {}                    # Simple box", NAME);
+    println!(
+        "    echo \"Hello World\" | {}                    # Simple box",
+        NAME
+    );
     println!("    echo \"Data\" | {} --style rounded --color azure", NAME);
     println!();
 
@@ -682,21 +771,45 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!();
 
     println!("  {}Advanced Layout:{}", get_color_code("cyan"), RESET);
-    println!("    echo \"Content\" | {} --header \"🚀 MyApp v2.1\" --title \"✅ Online\"", NAME);
-    println!("    echo \"Status\" | {} --header \"System\" --status \"sr:Updated $(date)\"", NAME);
-    println!("    echo \"Data\" | {} --title \"📊 Analytics\" --footer \"© 2024\"", NAME);
+    println!(
+        "    echo \"Content\" | {} --header \"🚀 MyApp v2.1\" --title \"✅ Online\"",
+        NAME
+    );
+    println!(
+        "    echo \"Status\" | {} --header \"System\" --status \"sr:Updated $(date)\"",
+        NAME
+    );
+    println!(
+        "    echo \"Data\" | {} --title \"📊 Analytics\" --footer \"© 2024\"",
+        NAME
+    );
     println!();
 
     println!("  {}CI/CD Integration:{}", get_color_code("cyan"), RESET);
     println!("    # Build status reporting");
-    println!("    build_status | {} --theme success --header \"Build Pipeline\"", NAME);
-    println!("    test_results | {} --theme error --status \"sc:$(date)\"", NAME);
+    println!(
+        "    build_status | {} --theme success --header \"Build Pipeline\"",
+        NAME
+    );
+    println!(
+        "    test_results | {} --theme error --status \"sc:$(date)\"",
+        NAME
+    );
     println!();
 
     println!("  {}Content Processing:{}", get_color_code("cyan"), RESET);
-    println!("    echo \"Raw content\" | {} --width 40        # Fixed width", NAME);
-    println!("    cat log.txt | {} --no-boxy                # Strip formatting", NAME);
-    println!("    echo \"Content\" | {} | {} --no-boxy=strict  # Remove all ANSI", NAME, NAME);
+    println!(
+        "    echo \"Raw content\" | {} --width 40        # Fixed width",
+        NAME
+    );
+    println!(
+        "    cat log.txt | {} --no-boxy                # Strip formatting",
+        NAME
+    );
+    println!(
+        "    echo \"Content\" | {} | {} --no-boxy=strict  # Remove all ANSI",
+        NAME, NAME
+    );
     println!();
 
     // =============== TIPS ===============
@@ -705,7 +818,10 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("  • Headers for app identity, titles for status/state information");
     println!("  • Status alignment prefixes (sl:, sc:, sr:) for professional layouts");
     println!("  • Variable expansion works in headers, titles, footers: --title \"Status: $USER\"");
-    println!("  • Chain with other commands: git status | {} --theme info --header \"Git\"", NAME);
+    println!(
+        "  • Chain with other commands: git status | {} --theme info --header \"Git\"",
+        NAME
+    );
     println!("  • Use --width for consistent formatting in scripts and CI/CD");
     println!();
 
@@ -717,7 +833,11 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     println!("  Documentation: See docs/tech/THEME_SYSTEM.md");
     println!();
 
-    println!("{}Transform your CLI output with semantic themes and professional formatting!{}", get_color_code("emerald"), RESET);
+    println!(
+        "{}Transform your CLI output with semantic themes and professional formatting!{}",
+        get_color_code("emerald"),
+        RESET
+    );
 }
 
 /// Show practical usage examples for different scenarios
@@ -726,7 +846,11 @@ pub fn show_usage_examples() {
     println!();
 
     // =============== QUICK START ===============
-    println!("{}QUICK START EXAMPLES:{}", get_color_code("emerald"), RESET);
+    println!(
+        "{}QUICK START EXAMPLES:{}",
+        get_color_code("emerald"),
+        RESET
+    );
     println!("  # Basic usage - simple box around content");
     println!("  echo \"Hello World\" | {}", NAME);
     println!();
@@ -739,7 +863,10 @@ pub fn show_usage_examples() {
     // =============== LAYOUT EXAMPLES ===============
     println!("{}LAYOUT & STYLING:{}", get_color_code("azure"), RESET);
     println!("  # Header (external) vs Title (internal) distinction");
-    println!("  echo \"Ready\" | {} --header \"MyApp v2.1\" --title \"🟢 Online\"", NAME);
+    println!(
+        "  echo \"Ready\" | {} --header \"MyApp v2.1\" --title \"🟢 Online\"",
+        NAME
+    );
     println!();
     println!("  # Different border styles and colors");
     println!("  echo \"Data\" | {} --style rounded --color azure", NAME);
@@ -755,13 +882,19 @@ pub fn show_usage_examples() {
     println!("  # Left, center, right aligned status bars");
     println!("  echo \"Data\" | {} --status \"sl:Processing...\"", NAME);
     println!("  echo \"Data\" | {} --status \"sc:50% Complete\"", NAME);
-    println!("  echo \"Data\" | {} --status \"sr:Updated $(date '+%%H:%%M')\"", NAME);
+    println!(
+        "  echo \"Data\" | {} --status \"sr:Updated $(date '+%%H:%%M')\"",
+        NAME
+    );
     println!();
 
     // =============== DEVELOPMENT WORKFLOW ===============
     println!("{}DEVELOPMENT WORKFLOW:{}", get_color_code("violet"), RESET);
     println!("  # Git status with themes");
-    println!("  git status --short | {} --theme warning --header \"Git Status\"", NAME);
+    println!(
+        "  git status --short | {} --theme warning --header \"Git Status\"",
+        NAME
+    );
     println!();
     println!("  # Build results");
     println!("  if make build; then");
@@ -771,55 +904,94 @@ pub fn show_usage_examples() {
     println!("  fi");
     println!();
     println!("  # Test results with status");
-    println!("  pytest --tb=short | {} --theme info --header \"Test Suite\" --status \"sc:$(date)\"", NAME);
+    println!(
+        "  pytest --tb=short | {} --theme info --header \"Test Suite\" --status \"sc:$(date)\"",
+        NAME
+    );
     println!();
 
     // =============== SYSTEM ADMINISTRATION ===============
     println!("{}SYSTEM ADMINISTRATION:{}", get_color_code("steel"), RESET);
     println!("  # Service status monitoring");
-    println!("  systemctl status nginx | {} --header \"Nginx Status\" --theme info", NAME);
+    println!(
+        "  systemctl status nginx | {} --header \"Nginx Status\" --theme info",
+        NAME
+    );
     println!();
     println!("  # Log analysis with fixed width");
-    println!("  tail -10 /var/log/syslog | {} --width 80 --header \"System Log\"", NAME);
+    println!(
+        "  tail -10 /var/log/syslog | {} --width 80 --header \"System Log\"",
+        NAME
+    );
     println!();
     println!("  # Resource usage alerts");
-    println!("  echo \"CPU: 85%, Memory: 92%\" | {} --theme warning --title \"⚠️ High Usage\"", NAME);
+    println!(
+        "  echo \"CPU: 85%, Memory: 92%\" | {} --theme warning --title \"⚠️ High Usage\"",
+        NAME
+    );
     println!();
 
     // =============== CI/CD INTEGRATION ===============
     println!("{}CI/CD INTEGRATION:{}", get_color_code("orchid"), RESET);
     println!("  # Pipeline status reporting");
-    println!("  echo \"All tests passed\" | {} --theme success --header \"CI Pipeline\" --footer \"Build #42\"", NAME);
+    println!(
+        "  echo \"All tests passed\" | {} --theme success --header \"CI Pipeline\" --footer \"Build #42\"",
+        NAME
+    );
     println!();
     println!("  # Deployment notifications");
-    println!("  echo \"Deployed to production\" | {} --theme success --header \"🚀 Deployment\" --status \"sr:$(git rev-parse --short HEAD)\"", NAME);
+    println!(
+        "  echo \"Deployed to production\" | {} --theme success --header \"🚀 Deployment\" --status \"sr:$(git rev-parse --short HEAD)\"",
+        NAME
+    );
     println!();
     println!("  # Security scan results");
-    println!("  echo \"3 vulnerabilities found\" | {} --theme warning --title \"🔒 Security Scan\"", NAME);
+    println!(
+        "  echo \"3 vulnerabilities found\" | {} --theme warning --title \"🔒 Security Scan\"",
+        NAME
+    );
     println!();
 
     // =============== DATA PROCESSING ===============
     println!("{}DATA PROCESSING:{}", get_color_code("sage"), RESET);
     println!("  # Processing status with progress");
-    println!("  echo \"Processed 1,247 records\" | {} --theme info --title \"📊 Data Processing\" --status \"sc:85% complete\"", NAME);
+    println!(
+        "  echo \"Processed 1,247 records\" | {} --theme info --title \"📊 Data Processing\" --status \"sc:85% complete\"",
+        NAME
+    );
     println!();
     println!("  # Database operations");
-    println!("  echo \"Backup completed\" | {} --theme success --header \"Database Backup\" --footer \"Size: 2.4GB\"", NAME);
+    println!(
+        "  echo \"Backup completed\" | {} --theme success --header \"Database Backup\" --footer \"Size: 2.4GB\"",
+        NAME
+    );
     println!();
     println!("  # API responses");
-    println!("  curl -s api/health | {} --theme info --header \"API Health Check\"", NAME);
+    println!(
+        "  curl -s api/health | {} --theme info --header \"API Health Check\"",
+        NAME
+    );
     println!();
 
     // =============== ADVANCED USAGE ===============
     println!("{}ADVANCED USAGE:{}", get_color_code("rust"), RESET);
     println!("  # Variable expansion in text");
-    println!("  echo \"Welcome\" | {} --header \"System: $HOSTNAME\" --title \"User: $USER\" --status \"sr:$(date)\"", NAME);
+    println!(
+        "  echo \"Welcome\" | {} --header \"System: $HOSTNAME\" --title \"User: $USER\" --status \"sr:$(date)\"",
+        NAME
+    );
     println!();
     println!("  # Chain with other commands");
-    println!("  ps aux | grep nginx | {} --header \"Nginx Processes\" --theme info", NAME);
+    println!(
+        "  ps aux | grep nginx | {} --header \"Nginx Processes\" --theme info",
+        NAME
+    );
     println!();
     println!("  # Remove box formatting (useful for parsing)");
-    println!("  echo \"Content with ANSI\" | {} --theme success | {} --no-boxy=strict", NAME, NAME);
+    println!(
+        "  echo \"Content with ANSI\" | {} --theme success | {} --no-boxy=strict",
+        NAME, NAME
+    );
     println!();
 
     // =============== ENGINE MANAGEMENT ===============
@@ -834,8 +1006,14 @@ pub fn show_usage_examples() {
     println!("  {} engine debug", NAME);
     println!();
     println!("  # Import/export theme config files");
-    println!("  {} engine export default        # Copy global to local", NAME);
-    println!("  {} engine import myproject       # Copy local boxy_myproject.yml to global", NAME);
+    println!(
+        "  {} engine export default        # Copy global to local",
+        NAME
+    );
+    println!(
+        "  {} engine import myproject       # Copy local boxy_myproject.yml to global",
+        NAME
+    );
     println!();
 
     // =============== TIPS ===============
@@ -847,6 +1025,12 @@ pub fn show_usage_examples() {
     println!("  • Themes are faster than manual color/style combinations");
     println!();
 
-    println!("{}More help: {} --help | {} --colors | {} theme help{}",
-        get_color_code("steel"), NAME, NAME, NAME, RESET);
+    println!(
+        "{}More help: {} --help | {} --colors | {} theme help{}",
+        get_color_code("steel"),
+        NAME,
+        NAME,
+        NAME,
+        RESET
+    );
 }

@@ -15,7 +15,7 @@ pub fn calculate_inner_content_target_width(
     inner_width: usize,
     _composed_lines: &[String],
     _is_fixed_width: bool,
-    h_padding: usize
+    h_padding: usize,
 ) -> usize {
     // The target width for content should be the inner width minus padding on both sides
     inner_width.saturating_sub(2 * h_padding)

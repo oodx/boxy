@@ -11,37 +11,36 @@
 //!
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
-pub mod utils;
 pub mod helpers;
+pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
 pub use utils::{
-    // Core validation functions
-    validate_theme_file,
-    validate_theme_file_with_duplicate_check,
-    validate_theme_name,
-
-    // Main command handlers
-    handle_theme_command,
-    handle_engine_command,
-
+    // Legacy compatibility
+    Theme,
+    convert_boxy_theme_to_legacy,
     // Interactive theme utilities
     create_theme_interactively,
     edit_theme_interactively,
 
-    // File operations
-    save_theme_to_file,
     export_theme_to_yaml,
 
-    // Legacy compatibility
-    Theme,
-    get_themes,
-    convert_boxy_theme_to_legacy,
     get_fallback_legacy_themes,
 
+    get_themes,
+    handle_engine_command,
+
+    // Main command handlers
+    handle_theme_command,
+    print_engine_help,
     // Help functions
     print_theme_help,
-    print_engine_help,
+    // File operations
+    save_theme_to_file,
+    // Core validation functions
+    validate_theme_file,
+    validate_theme_file_with_duplicate_check,
+    validate_theme_name,
 };
 
 // Test module access to helpers

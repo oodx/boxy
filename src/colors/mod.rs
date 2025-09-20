@@ -5,17 +5,11 @@
 //!
 //! Version: boxy v0.6.0+ (RSB MODULE_SPEC reorganization)
 
-pub mod utils;
 pub mod helpers;
+pub mod utils;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
-pub use utils::{
-    get_color_code,
-    validate_color,
-    get_color_categories,
-    generate_color_help,
-    RESET,
-};
+pub use utils::{RESET, generate_color_help, get_color_categories, get_color_code, validate_color};
 
 // Test module access
 #[cfg(test)]
