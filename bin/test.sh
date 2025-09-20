@@ -58,7 +58,7 @@ declare -A TESTS=(
     ["demo:ux"]="misc/ux.sh"
     ["smoke:minimal"]="misc/sanity-test.sh"
     ["comprehensive"]="misc/comprehensive-features.sh"
-    ["perfect"]="misc/perfect-demo.sh"
+    ["varied"]="misc/perfect-demo.sh"
     ["perfect"]="misc/perfect.sh"
     ["uat:pantheon"]="uat/ceremony.sh"
     ["suite:uat-helpers"]="misc/uat-ceremonies.sh"
@@ -93,7 +93,8 @@ Available Tests:
   ceremony               Security-hardened pantheon ceremony
   minimal                Basic boxy functionality tests
   comprehensive          Complete feature coverage test (all v0.8 features)
-  perfect                Beautiful showcase demo with realistic scenarios
+  perfect                The Perfect Unit Test
+	varied 								 Beautiful showcase demo with realistic scenarios
   boxy-demo              Full v0.6.0 milestone demonstration
   foundation             Complete foundation API ceremony batch (5 ceremonies)
   ceremony-01            Single foundation ceremony demo
