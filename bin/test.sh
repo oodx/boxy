@@ -59,7 +59,7 @@ declare -A TESTS=(
     ["smoke:minimal"]="misc/sanity-test.sh"
     ["comprehensive"]="misc/comprehensive-features.sh"
     ["perfect"]="misc/perfect-demo.sh"
-    ["visual-perfect"]="misc/visual-perfect.sh"
+    ["perfect"]="misc/perfect.sh"
     ["uat:pantheon"]="uat/ceremony.sh"
     ["suite:uat-helpers"]="misc/uat-ceremonies.sh"
 

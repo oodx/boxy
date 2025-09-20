@@ -15,6 +15,7 @@
 
 pub mod utils;
 pub mod helpers;
+pub mod calc_macros;
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
 pub use utils::{
