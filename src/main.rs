@@ -101,6 +101,7 @@ fn run_boxy_application() -> Result<(), AppError> {
     let mut no_boxy = false;
     let mut strict_mode = false;
     let mut fixed_width: Option<usize> = None;
+    let mut fixed_height: Option<usize> = None;
     let mut theme_name: Option<String> = None;
     let mut theme_from_env = false;
     let mut enable_wrapping = false;
@@ -315,6 +316,29 @@ fn run_boxy_application() -> Result<(), AppError> {
                     }
                 }
             }
+            "--height" => {
+                if i + 1 < args.len() {
+                    let harg = &args[i + 1];
+                    if harg.eq_ignore_ascii_case("max") {
+                        fixed_height = Some(get_max_safe_height());
+                        skip_next = true;
+                    } else if harg.eq_ignore_ascii_case("auto") {
+                        fixed_height = None; // let auto-sizing decide
+                        skip_next = true;
+                    } else {
+                        match validate_height(harg) {
+                            Ok(_) => {
+                                fixed_height = Some(harg.parse::<usize>().unwrap());
+                                skip_next = true;
+                            }
+                            Err(error_msg) => {
+                                eprintln!("Error: {}", error_msg);
+                                return Err("Invalid height specification".to_string());
+                            }
+                        }
+                    }
+                }
+            }
             "--theme" | "--use" => {
                 if i + 1 < args.len() {
                     theme_name = Some(args[i + 1].clone());
@@ -512,6 +536,21 @@ fn run_boxy_application() -> Result<(), AppError> {
                     }
                 }
             }
+            // Handle width and height params: w=N, h=N
+            if fixed_width.is_none() && pc.width.is_some() {
+                if let Some(w) = pc.width {
+                    if w >= 4 {
+                        fixed_width = Some(w);
+                    }
+                }
+            }
+            if fixed_height.is_none() && pc.height.is_some() {
+                if let Some(h) = pc.height {
+                    if validate_height(&h.to_string()).is_ok() {
+                        fixed_height = Some(h);
+                    }
+                }
+            }
             // Body remains the piped stdin text
         }
     }
@@ -645,25 +684,26 @@ fn run_boxy_application() -> Result<(), AppError> {
         println!("{}", stripped);
     } else {
         let config = resolve_box_config(
-          &text, 
-          1, 1, 
-          style, color, text_color, 
-          title.as_deref(), 
-          footer.as_deref(), 
-          icon.as_deref(), 
-          fixed_width, 
-          status_bar.as_deref(), 
-          header.as_deref(), 
-          header_align, footer_align, 
-          status_align_override.as_deref(), 
-          divider_after_title, divider_before_status, 
-          pad_after_title_divider, pad_before_status_divider, 
-          pad_before_title, pad_after_status, 
-          pad_after_title, pad_before_status, 
-          title_color.as_deref(), 
-          status_color.as_deref(), 
+          &text,
+          1, 1,
+          style, color, text_color,
+          title.as_deref(),
+          footer.as_deref(),
+          icon.as_deref(),
+          fixed_width,
+          fixed_height,
+          status_bar.as_deref(),
+          header.as_deref(),
+          header_align, footer_align,
+          status_align_override.as_deref(),
+          divider_after_title, divider_before_status,
+          pad_after_title_divider, pad_before_status_divider,
+          pad_before_title, pad_after_status,
+          pad_after_title, pad_before_status,
+          title_color.as_deref(),
+          status_color.as_deref(),
           body_align,
-          body_pad_emoji, 
+          body_pad_emoji,
           pad_body_above,
           pad_body_below,
           header_color.as_deref(),

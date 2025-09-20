@@ -88,3 +88,8 @@ echo "This is a super long line that has #T# some additional content that should
 
 # Explicit newline marker test
 echo "Line one #NL# Line two #NL# Line three" | $BOXY
+
+# HEIGHT FEATURE TESTS - Basic functionality
+echo "Height test" | $BOXY --height 8
+echo "Height + width" | $BOXY --height 10 --width 25
+echo "Height via params" | $BOXY --params "h=12; w=30;"

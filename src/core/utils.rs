@@ -227,7 +227,9 @@ pub struct ParsedContent {
     pub title_color: Option<String>,
     pub status_color: Option<String>,
     pub header_color: Option<String>,
-    pub footer_color: Option<String>
+    pub footer_color: Option<String>,
+    pub width: Option<usize>,
+    pub height: Option<usize>
 }
 
 // =============== CONFIGURATION FUNCTIONS ===============
@@ -244,6 +246,7 @@ pub fn resolve_box_config(
     footer: Option<&str>,
     icon: Option<&str>,
     fixed_width: Option<usize>,
+    fixed_height: Option<usize>,
     status_bar: Option<&str>,
     header: Option<&str>,
     header_align: &str,
@@ -291,7 +294,7 @@ pub fn resolve_box_config(
             v_padding,
             enable_wrapping,
         },
-        fixed_height: None,
+        fixed_height,
         padding: PaddingConfig {
             pad_before_title,
             pad_after_title,
@@ -351,15 +354,25 @@ pub fn unescape_stream_value(s: &str) -> String {
 }
 
 pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
-    // Matches k='v' with single quotes; non-greedy across newlines; optional trailing semicolon
-    let re = Regex::new(r"(?s)([A-Za-z]{2})\s*=\s*'(.+?)'\s*;?").ok()?;
     let mut map: HashMap<String, String> = HashMap::new();
-    for cap in re.captures_iter(input) {
+
+    // Regex for k='v' patterns with single quotes; non-greedy across newlines; optional trailing semicolon
+    let re_quoted = Regex::new(r"(?s)([A-Za-z]{2})\s*=\s*'(.+?)'\s*;?").ok()?;
+    for cap in re_quoted.captures_iter(input) {
         let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
         let v_raw = cap.get(2).map(|m| m.as_str()).unwrap_or("");
         let v = unescape_stream_value(v_raw);
         map.insert(k, v);
     }
+
+    // Regex for k=N patterns (single letter key, numeric value); optional trailing semicolon
+    let re_numeric = Regex::new(r"([whHW])\s*=\s*(\d+)\s*;?").ok()?;
+    for cap in re_numeric.captures_iter(input) {
+        let k = cap.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let v = cap.get(2).map(|m| m.as_str()).unwrap_or("");
+        map.insert(k, v.to_string());
+    }
+
     if map.is_empty() {
         return None;
     }
@@ -372,8 +385,20 @@ pub fn parse_content_stream(input: &str) -> Option<ParsedContent> {
     if let Some(v) = map.remove("ic") { pc.icon = Some(v); }
     if let Some(v) = map.remove("tc") { pc.title_color = Some(v); }
     if let Some(v) = map.remove("sc") { pc.status_color = Some(v); }
+    // Parse numeric values for width and height
+    if let Some(v) = map.remove("w") {
+        if let Ok(width) = v.parse::<usize>() {
+            pc.width = Some(width);
+        }
+    }
+    if let Some(v) = map.remove("h") {
+        if let Ok(height) = v.parse::<usize>() {
+            pc.height = Some(height);
+        }
+    }
     // If nothing recognized, return None to avoid hijacking arbitrary input
-    if pc.header.is_none() && pc.footer.is_none() && pc.status.is_none() && pc.title.is_none() && pc.body.is_none() && pc.icon.is_none() {
+    if pc.header.is_none() && pc.footer.is_none() && pc.status.is_none() && pc.title.is_none()
+        && pc.body.is_none() && pc.icon.is_none() && pc.width.is_none() && pc.height.is_none() {
         None
     } else {
         Some(pc)

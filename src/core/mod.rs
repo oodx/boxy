@@ -75,7 +75,7 @@ mod tests {
             "blue",
             "white",
             Some("Test Title"),
-            None, None, None, None, None,
+            None, None, None, None, None, None,
             "left", "left", None,
             false, false, false, false,
             false, false, false, false,

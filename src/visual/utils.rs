@@ -170,16 +170,44 @@ pub fn draw_box(config: BoxyConfig) {
     // Use Body component for content rendering with preserved emoji/width calculations
     let body = Body::new(&config);
     let body_lines = body.render(inner_width, &color_code, &text_color_code, &title_color_code);
-    for line in body_lines {
+    for line in &body_lines {
         println!("{}", line);
     }
 
     // Use Status component for status bar rendering
     let status = Status::new(&config);
+    let mut status_lines = Vec::new();
     if status.should_render() {
-        let status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
-        for line in status_lines {
+        status_lines = status.render(inner_width, &color_code, &text_color_code, &status_color_code);
+        for line in &status_lines {
             println!("{}", line);
+        }
+    }
+
+    // Height padding: add blank lines if fixed_height is set and needs more lines
+    if let Some(target_height) = config.fixed_height {
+        // Calculate current total lines: header(1) + body + status + footer(1)
+        let current_total = 1 + body_lines.len() + status_lines.len() + 1;
+
+        if target_height > current_total {
+            let filler_needed = target_height - current_total;
+            let pad = " ".repeat(config.width.h_padding);
+
+            // Add blank padding lines before footer
+            for _ in 0..filler_needed {
+                let available_content_width = inner_width.saturating_sub(2 * config.width.h_padding);
+                let blank_line = format!(
+                    "{}{}{}{}{}{}{}",
+                    &color_code,
+                    config.style.vertical,
+                    RESET,
+                    &pad,
+                    " ".repeat(available_content_width),
+                    &pad,
+                    format!("{}{}{}", &color_code, config.style.vertical, RESET)
+                );
+                println!("{}", blank_line);
+            }
         }
     }
 
@@ -587,6 +615,7 @@ impl<'a> Body<'a> {
                 lines.push(self.render_padding_line(inner_width, color_code, &pad));
             }
         }
+
 
         lines
     }

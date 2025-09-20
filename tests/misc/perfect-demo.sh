@@ -137,7 +137,7 @@ echo -e "✓ npm install completed\n⚠ 3 vulnerabilities found\n✗ peer depend
 # 6. EMOJI AND UNICODE SHOWCASE
 echo -e "\n🎭 EMOJI & UNICODE SHOWCASE:"
 cat << 'EOF' | $BOXY --style rounded \
-                    --color light_blue \
+                    --color cyan \
                     --title "🌍 Global Status" \
                     --width 45 \
                     --text auto
@@ -208,7 +208,102 @@ echo "Double lines" | $BOXY --style double --color blue
 echo "Heavy borders" | $BOXY --style heavy --color purple
 echo "ASCII compatible" | $BOXY --style ascii --color orange
 
-# 12. NO-BOXY PIPELINE DEMO
+# 12. HEIGHT CONTROL SHOWCASE
+echo -e "\n📏 HEIGHT CONTROL & TERMINAL LAYOUT:"
+
+# Perfect dashboard with fixed height for consistent terminal layout
+cat << 'EOF' | $BOXY --theme blueprint \
+                    --title "📊 System Monitoring Dashboard" \
+                    --header "Real-time Infrastructure Status" \
+                    --footer "Last updated: $(date '+%H:%M:%S')" \
+                    --status "sc:⚡ All systems operational" \
+                    --width 60 \
+                    --height 15 \
+                    --layout "dt,ds,stn,ssn"
+🖥️  Server Load: 34% CPU, 67% Memory
+🌐 Network: 145 Mbps in, 89 Mbps out
+💾 Storage: 2.4TB free of 8TB total
+🔒 Security: All firewalls active
+📈 Uptime: 127 days, 14 hours
+EOF
+
+# Terminal multiplexer-style consistent height boxes
+echo "Production deployment status" | $BOXY --theme success \
+                                         --title "🚀 Deploy #142" \
+                                         --status "sl:✅ Completed successfully" \
+                                         --height 10 \
+                                         --width 45
+
+echo "Database backup running..." | $BOXY --theme info \
+                                        --title "💾 Backup Service" \
+                                        --status "sr:⏳ 67% complete" \
+                                        --height 10 \
+                                        --width 45
+
+# Height with params - Configuration management style
+cat << 'EOF' | $BOXY --params "h=18; w=50; tl='⚙️ Configuration Manager'; hd='Environment: Production'; ft='Config v2.1.0'; st='🎯 All validations passed';"
+API Endpoints:
+  • Authentication: https://auth.api.company.com
+  • User Service: https://users.api.company.com
+  • Payment Gateway: https://pay.api.company.com
+  • Analytics: https://analytics.api.company.com
+
+Database Connections:
+  • Primary DB: postgresql://prod-primary:5432
+  • Read Replicas: 3 active connections
+  • Redis Cache: redis://cache-cluster:6379
+  • Search Index: elasticsearch://search:9200
+
+Security Settings:
+  • SSL/TLS: Enabled (TLS 1.3)
+  • API Rate Limiting: 1000 req/min
+  • CORS Origins: app.company.com
+  • JWT Expiry: 24 hours
+EOF
+
+# Layout engine demonstration - consistent heights for grid layouts
+echo -e "\n🏗️  LAYOUT ENGINE - Consistent Grid Heights:"
+echo "Service A" | $BOXY --theme success --height 8 --width 20 --title "📦 App Server" &
+echo "Service B" | $BOXY --theme warning --height 8 --width 20 --title "🗄️ Database" &
+echo "Service C" | $BOXY --theme info --height 8 --width 20 --title "🔍 Search" &
+wait
+
+# Advanced terminal UI with height control
+echo -e "\n🎛️  ADVANCED TERMINAL UI:"
+cat << 'EOF' | $BOXY --theme magic \
+                    --title "✨ Deployment Wizard" \
+                    --header "Step 3 of 5: Environment Configuration" \
+                    --footer "Press ENTER to continue, ESC to cancel" \
+                    --status "sc:🎯 Ready to deploy" \
+                    --height 20 \
+                    --width 65 \
+                    --layout "dt,ds,stn,ssn"
+📋 Deployment Configuration Summary:
+
+   Environment: Production
+   Region: us-east-1
+   Instance Type: t3.large (2 vCPU, 8GB RAM)
+   Auto Scaling: 2-10 instances
+   Load Balancer: Application Load Balancer
+   Database: RDS PostgreSQL 13.7
+
+🔐 Security Configuration:
+   ✅ WAF Protection enabled
+   ✅ SSL certificate configured
+   ✅ VPC security groups applied
+   ✅ IAM roles and policies set
+   ✅ CloudTrail logging enabled
+
+📊 Monitoring Setup:
+   ✅ CloudWatch metrics enabled
+   ✅ Application performance monitoring
+   ✅ Log aggregation configured
+   ✅ Alerting rules established
+
+Ready to proceed with deployment?
+EOF
+
+# 13. NO-BOXY PIPELINE DEMO
 echo -e "\n🔧 PIPELINE INTEGRATION:"
 echo "Raw content for pipeline processing" | $BOXY --theme error --no-boxy
 echo "Completely stripped content" | $BOXY --theme success --no-boxy=strict
@@ -216,4 +311,5 @@ echo "Completely stripped content" | $BOXY --theme success --no-boxy=strict
 echo -e "\n========================================="
 echo "🎊 PERFECT DEMO COMPLETE!"
 echo "🏆 Boxy v0.8 - All features demonstrated"
+echo "🎯 HEIGHT MILESTONE: Terminal layout control"
 echo "========================================="
