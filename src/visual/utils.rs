@@ -435,64 +435,29 @@ impl<'a> Status<'a> {
         status_color_code: &str,
     ) -> Vec<String> {
         let mut lines = Vec::new();
-        let pad = " ".repeat(self.config.width.h_padding);
 
-        if let Some(status_bar) = &self.config.status_bar {
-            let expanded_status = expand_variables(status_bar);
-            let (align, content) = self.parse_status_alignment(&expanded_status);
-
-            // Line before status (conditional)
+        if let Some(status_text) = &self.config.status_bar {
             if self.config.padding.pad_before_status {
-                let padding_line = format!("{}{}{}{}{}",
-                    color_code,
-                    self.config.style.vertical,
-                    pad,
-                    " ".repeat(inner_width.saturating_sub(2 * self.config.width.h_padding)),
-                    self.config.style.vertical
-                );
-                lines.push(format!("{}{}", padding_line, RESET));
+                lines.push(self.render_padding_line(inner_width, color_code));
             }
 
-            // Status line
-            let available_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
-            let status_width = get_display_width(&content);
-            let padding_needed = available_width.saturating_sub(status_width);
+            if self.config.dividers.divider_before_status {
+                if self.config.dividers.pad_before_status_divider {
+                    lines.push(self.render_padding_line(inner_width, color_code));
+                }
+                lines.push(self.render_divider_line(inner_width, color_code));
+            }
 
-            let (left_pad, right_pad) = match align.as_str() {
-                "center" => {
-                    let left = padding_needed / 2;
-                    let right = padding_needed - left;
-                    (left, right)
-                },
-                "right" => (padding_needed, 0),
-                _ => (0, padding_needed), // left alignment (default)
-            };
-
-            let status_line = format!(
-                "{}{}{}{}{}{}{}{}{}{}",
+            lines.push(self.render_status_content(
+                status_text,
+                inner_width,
                 color_code,
-                self.config.style.vertical,
-                pad,
-                " ".repeat(left_pad),
-                status_color_code,
-                content,
                 text_color_code,
-                " ".repeat(right_pad),
-                pad,
-                self.config.style.vertical
-            );
-            lines.push(format!("{}{}", status_line, RESET));
+                status_color_code,
+            ));
 
-            // Line after status (conditional)
             if self.config.padding.pad_after_status {
-                let padding_line = format!("{}{}{}{}{}",
-                    color_code,
-                    self.config.style.vertical,
-                    pad,
-                    " ".repeat(inner_width.saturating_sub(2 * self.config.width.h_padding)),
-                    self.config.style.vertical
-                );
-                lines.push(format!("{}{}", padding_line, RESET));
+                lines.push(self.render_padding_line(inner_width, color_code));
             }
         }
 
@@ -501,13 +466,111 @@ impl<'a> Status<'a> {
 
     /// Parse status alignment from status text
     fn parse_status_alignment(&self, expanded_status: &str) -> (String, String) {
-        if expanded_status.starts_with("sc:") {
+        if let Some(override_align) = &self.config.alignment.status_align_override {
+            (override_align.clone(), expanded_status.to_string())
+        } else if expanded_status.starts_with("sl:") {
+            ("left".to_string(), expanded_status.strip_prefix("sl:").unwrap_or(expanded_status).to_string())
+        } else if expanded_status.starts_with("sc:") {
             ("center".to_string(), expanded_status.strip_prefix("sc:").unwrap_or(expanded_status).to_string())
         } else if expanded_status.starts_with("sr:") {
             ("right".to_string(), expanded_status.strip_prefix("sr:").unwrap_or(expanded_status).to_string())
         } else {
             ("left".to_string(), expanded_status.to_string())
         }
+    }
+
+    fn render_padding_line(&self, inner_width: usize, color_code: &str) -> String {
+        let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
+        let pad = " ".repeat(self.config.width.h_padding);
+        format!(
+            "{}{}{}{}{}{}{}",
+            color_code,
+            self.config.style.vertical,
+            RESET,
+            pad,
+            " ".repeat(available_content_width),
+            pad,
+            format!("{}{}{}", color_code, self.config.style.vertical, RESET)
+        )
+    }
+
+    fn render_divider_line(&self, inner_width: usize, color_code: &str) -> String {
+        format!(
+            "{}{}{}{}{}",
+            color_code,
+            self.config.style.tee_left,
+            self.config.style.horizontal.repeat(inner_width),
+            self.config.style.tee_right,
+            RESET
+        )
+    }
+
+    fn render_status_content(
+        &self,
+        status_text: &str,
+        inner_width: usize,
+        color_code: &str,
+        text_color_code: &str,
+        status_color_code: &str,
+    ) -> String {
+        let expanded_status = expand_variables(status_text);
+        let (alignment, clean_status) = self.parse_status_alignment(&expanded_status);
+
+        let available_content_width = inner_width.saturating_sub(2 * self.config.width.h_padding);
+        let status_display = if self.config.width.fixed_width.is_some()
+            && get_display_width(&clean_status) > available_content_width {
+            truncate_with_ellipsis(&clean_status, available_content_width)
+        } else {
+            clean_status
+        };
+
+        let final_width = get_display_width(&status_display);
+        let debug_prefix = "";
+
+        let (left_pad_inner, right_pad_inner) = match alignment.as_str() {
+            "center" => {
+                let space = available_content_width.saturating_sub(final_width + debug_prefix.len());
+                let lp = space / 2;
+                (lp, space.saturating_sub(lp))
+            }
+            "right" => {
+                let space = available_content_width.saturating_sub(final_width + debug_prefix.len());
+                (space, 0)
+            }
+            _ => (0, available_content_width.saturating_sub(final_width + debug_prefix.len())),
+        };
+
+        let status_line = format!(
+            "{}{}{}{}",
+            debug_prefix,
+            " ".repeat(left_pad_inner),
+            status_display,
+            " ".repeat(right_pad_inner)
+        );
+
+        let status_code = if !status_color_code.is_empty() {
+            status_color_code
+        } else {
+            text_color_code
+        };
+
+        let colored_status = if status_code.is_empty() {
+            status_line
+        } else {
+            format!("{}{}{}", status_code, status_line, RESET)
+        };
+
+        let pad = " ".repeat(self.config.width.h_padding);
+        format!(
+            "{}{}{}{}{}{}{}",
+            color_code,
+            self.config.style.vertical,
+            RESET,
+            pad,
+            colored_status,
+            pad,
+            format!("{}{}{}", color_code, self.config.style.vertical, RESET)
+        )
     }
 }
 
