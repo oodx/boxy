@@ -547,8 +547,8 @@ echo "User: $USER" | boxy
 ## Examples
 
 ```bash
-# System info box with title  
-echo -e "🦀 Rust powered\n⚡ Lightning fast\n🔒 Memory safe" | boxy --title "📦 boxy v0.11.0" -s rounded -c blue
+# System info box with title
+echo -e "🦀 Rust powered\n⚡ Lightning fast\n🔒 Memory safe" | boxy --title "📦 boxy v0.16.1" -s rounded -c blue
 
 # Error alert with themed styling and auto text color
 echo "File not found: config.json" | boxy --theme error --text auto --title "🚨 Error"
