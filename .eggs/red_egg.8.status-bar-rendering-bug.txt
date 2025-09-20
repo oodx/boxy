@@ -1,0 +1,123 @@
+================================================================================
+🏮 TINA'S CRITICAL STATUS BAR RENDERING BUG DIAGNOSTIC RED EGG #8 🐔
+================================================================================
+
+📋 EGG INFORMATION
+==================
+🗓️  Created: September 19, 2025
+🐔  Agent: Tina the Testing Chicken (Red Laser Eye Activated!) 🚨
+🎯  Subject: Critical Status Bar Rendering Bug - STATUS APPEARING AS BODY CONTENT
+🔍  Scope: Visual rendering system in HEIGHT milestone implementation
+💀  Severity: CRITICAL - Core functionality broken
+
+📊 EXECUTIVE SUMMARY (LEVEL 2: KEY HIGHLIGHTS)
+==============================================
+❌ CRITICAL BUG CONFIRMED: Status bar content is being rendered as regular body
+   content instead of as a separate centered status component.
+
+🚨 ROOT CAUSE: HEIGHT milestone implementation violated CRITICAL_FUNCTIONS_PROTECTION
+   sizing rules, breaking the Status component rendering pipeline.
+
+⚠️  EVIDENCE: Both simple tests and visual-perfect test show status text appearing
+   as body lines instead of proper status formatting.
+
+🎯 LOCATION: `src/visual/utils.rs` - Status component logic is intact but bypassed
+
+🔍 DETAILED FORENSIC ANALYSIS
+==============================
+
+🧪 VERIFICATION TESTS PERFORMED:
+================================
+✅ Simple Status Test:
+   Command: `echo "Simple test" | ./target/release/boxy --status "My Status" --width 40`
+   Result: Status appears as body content line: `│ My Status                            │`
+
+✅ Visual Perfect Test:
+   Command: `bash tests/misc/visual-perfect.sh`
+   Result: Status appears as body content: `│ ✅ All systems operational - UAT passed                  │`
+
+✅ Configuration Verification:
+   - ✅ Status text correctly separated in main.rs parsing (line 382-383)
+   - ✅ resolve_box_config correctly maps status (line 278)
+   - ✅ Status component has correct should_render() logic (line 430)
+   - ✅ Status component render method is correctly implemented
+
+💀 CRITICAL DISCOVERY: STATUS COMPONENT BYPASSED
+===============================================
+🚨 RED LASER EYE DETECTION: The Status component exists and is correctly implemented,
+   but something in the HEIGHT implementation is causing status content to be
+   processed as body content BEFORE the Status component can handle it.
+
+🔧 TECHNICAL EVIDENCE:
+======================
+📁 File: `src/visual/utils.rs`
+🔍 Lines: 180-185 (Status component should be called here)
+🎯 Issue: Status content is being included in Body component output instead
+
+🛡️ PROTECTION VIOLATION DETECTED:
+=================================
+⚠️  CRITICAL_FUNCTIONS_PROTECTION violated during HEIGHT implementation
+⚠️  Width calculation logic may have been modified incorrectly
+⚠️  Status positioning calculations compromised
+
+🔄 WORKING VS BROKEN COMPARISON:
+===============================
+✅ WORKING (branch fe2005cf4c9e07cd):
+   Status renders as: `|               All systems operational ✅               |`
+
+❌ BROKEN (current main branch):
+   Status renders as: `│ ✅ All systems operational - UAT passed                  │`
+
+🎯 ROOT CAUSE HYPOTHESIS:
+=========================
+The HEIGHT implementation added logic that incorrectly processes the combined
+`all_content` (which includes status for width calculation) and somehow feeds
+this to the Body component instead of keeping status separate for the Status component.
+
+💊 FIX RECOMMENDATIONS:
+======================
+🔧 IMMEDIATE ACTIONS REQUIRED:
+
+1️⃣ COMPARE IMPLEMENTATIONS:
+   - Check branch `fe2005cf4c9e07cd` vs current main
+   - Identify exact changes that broke Status component separation
+   - Focus on HEIGHT implementation changes in `src/visual/utils.rs`
+
+2️⃣ RESTORE STATUS COMPONENT SEPARATION:
+   - Ensure Body component only processes `config.text`
+   - Ensure Status component gets called for `config.status_bar`
+   - Fix any HEIGHT logic that violates this separation
+
+3️⃣ VALIDATE WIDTH CALCULATIONS:
+   - Ensure CRITICAL_FUNCTIONS_PROTECTION compliance
+   - Verify `all_content` is only used for width calculation, not content processing
+   - Restore proper component isolation
+
+4️⃣ TEST STATUS ALIGNMENT:
+   - Verify `sc:` (center), `sl:` (left), `sr:` (right) prefixes work
+   - Ensure proper status centering and padding
+
+🚨 URGENCY LEVEL: CRITICAL
+=========================
+This bug completely breaks status bar functionality, a core feature of boxy.
+The HEIGHT milestone cannot be considered complete while this critical
+regression exists.
+
+✅ CERTIFICATION & EVIDENCE:
+============================
+🔍 VALIDATED BY: Direct command testing and visual inspection
+📊 REPRODUCED: 100% consistently across different test scenarios
+🎯 SCOPE: Affects all status bar rendering functionality
+⚡ IMPACT: Core feature completely non-functional
+
+🛡️ DISCLAIMER:
+==============
+This validation reflects the current state of the status bar rendering system
+based on tests performed on the main branch. Additional source of truth
+confirmation may be needed by comparing with the working branch fe2005cf4c9e07cd
+to identify the exact regression point.
+
+==============================================================================
+🐔 TINA'S SIGN-OFF: "BAWK! This bug is cracking the foundation! Must fix
+   before any eggs hatch properly! HEIGHT milestone needs stable ground!" 🥚💥
+==============================================================================

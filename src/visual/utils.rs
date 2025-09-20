@@ -137,15 +137,11 @@ pub fn calculate_box_width(text: &str, h_padding: usize, fixed_width: Option<usi
 }
 
 pub fn draw_box(config: BoxyConfig) {
-    // Calculate width considering ALL content (text, title, status)
+    // Calculate width considering text and title only (status handled separately by Status component)
     let mut all_content = config.text.clone();
     if let Some(title) = &config.title {
         all_content.push('\n');
         all_content.push_str(title);
-    }
-    if let Some(status_bar) = &config.status_bar {
-        all_content.push('\n');
-        all_content.push_str(status_bar);
     }
 
     let final_width = calculate_box_width(&all_content, config.width.h_padding, config.width.fixed_width, config.width.enable_wrapping);
@@ -193,18 +189,18 @@ pub fn draw_box(config: BoxyConfig) {
             let filler_needed = target_height - current_total;
             let pad = " ".repeat(config.width.h_padding);
 
-            // Add blank padding lines before footer
+            // Add blank padding lines before footer using same format as other components
             for _ in 0..filler_needed {
                 let available_content_width = inner_width.saturating_sub(2 * config.width.h_padding);
                 let blank_line = format!(
                     "{}{}{}{}{}{}{}",
-                    &color_code,
+                    color_code,
                     config.style.vertical,
-                    RESET,
-                    &pad,
+                    pad,
                     " ".repeat(available_content_width),
-                    &pad,
-                    format!("{}{}{}", &color_code, config.style.vertical, RESET)
+                    pad,
+                    config.style.vertical,
+                    RESET
                 );
                 println!("{}", blank_line);
             }

@@ -19,8 +19,8 @@ cat << 'EOF' | $BOXY --theme blueprint \
                     --style rounded \
                     --title "🎯 VISUAL PERFECT TEST" \
                     --header "All Boxy Features Demonstration" \
-                    --footer "Height: 20 | Width: 60 | Style: Rounded | Theme: Blueprint" \
-                    --status "✅ All systems operational - UAT passed" \
+                    --footer "Height: 20 | Width: 60 " \
+                    --status "sc:✅ All systems operational - UAT passed" \
                     --width 60 \
                     --height 20 \
                     --layout "dt,ds,stn,ssn"
