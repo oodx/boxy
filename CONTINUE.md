@@ -1,12 +1,13 @@
-# Continue Log – perf/render-target
+# Continue Log – perf/render-write
 
 ## Summary
-- Moved `draw_box`/`render_to_string` onto the new streaming `RenderTarget`, eliminating the repeated `Vec<String>` allocations.
-- Added Criterion bench `render_full` that times the public `render_to_string` path and saved baseline `buffer-stream` (see `target/criterion/render_full/report/index.html`).
-- All tests and doctests pass; `bin/test.sh run perfect` still renders the showcase box correctly.
+- `RenderTarget` now streams into any `std::io::Write` sink; the CLI path locks `stdout` instead of allocating an intermediate `String`.
+- Snapshot coverage for `render_to_string` lives in `tests/render_snapshots.rs` with fixtures under `tests/fixtures/` to catch accidental byte regressions.
+- Roadmap synced (Milestone 1.7 marked complete; height milestone flagged as done) and README/docs updated to advertise streaming + height features.
+- Bench snapshots refreshed earlier (`meta/snaps/`), full test suite continues to pass.
 
 ## Current Branch
-- `perf/render-target`
+- `perf/render-write`
 
 ## Latest Benchmarks
 - Rounded: ~1.21 ms (down from ~1.39 ms).
@@ -15,10 +16,10 @@
 - Baseline stored with `cargo bench --bench status_render -- --save-baseline buffer-stream`.
 
 ## What’s Next
-- Generalize `RenderTarget` to stream directly into any `io::Write` when needed (CLI stdout, tmux pipe).
-- Remove the temporary `Vec<String>` compatibility layer once downstream callers adapt.
-- Clean up compiler warnings (unused re-exports, helper methods) introduced by the new plumbing.
-- Optional: add snapshot tests around `render_to_string` outputs to catch regressions.
+- Refresh CLI `--help` output now that height/streaming features are standard (see new `[M2-010]`).
+- Plan the temporary Vec adapter removal alongside the upcoming public API work (M2) and wire streaming helpers into BoxBuilder.
+- Evaluate TOML vs JSON for theme configs and prepare the migration away from deprecated `serde_yaml` (new `[M3-010]`, `[M3-011]`).
+- Add a `height` Cargo feature gate during the feature-flag milestone (task `[M5-002a]`).
 
 ## Handy Commands
 ```bash

@@ -127,6 +127,44 @@ Theme: Property Integration Testing (2 pts)
   - ✅ Test file: tests/auto_none_properties_tests.rs
 
 ================================================================================
+🎯 MILESTONE 1.7: RENDER TARGET STREAMING (15 pts) ✅ COMPLETED
+================================================================================
+Duration: 1 week | Risk: Medium | Performance infrastructure
+Status: ✅ Completed – streaming path ready for library integration and benchmarks refreshed
+
+Theme: Streaming Core (8 pts)
+-----------------------------
+[M1.7-001] Generalize RenderTarget to accept std::io::Write sinks (3) - Critical ✅ COMPLETED
+  - Implement RenderTarget::from_writer / owned_writer lifecycle
+  - Support fmt::Write + io::Write without extra allocations
+  - Preserve existing render_to_string compatibility
+
+[M1.7-002] Stream components into shared buffer (5) - High ✅ COMPLETED
+  - Update Header/Body/Status/Footer to work with writer-backed targets
+  - Ensure CLI draw path writes directly to stdout/tmux
+  - Maintain temporary Vec adapters for downstream callers
+
+Theme: Benchmarks & Regression Safety (7 pts)
+---------------------------------------------
+[M1.7-003] Refresh Criterion baselines for render_full bench (2) - Medium ✅ COMPLETED
+  - Regenerate buffer-stream baseline after streaming change
+  - Snapshot results via bin/snap.sh into meta/snaps/
+
+[M1.7-004] Add snapshot tests for render_to_string outputs (3) - High ✅ COMPLETED
+  - Added `tests/render_snapshots.rs` with fixture-backed golden output
+  - Captures deterministic box render including current ANSI reset behavior
+  - Prevents accidental string regressions during streaming follow-ups
+
+[M1.7-005] Plan removal of temporary Vec<String> shims (1) - Medium ✅ COMPLETED
+  - Documented adapters slated for removal (RenderTarget::new/into_lines, Body::render, Status::render)
+  - Scheduled cleanup to land with M2 library API migration so downstream consumers have replacements
+
+[M1.7-006] Document streaming API usage for library consumers (1) - High ✅ COMPLETED
+  - Added streaming guidance to PUBLIC_API_STRAT (`Streaming directly into an arbitrary sink`)
+  - Captured interim workflow using RenderTarget::from_writer and component render_into helpers
+  - Will expand with BoxBuilder helpers during M2
+
+================================================================================
  🎯 MILESTONE 2: LIBRARY API DEVELOPMENT (34 pts)
 ================================================================================
 Duration: 2-3 weeks | Risk: Medium | New Public API
@@ -191,8 +229,14 @@ Theme: Documentation & Examples (8 pts)
   - Create clean separation of concerns
   - Test library usage without CLI
 
+[M2-010] Refresh CLI help documentation (2) - Medium
+  - Add height-related options (--height, `height` subcommand, `--params h=`) to --help output
+  - Document streaming/RanderTarget guidance as part of help footer
+  - Ensure CLI help reflects current theme/height features
+  - Regenerate README/usage snippets after help update
+
 ================================================================================
- 🎯 MILESTONE 3: UTILS/HELPERS SEPARATION (18 pts)
+ 🎯 MILESTONE 3: UTILS/HELPERS SEPARATION (20 pts)
 ================================================================================
 Duration: 1-2 weeks | Risk: Low | Internal Reorganization
 
@@ -207,6 +251,22 @@ Theme: Themes Module Separation (5 pts)
   - Move theme parsing internals to helpers.rs
   - Move YAML processing to helpers.rs
   - Keep implementation details private
+
+[M3-009] Evaluate serde YAML replacement (2) - Medium
+  - Investigate migration path from deprecated `serde_yaml 0.9` to the current community-supported crate (e.g. `serde_yml`)
+  - Ensure theme serialization/deserialization APIs remain compatible
+  - Update dependency tree and regression tests once replacement selected
+
+[M3-010] Evaluate TOML vs JSON for theme storage (3) - High
+  - Benchmark parse/serialize performance for representative theme sets
+  - Compare ecosystem support (toml, serde_json, ron) and recommend default format
+  - Decide on migration target (prefer TOML unless JSON yields material gains)
+
+[M3-011] Migrate theme system to chosen format (5) - High
+  - Implement new loader/saver using selected format
+  - Provide backward-compatible YAML importer or one-shot conversion tool
+  - Update documentation, examples, and tests to reflect new format
+  - Drop deprecated serde_yaml dependency once migration completes
 
 Theme: Colors Module Separation (4 pts)
 ---------------------------------------
@@ -293,6 +353,12 @@ Theme: Feature Flag Design (8 pts)
   - Ensure graceful degradation when features disabled
   - Test feature combinations
 
+[M5-002a] Gate height system behind cargo feature (2) - High
+  - Introduce default-on `height` feature in Cargo.toml
+  - Wrap height_plugin, CLI flags, and BOXY_MULTIPLEX_MODE logic in #[cfg(feature = "height")]
+  - Provide no-op stubs when feature disabled to keep API compiling
+  - Document build instructions for height-enabled vs minimal builds
+
 Theme: Adapter Pattern Implementation (12 pts)
 ----------------------------------------------
 [M5-003] Create themes/adapters.rs for color integration (5) - High
@@ -352,58 +418,38 @@ Theme: Macro System (6 pts)
   - Document compliance status
 
 ================================================================================
- 🎯 MILESTONE HEIGHT: TERMINAL HEIGHT SYSTEM (18 pts) ⬆️ NEXT
+ 🎯 MILESTONE HEIGHT: TERMINAL HEIGHT SYSTEM (18 pts) ✅ COMPLETED
 ================================================================================
 Duration: 1-2 weeks | Risk: Medium | New Terminal Feature
-Status: Ready to begin - Follow width_plugin.rs patterns
+Status: ✅ Completed – height flag, params, diagnostics and padding logic landed
 
 Theme: Height Plugin Foundation (8 pts)
 --------------------------------------
-[MH-001] Create src/height_plugin.rs following width_plugin.rs patterns (3) - Critical
-  - Create height_plugin.rs mirroring width_plugin.rs structure
-  - Implement get_terminal_height() with tput lines, stty size fallbacks
-  - Add validate_height() function (range 5-50 lines)
-  - Follow exact same pattern as get_terminal_width()
+[MH-001] Create src/height_plugin.rs following width_plugin.rs patterns (3) - Critical ✅ COMPLETED
+  - height_plugin.rs mirrors width plugin structure with `get_terminal_height`, fallbacks, and validation helper
 
-[MH-002] Add height diagnostics subcommand (2) - High
-  - Implement handle_height_command() following handle_width_command()
-  - Add "height" subcommand to main.rs CLI parsing
-  - Display: tput lines, stty size rows, effective height
-  - Test across different terminal environments
+[MH-002] Add height diagnostics subcommand (2) - High ✅ COMPLETED
+  - `boxy height` implemented via `handle_height_command()` in main.rs
+  - CLI help to be refreshed under `[M2-010]` to surface the command
 
-[MH-003] Integrate height detection in lib.rs and modules (3) - High
-  - Export height functions from lib.rs
-  - Add height_plugin to visual module imports
-  - Update core module with height configuration support
-  - Maintain compatibility with existing width system
+[MH-003] Integrate height detection in lib.rs and modules (3) - High ✅ COMPLETED
+  - Height helpers exported from lib.rs; visual/core modules consume them for padding logic
 
 Theme: CLI Height Integration (5 pts)
 -------------------------------------
-[MH-004] Add --height flag to CLI argument parsing (2) - Critical
-  - Add height flag to main.rs argument parsing
-  - Support --height <N> syntax following --width pattern
-  - Add height validation using validate_height()
-  - Integrate with existing BoxyConfig.fixed_height field
+[MH-004] Add --height flag to CLI argument parsing (2) - Critical ✅ COMPLETED
+  - `--height <N|max|auto>` handled in main.rs with validation + `get_max_safe_height`
 
-[MH-005] Extend --params flag to support h=N syntax (3) - High
-  - Update parse_content_stream() in core/utils.rs
-  - Add h=N parsing alongside existing k='v' pairs
-  - Support w=N (width) and h=M (height) together
-  - Test: boxy --params "h=15; w=40; tl='Title';" "Content"
+[MH-005] Extend --params flag to support h=N syntax (3) - High ✅ COMPLETED
+  - `parse_content_stream` accepts `h=...` and maps into `ParsedContent.height`
 
 Theme: Height Layout Engine (5 pts)
 -----------------------------------
-[MH-006] Implement height padding in visual system (3) - Critical
-  - Add height calculation functions to visual/utils.rs
-  - Implement padding generation following draw.rs.backup logic
-  - Integrate with existing component system (Header/Body/Status/Footer)
-  - Preserve status line positioning at bottom
+[MH-006] Implement height padding in visual system (3) - Critical ✅ COMPLETED
+  - Visual utils insert padding lines to honour fixed height while keeping status anchored
 
-[MH-007] Add height mode support (pad/truncate/auto) (2) - Medium
-  - Add HeightMode enum to core configuration
-  - Implement padding mode (add blank lines to reach target)
-  - Implement truncate mode (cut content if exceeds height)
-  - Default to "pad" mode for layout engine compatibility
+[MH-007] Add height mode support (pad/truncate/auto) (2) - Medium ✅ COMPLETED
+  - HeightMode enum active; pad/truncate/auto options wired through CLI/env and visual padding logic
 
 ### CRITICAL FUNCTION PROTECTION TASKS (Added to All Milestones):
 
@@ -428,6 +474,7 @@ Theme: Height Layout Engine (5 pts)
 
 M1 (23 pts): 11 tasks + 3 protection - Basic module restructuring ✅ COMPLETED
 M1.5 (8 pts): 5 tasks - Auto/None properties validation ✅ COMPLETED
+M1.7 (15 pts): 6 tasks - Render target streaming & benchmarks ✅ COMPLETED
 MH (18 pts): 7 tasks - Terminal height system ⬆️ NEXT
 M2 (34 pts): 9 tasks - Library API development
 M3 (18 pts): 8 tasks - Utils/helpers separation
@@ -435,9 +482,9 @@ M4 (16 pts): 6 tasks - Typed error system
 M5 (28 pts): 7 tasks - Feature flags & adapters
 M6 (14 pts): 4 tasks - Curated prelude & macros
 
-Completed: 31 story points (M1 + M1.5)
-Remaining: 126 story points across 39 tasks (including MH)
-Total: 157 story points across 56 tasks
+Completed: 46 story points (M1 + M1.5 + M1.7)
+Remaining: 128 story points across 44 tasks
+Total: 174 story points across 62 tasks
 
 ================================================================================
  🎯 TASK PRIORITIZATION

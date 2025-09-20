@@ -16,6 +16,7 @@ use crate::{
     RESET, expand_variables, get_color_code, get_display_width, get_terminal_width,
     render_title_or_footer, truncate_with_ellipsis,
 };
+use std::io;
 
 // ============================================================================
 // BOX STYLE SYSTEM (from boxes.rs)
@@ -181,9 +182,13 @@ pub fn calculate_box_width(
 
 pub fn draw_box(config: BoxyConfig) {
     let final_width = calculate_final_width(&config);
-    let mut target = RenderTarget::with_capacity(estimate_capacity(final_width, &config));
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
+    let mut target = RenderTarget::from_writer(&mut handle);
     render_box_with_width(&config, final_width, &mut target);
-    print!("{}", target.into_string());
+    target
+        .finish()
+        .expect("failed to flush render output to writer");
 }
 
 #[allow(dead_code)] // Public library API; benchmarks and downstream code consume this path.
@@ -216,7 +221,11 @@ fn estimate_capacity(final_width: usize, config: &BoxyConfig) -> usize {
     final_width.saturating_mul(line_hint + 2)
 }
 
-fn render_box_with_width(config: &BoxyConfig, final_width: usize, target: &mut RenderTarget) {
+fn render_box_with_width<'a>(
+    config: &BoxyConfig,
+    final_width: usize,
+    target: &mut RenderTarget<'a>,
+) {
     let inner_width = final_width.saturating_sub(2);
     let color_code = get_color_code(&config.colors.box_color);
 
@@ -550,7 +559,7 @@ impl<'a> Status<'a> {
 
     pub fn render_into(
         &self,
-        target: &mut RenderTarget,
+        target: &mut RenderTarget<'_>,
         inner_width: usize,
         color_code: &str,
         text_color_code: &str,
@@ -637,7 +646,7 @@ impl<'a> Body<'a> {
     /// Render the body content preserving existing emoji and width calculations
     pub fn render_into(
         &self,
-        target: &mut RenderTarget,
+        target: &mut RenderTarget<'_>,
         inner_width: usize,
         color_code: &str,
         text_color_code: &str,

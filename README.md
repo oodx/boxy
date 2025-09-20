@@ -4,7 +4,7 @@ A fast command-line utility that draws Unicode boxes around text with proper emo
 
 ## Features
 
-- ✨ Unicode-width crate for accurate emoji/Unicode width calculation (with custom fallback available)
+- ✨ Accurate emoji/Unicode width handling (unicode-width crate primary, custom fallback available)
 - 🎨 Multiple box styles (normal, rounded, double, heavy, ascii)
 - 🌈 Colored borders and text with predefined color schemes
 - 🎨 Text color control with auto-matching and explicit colors
@@ -13,6 +13,8 @@ A fast command-line utility that draws Unicode boxes around text with proper emo
 - 📋 Title and footer support with emoji/variable expansion (inside borders)
 - 🎯 Icon decorations for content
 - 📏 Fixed width boxes with intelligent word wrapping and truncation
+- 📐 Fixed-height rendering with padding/truncate/auto modes (CLI and params)
+- 🔄 Stream rendering directly into any `std::io::Write` sink (stdout, files, pipes)
 - 🔄 Advanced text wrapping with explicit line breaks and wrap hints
 - 🎯 Three wrapping modes: auto-width wrapping (default), fixed-width with wrapping, and fixed-width with truncation
 - 🔄 Pipeline integration with box stripping modes
@@ -51,6 +53,10 @@ echo "Content" | boxy --header "Header" --footer "✅ Done"
 # With icon decoration and text colors
 echo "Important message" | boxy --icon "⚠️" --color yellow --text red
 echo "Success!" | boxy --icon "✅" --color green --text auto  # Text matches box color
+
+# Fixed height and multiplex padding
+echo "Dashboard panel" | boxy --height 12 --title "📊 Metrics" --status "sr:Updated"
+echo "Content" | boxy --params "h=10; tl='Server'; st='sc:OK';" --width 32
 
 # Using themes (includes icon, color, and styling)
 echo "Something went wrong" | boxy --theme error
@@ -91,7 +97,7 @@ echo "Content" | boxy | boxy --no-boxy=strict   # Pure ASCII output
 echo -e "🎉 Party Time\n🚀 Launch\n🔥 Fire" | boxy -s rounded -c orange
 
 # Param stream (metadata alongside piped body)
-echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; ly='bl,bp,stn,ptn,psn,ssn'" --width max
+echo -e "Line 1\nLine 2" | boxy --params "hd='Header'; tl='Title'; st='Status'; h=14; ly='bl,bp,stn,ptn,psn,ssn'" --width max
 
 # Title/Status color overrides
 echo "Body" | boxy --title "Title" --status Status --title-color crimson --status-color jade
@@ -108,6 +114,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `-c, --color <COLOR>` - Border color from 90+ palette
 - `--text <COLOR>` - Text color: 'auto' matches border, 'none' default
 - `-w, --width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
+- `--height <N|max|auto>` - Fixed height (pad/truncate/auto). `max` uses safe terminal height
 - `--wrap` - Enable hint-aware wrapping for fixed widths
 
 **Content Sections:**
@@ -126,6 +133,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 **Layout Controls:**
 - `--layout <spec>` - Align/divide/pad: hl|hc|hr, fl|fc|fr, sl|sc|sr, dt|dtn, ds|dsn, stn|ptn|psn|ssn, bl|bc|br, bp
 - `--pad <a|b>` - Blank line above (a) and/or below (b) the body
+- `--params "...; h=<N>; ..."` - Provide height via param stream (e.g. `h=12`)
 
 **Theme System:**
 - `-t, --theme <name>` - Apply semantic theme (error, success, warning, info, critical)
@@ -144,6 +152,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `--no-boxy[=strict]` - Strip box decoration (strict removes all formatting)
 - `--no-color` - Disable Jynx integration and color output
 - `boxy width` - Show terminal width diagnostics
+- `boxy height` - Show terminal height diagnostics and detection methods
 - `--colors` - Preview all 90+ available colors
 - `-h, --help` - Show help message
 - `-v, --version` - Show version information
@@ -152,6 +161,9 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 - `BOXY_THEME=<name>` - Set default theme (overridden by --theme)
 - `BOXY_MIN_WIDTH=<N>` - Set minimum box width (default: 5)
 - `BOXY_MULTIPLEX_MODE=<mode>` - Control multiplex behavior
+- `BOXY_HEIGHT=<N>` - Default fixed height (overridden by CLI/params)
+- `BOXY_HEIGHT_MODE=<pad|truncate|auto>` - Default height mode
+- `BOXY_HEIGHT_FILLER=<char>` - Filler character for padding mode
 - `BOXY_USE_CUSTOM_WIDTH=1` - Use custom width calculation fallback (instead of unicode-width crate)
 - `HOME` - Used for theme hierarchy and configuration paths
 - `USER` - Used in theme variable expansion
@@ -782,3 +794,35 @@ By **downloading, installing, linking to, or otherwise using RSB Framework, Oxid
 2. **Represent that you meet all eligibility requirements** for the license you have chosen.
 
 > Questions about eligibility or commercial licensing: **licensing@vegajunk.com**
+
+## Streaming to Writers
+
+Boxy can stream renders directly into any `std::io::Write` sink without building
+intermediate strings. This is ideal for long-running dashboards, tmux panes, or
+integrations with layout engines such as Room.
+
+```rust
+use std::io::{self, Write};
+use boxy::{visual::render_target::RenderTarget, BoxyConfig};
+
+fn stream_box(config: &BoxyConfig) -> std::io::Result<()> {
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
+    let mut target = RenderTarget::from_writer(&mut handle);
+
+    // Reuse the existing rendering helpers
+    let final_width = boxy::calculate_box_width(
+        &config.text,
+        config.width.h_padding,
+        config.width.fixed_width,
+        config.width.enable_wrapping,
+    );
+    boxy::visual::utils::render_box_with_width(config, final_width, &mut target);
+    target.finish()?; // flush and surface any IO errors
+    Ok(())
+}
+```
+
+Component-level helpers (e.g., `Header::render`, `Body::render_into`) accept the
+same `RenderTarget`, so you can selectively update sections when composing your
+own dashboards.

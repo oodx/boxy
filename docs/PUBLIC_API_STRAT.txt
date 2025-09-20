@@ -683,6 +683,15 @@ BoxBuilder::new("Status")
     .theme("custom")
     .validate()?
     .draw()?;
+
+// Streaming directly into an arbitrary sink (stdout, pipe, file)
+// (BoxBuilder helper coming in M2; until then use RenderTarget::from_writer and
+// the component render_into helpers.)
+// 1. Acquire the sink: `let mut stdout = std::io::stdout();`
+// 2. Wrap it: `let mut target = boxy::RenderTarget::from_writer(&mut stdout.lock());`
+// 3. Drive the components you care about (`Header::new(&config).render(...)`,
+//    `Body::render_into(&mut target, ...)`, etc.).
+// 4. Call `target.finish()?` to flush and surface IO errors.
 ```
 
 ### **Gradual Feature Adoption**
@@ -775,3 +784,4 @@ BoxBuilder::new("Status")
 **Ready for M3 Utils/Helpers Separation with solid public API foundation.**
 
 ================================================================================
+
