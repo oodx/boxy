@@ -1,0 +1,67 @@
+
+- EPIC 1: Fix the broken theme/engine system
+
+- boxy theme import/export and themes subcommands not working
+  - boxy inheritance hierachy isnt running as expected, the global themes are not copied to the etc/ directory
+    so whenever you call boxy using the theme flag it only loads whats in the local directory.
+  - `boxy theme hierarchy` command 
+    (1) needs a better name, hierachy is too cumbersome to type -> `boxy engine debug`
+        (1.2) once renamed the debug command should add the 
+          a. list if the global etc/boxy/themes directory is empty 
+          b. width calculation display
+          c. list of the discovered themes
+    (2) `boxy theme import` and export are broken due to a misconception, they seem to be trying to manage individual themes from its theme engine, instead of explicit THEME_FILES. Import and Export use their argument to map to a name 
+      (2.1) EXPORT: for example `boxy theme export pretty` would look for a `theme_pretty.yml` in the global etc, and copy it to the local directory where boxy is being called, allowing the user to edit it and the re-importing it back or using another name. 
+      (2.2) IMPORT: `boxy theme import pretty.new` would look for a local `theme-pretty.new.yml` and copy it to the global etc directory, allowing it be loaded like any of the other themes in the right order. `boxy theme debug` should show the new theme file in its loading algorithm.
+
+    (3) Distinguish between Theme Engine Config and Themes. Currently "Theme" and "Theme File" are ambiguous terms so we need to clarify this. The YAML files are "Theme Engine Config Files" and "Themes" are the differnt styles defined in the Theme Enging Config.
+
+    - with this in mind, commands meant for the theme engine itself should use the `engine` subcommands
+      `boxy theme list` <-- wrong   `boxy engine list` <--- right
+
+    - any "--theme"-like flags meant for the Theme Engine should instead use `--engine` so the use of `--theme` is clear, and we can alias `--theme` with `--use` to help clarify the api.
+
+    (4) Showing the available themes from the current engine config, should print out each theme with its thematic properties visible. 
+      Pattern: 
+        - the Theme Name
+        - the main icon (if used or just an empty block emoji placeholder)
+        - the text color name wrapped in the ansi color for the text property
+        - the box drawing style with box parts wrapped in ansi color for the box color property
+        - any layout configuartions like: lh,sc, etc.
+
+    
+# BACKLOG
+
+- EPIC 2: Eventual alignment with RSB. Requires large refactor and knowledge transfer
+
+
++ application mapping
+
+
+
+  1. Stream header/footer into arbitrary writers (SP follow-up):
+     Right now RenderTarget owns a String. If you ever want to write directly to stdout/tmux with minimal copying, we
+  could generalize it to accept impl Write so the whole renderer works with any sink (Vec<u8>, file, network, etc.).
+  That would dovetail with the render buffer epic and reduce allocations further.
+  2. Remove redundant re-exports and unused code:
+     The compiler is warning about many unused items (ParsedContent, BOX_CHARS, RenderTarget::len, etc.). Cleaning those
+  up (or gating them behind #[cfg(test)]) will trim the codebase and reduce “noise” in future diffs.
+  3. Snapshot-based regression tests:
+     Since render_to_string now exists, we can add golden/snapshot tests to ensure the box output stays byte-for-byte
+  identical when we refactor internals. That’s especially useful once we stream directly to Write.
+  4. Broader benchmarking:
+     We have render_full running. You might add:
+      - A benchmark that renders multiple boxes consecutively (simulates tmux panes).
+      - A stress test with wrapping enabled and wider heights to ensure the buffer sizing logic holds.
+  5. Expose render_to_string via CLI/library docs:
+     It’s callable now; we should document it (README or docs) so downstream consumers know they can capture renders
+
+
+ 1. Rework RenderTarget to wrap impl Write (keep fmt::Write support) so draw_box can forward directly to stdout/tmux
+  and drop the extra allocation path (src/visual/render_target.rs:8, TASKS.txt:3).
+  2. Pare back the broad public re-exports or gate them behind cfg(test) to silence the compiler noise while keeping the
+  protected APIs available (src/lib.rs:44, TASKS.txt:5).
+  3. Introduce snapshot fixtures around render_to_string to lock byte-for-byte output before streaming changes land
+  (src/visual/utils.rs:189, TASKS.txt:6).
+  4. Expand the Criterion suite with the queued multi-box and wrapping stress cases so we can measure the streaming work
+  against the saved buffer-stream baseline (benches, TASKS.txt:7).
