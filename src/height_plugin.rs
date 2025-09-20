@@ -1,7 +1,27 @@
 
+/// Height plugin for terminal height detection and management
+///
+/// This module provides terminal height detection using multiple methods,
+/// similar to the width_plugin.rs patterns. It supports terminal multiplexers,
+/// TUI frameworks, and layout engines requiring predictable vertical spacing.
+
 use crate::{File, Command, Stdio};
 
-/// Validate height input
+/// Validate height input string
+///
+/// # Arguments
+/// * `height_str` - String representation of desired height
+///
+/// # Returns
+/// * `Ok(())` if height is valid (5-50 lines range)
+/// * `Err(String)` with descriptive error message if invalid
+///
+/// # Examples
+/// ```
+/// assert!(validate_height("20").is_ok());
+/// assert!(validate_height("3").is_err());  // Too small
+/// assert!(validate_height("100").is_err()); // Too large
+/// ```
 pub fn validate_height(height_str: &str) -> Result<(), String> {
     match height_str.parse::<usize>() {
         Ok(h) if h >= 5 && h <= 50 => Ok(()),
@@ -10,7 +30,21 @@ pub fn validate_height(height_str: &str) -> Result<(), String> {
     }
 }
 
-/// Height diagnostics subcommand
+/// Handle the height diagnostics subcommand
+///
+/// Displays comprehensive terminal height detection information using
+/// multiple detection methods (tput, stty, environment variables).
+///
+/// # Output
+/// Prints diagnostic information showing:
+/// - Effective height from get_terminal_height()
+/// - tput lines result (if available)
+/// - stty size rows result (if available)
+///
+/// # Usage
+/// ```bash
+/// boxy height
+/// ```
 pub fn handle_height_command() {
     // Helper to run command with /dev/tty as stdin when available
     fn run_with_tty(mut cmd: Command) -> Option<String> {
@@ -45,7 +79,20 @@ pub fn handle_height_command() {
     println!("  stty size rows (tty): {}", stty_rows_tty.map(|v| v.to_string()).unwrap_or_else(|| "N/A".to_string()));
 }
 
-/// Get terminal height with fallback to 24 lines
+/// Get terminal height with automatic fallback
+///
+/// Attempts multiple methods to detect terminal height:
+/// 1. `tput lines` command via /dev/tty
+/// 2. `stty size` command (extracts rows from "rows cols" output)
+/// 3. `LINES` environment variable
+/// 4. Fallback to 24 lines (standard terminal height)
+///
+/// # Returns
+/// Terminal height in lines, guaranteed to be at least 5
+///
+/// # Implementation Note
+/// Follows the same pattern as get_terminal_width() in width_plugin.rs
+/// for consistency across the codebase.
 pub fn get_terminal_height() -> usize {
     // Helper to run with /dev/tty
     fn run_with_tty(mut cmd: Command) -> Option<String> {
@@ -91,12 +138,37 @@ pub fn get_terminal_height() -> usize {
     24
 }
 
-/// Calculate height of content lines (helper for layout engines)
+/// Calculate the total height of content lines
+///
+/// Simple helper function for layout engines to determine
+/// the number of lines in content.
+///
+/// # Arguments
+/// * `lines` - Slice of strings representing content lines
+///
+/// # Returns
+/// Number of lines in the content
+///
+/// # Example
+/// ```
+/// let lines = vec!["Line 1".to_string(), "Line 2".to_string()];
+/// assert_eq!(calculate_content_height(&lines), 2);
+/// ```
 pub fn calculate_content_height(lines: &[String]) -> usize {
     lines.len()
 }
 
 /// Get maximum safe height for current terminal
+///
+/// Calculates the usable terminal height, leaving space for
+/// shell prompt and other terminal UI elements.
+///
+/// # Returns
+/// Safe height value (terminal_height - 2) or full height if terminal is very small
+///
+/// # Usage Note
+/// Use this when you want to maximize box height while ensuring
+/// the shell prompt remains visible after box rendering.
 pub fn get_max_safe_height() -> usize {
     let terminal_height = get_terminal_height();
     // Leave some space for shell prompt and other terminal UI
