@@ -17,6 +17,8 @@ TEST_SLEEP=""
 NO_SLEEP="false"
 QUICK_MODE="true"  # Default to quick mode
 COMPREHENSIVE_MODE="false"
+BENCHMARK_MODE="false"
+SNAP_BENCHMARKS="false"
 ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -37,6 +39,15 @@ while [[ $# -gt 0 ]]; do
         --comprehensive|--full)
             QUICK_MODE="false"
             COMPREHENSIVE_MODE="true"
+            shift 1
+            ;;
+        --benchmark)
+            BENCHMARK_MODE="true"
+            shift 1
+            ;;
+        --snap-benchmarks)
+            BENCHMARK_MODE="true"
+            SNAP_BENCHMARKS="true"
             shift 1
             ;;
         *)
@@ -78,15 +89,17 @@ show_help() {
     if command -v $BOXY >/dev/null 2>&1; then
         cat <<-EOF | $BOXY --theme info --title "🧪 Pantheon Test Runner" --width max
 Available Commands:
-  test.sh [--comprehensive] [--sleep N|--no-sleep] run <test>   Run specific test (quick by default)
+  test.sh [--comprehensive] [--sleep N|--no-sleep] [--benchmark] run <test>   Run specific test (quick by default)
   test.sh list                                       List available tests
   test.sh help                                       Show this help
 
 Options:
   --comprehensive        Run full validation (200+ tests per ceremony)
-  --quick                Force quick mode (default, 1 test per ceremony)  
+  --quick                Force quick mode (default, 1 test per ceremony)
   --sleep N              Add sleep/timeout of N seconds between demo steps
   --no-sleep             Disable all sleeps (default behavior)
+  --benchmark            Run performance benchmarks with criterion + time comparison
+  --snap-benchmarks      Run benchmarks and preserve performance snapshots
 
 Available Tests:
   uat                    Comprehensive UAT ceremonies with boxy integration
@@ -105,8 +118,8 @@ EOF
         echo "======================"
         echo
         echo "Available Commands:"
-        echo "  test.sh [--comprehensive] [--sleep N|--no-sleep] run <test>   Run specific test (quick by default)"
-        echo "  test.sh list                                       List available tests" 
+        echo "  test.sh [--comprehensive] [--sleep N|--no-sleep] [--benchmark] run <test>   Run specific test (quick by default)"
+        echo "  test.sh list                                       List available tests"
         echo "  test.sh help                                       Show this help"
         echo ""
         echo "Options:"
@@ -114,6 +127,8 @@ EOF
         echo "  --quick                Force quick mode (default, 1 test per ceremony)"
         echo "  --sleep N              Add sleep/timeout of N seconds between demo steps"
         echo "  --no-sleep             Disable all sleeps (default behavior)"
+        echo "  --benchmark            Run performance benchmarks with criterion + time comparison"
+        echo "  --snap-benchmarks      Run benchmarks and preserve performance snapshots"
         echo
         echo "Available Tests:"
         echo "  uat                    Comprehensive UAT ceremonies with boxy integration"
@@ -210,7 +225,17 @@ run_test() {
         export COMPREHENSIVE_MODE="true"
         export CEREMONY_QUICK="false"
     fi
-    
+    if [[ "$BENCHMARK_MODE" == "true" ]]; then
+        export BENCHMARK_MODE="true"
+        export SNAP_BENCHMARKS="$SNAP_BENCHMARKS"
+    fi
+
+    # Run benchmarks if requested
+    if [[ "$BENCHMARK_MODE" == "true" ]]; then
+        bash "$TEST_DIR/misc/benchmark-suite.sh"
+        echo
+    fi
+
     exec bash "$test_path"
 }
 
