@@ -1,0 +1,627 @@
+================================================================================
+🐔 TINA'S TECHNICAL DEBT TASK TICKETS RED EGG #2 🏮
+================================================================================
+
+Created: 2025-09-20 (Current Session)
+Target: Actionable Task Tickets from RSB Compliance & Test Coverage Analysis
+Agent: User's request for technical debt extraction
+Purpose: Convert red egg findings into actionable work tickets for M3 milestone
+
+💡 EXECUTIVE SUMMARY
+===================
+Based on my comprehensive red egg analysis, I've extracted 18 specific task tickets
+organized into 4 strategic phases. These tickets address the 65% RSB compliance gap,
+benchmark integration needs, test automation improvements, and quality assurance
+processes identified in the boxy project. Each ticket includes priority, effort
+estimation, and clear success criteria! 🎯
+
+================================================================================
+📋 PHASE 1: TESTING INFRASTRUCTURE IMPROVEMENTS (High Priority)
+================================================================================
+
+┌──────────────── TEST-01: Benchmark Integration ────────────────┐
+│ Title: Integrate performance benchmarks into test.sh workflow   │
+│ Priority: HIGH                                                  │
+│ Effort: MEDIUM                                                  │
+│ Target: M3 Week 1                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Create benchmark integration flags and workflow in test.sh to automatically
+run performance tests as part of the standard testing ceremony.
+
+**Tasks:**
+- Add ["bench:performance"] and ["bench:snap"] to TESTS array
+- Implement --benchmark and --snap-benchmarks flags
+- Create tests/misc/benchmark-suite.sh script
+- Add performance threshold validation
+
+**Success Criteria:**
+- `bin/test.sh --benchmark` runs all tests + benchmarks
+- Performance regressions are automatically detected
+- Benchmark results are preserved via snap.sh integration
+
+**Why Important:**
+Closes the critical gap between UAT testing and performance validation,
+enabling automated regression detection.
+
+┌──────────────── TEST-02: Performance Regression Detection ──────────────────┐
+│ Title: Implement automated performance regression detection      │
+│ Priority: HIGH                                                  │
+│ Effort: MEDIUM                                                  │
+│ Target: M3 Week 1                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Create threshold-based performance validation that fails builds when
+render times exceed acceptable limits (currently 1.19-1.49ms baseline).
+
+**Tasks:**
+- Define performance thresholds (2.0ms max render time)
+- Parse benchmark output for regression detection
+- Implement pass/fail logic in benchmark-suite.sh
+- Add performance reporting to test output
+
+**Success Criteria:**
+- Tests fail when render time > 2.0ms
+- Clear performance regression messages
+- Historical performance tracking enabled
+
+**Why Important:**
+Prevents performance degradation during RSB refactoring and future development.
+
+┌──────────────── TEST-03: Enhanced Snap.sh Versioning ──────────────────┐
+│ Title: Add versioned snapshots and historical tracking to snap.sh │
+│ Priority: MEDIUM                                                   │
+│ Effort: SMALL                                                      │
+│ Target: M3 Week 1                                                 │
+└────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Enhance snap.sh to preserve historical benchmark data with timestamps
+and enable performance comparison across versions.
+
+**Tasks:**
+- Add TIMESTAMP variable to snap.sh
+- Create versioned snapshot directories
+- Implement performance comparison logic
+- Add cleanup for old snapshots (keep last 10)
+
+**Success Criteria:**
+- Snapshots saved with timestamp: meta/snaps/20250920_114200/
+- Performance comparison between runs available
+- Automated cleanup prevents disk bloat
+
+**Why Important:**
+Enables performance trend analysis and regression root cause analysis.
+
+┌──────────────── TEST-04: Cargo Test Integration ──────────────────┐
+│ Title: Integrate unit tests (cargo test) into test.sh workflow    │
+│ Priority: MEDIUM                                                   │
+│ Effort: SMALL                                                      │
+│ Target: M3 Week 2                                                 │
+└────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Add unit test execution to test.sh to ensure comprehensive testing
+coverage including both UAT scenarios and unit tests.
+
+**Tasks:**
+- Add ["unit:cargo"] to TESTS array in test.sh
+- Create tests/misc/unit-test-runner.sh
+- Add --unit-tests flag for targeted unit test execution
+- Integrate unit test results into overall test reporting
+
+**Success Criteria:**
+- `bin/test.sh comprehensive` runs unit tests
+- Unit test failures cause overall test failure
+- Clear unit test reporting in test output
+
+**Why Important:**
+Ensures comprehensive test coverage combining UAT and unit test validation.
+
+================================================================================
+📋 PHASE 2: RSB COMPLIANCE ARCHITECTURE (High Priority)
+================================================================================
+
+┌──────────────── TEST-05: RSB Module Structure Migration ──────────────────┐
+│ Title: Migrate flat .rs files to RSB MODULE_SPEC directory structure   │
+│ Priority: HIGH                                                          │
+│ Effort: LARGE                                                           │
+│ Target: M3 Week 2-3                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Restructure the 9 flat .rs files into proper RSB module directories with
+mod.rs orchestrators, utils.rs helpers, and proper organization.
+
+**Tasks:**
+- Convert theme_engine.rs → themes/engine/ module
+- Convert main.rs → cli/ module (extract logic from 818 lines)
+- Convert height_plugin.rs → plugins/height/ module
+- Convert width_plugin.rs → plugins/width/ module
+- Convert jynx_plugin.rs → plugins/jynx/ module
+- Create proper mod.rs orchestrators for each module
+- Update all imports and dependencies
+
+**Success Criteria:**
+- All flat files converted to directory modules
+- mod.rs files properly orchestrate module functionality
+- No compilation errors after restructuring
+- All tests continue to pass
+
+**Why Important:**
+Addresses 65% of RSB compliance gap and creates proper architectural foundation.
+
+┌──────────────── TEST-06: Typed Error System Implementation ──────────────────┐
+│ Title: Replace String-based errors with typed enums                      │
+│ Priority: HIGH                                                            │
+│ Effort: MEDIUM                                                            │
+│ Target: M3 Week 3                                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Replace all Result<T, String> usage with proper typed error enums
+following RSB error handling patterns.
+
+**Tasks:**
+- Create src/errors/ module with comprehensive error types
+- Define BoxyError enum with proper error variants
+- Implement Display and Debug traits for errors
+- Replace all String error usage with typed errors
+- Add error context and chain support
+
+**Success Criteria:**
+- No Result<T, String> usage remains in codebase
+- All errors use typed BoxyError enum
+- Proper error context and debugging information
+- Error handling tests pass
+
+**Why Important:**
+Critical for proper error management and debugging capabilities in production.
+
+┌──────────────── TEST-07: Feature Gate Implementation ──────────────────┐
+│ Title: Add conditional compilation feature gates for visual components │
+│ Priority: MEDIUM                                                        │
+│ Effort: MEDIUM                                                          │
+│ Target: M3 Week 3                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Implement feature flags for optional visual components to reduce
+compilation bloat and enable conditional builds.
+
+**Tasks:**
+- Add feature gates to Cargo.toml (visual, themes, emoji)
+- Wrap visual components with #[cfg(feature = "visual")]
+- Wrap theme system with #[cfg(feature = "themes")]
+- Add feature documentation and build variants
+- Test all feature combinations
+
+**Success Criteria:**
+- Minimal build without visual features compiles
+- All feature combinations compile and test successfully
+- Feature documentation is clear and comprehensive
+- Binary size reduction measured and documented
+
+**Why Important:**
+Enables lean builds for headless environments and reduces compilation overhead.
+
+┌──────────────── TEST-08: Curated Prelude Implementation ──────────────────┐
+│ Title: Replace wildcard re-exports with curated prelude in lib.rs      │
+│ Priority: MEDIUM                                                        │
+│ Effort: SMALL                                                           │
+│ Target: M3 Week 3                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Remove wildcard `pub use` statements from lib.rs and create a proper
+curated prelude following RSB patterns.
+
+**Tasks:**
+- Audit all public exports from modules
+- Replace `pub use module::*` with specific exports
+- Create src/prelude.rs with commonly used items
+- Update documentation for public API
+- Verify API surface area is appropriate
+
+**Success Criteria:**
+- No wildcard re-exports in lib.rs
+- Clear, documented public API surface
+- Prelude contains only essential items
+- No breaking changes for existing users
+
+**Why Important:**
+Provides clear API boundaries and prevents accidental exposure of internal APIs.
+
+================================================================================
+📋 PHASE 3: TEST AUTOMATION ENHANCEMENT (Medium Priority)
+================================================================================
+
+┌──────────────── TEST-09: Automated Visual Test Assertions ──────────────────┐
+│ Title: Add automated assertions to visual test scenarios                 │
+│ Priority: MEDIUM                                                          │
+│ Effort: MEDIUM                                                            │
+│ Target: M3 Week 4                                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Replace manual visual inspection with automated assertions for
+consistent test validation and CI/CD integration.
+
+**Tasks:**
+- Create output validation functions for visual tests
+- Add character count assertions for width/height constraints
+- Implement color code validation for theme application
+- Add Unicode/emoji rendering validation
+- Create test output snapshots for comparison
+
+**Success Criteria:**
+- Visual tests can run without human inspection
+- Automated pass/fail determination for all scenarios
+- Regression detection for visual output changes
+- CI/CD compatible test execution
+
+**Why Important:**
+Enables automated testing in CI/CD pipelines and reduces manual testing overhead.
+
+┌──────────────── TEST-10: Comprehensive Regression Testing ──────────────────┐
+│ Title: Implement systematic regression testing framework               │
+│ Priority: MEDIUM                                                       │
+│ Effort: MEDIUM                                                         │
+│ Target: M3 Week 4                                                     │
+└────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Create comprehensive regression testing that validates both functionality
+and performance across all test scenarios.
+
+**Tasks:**
+- Create regression test suite combining all scenarios
+- Add performance baseline validation
+- Implement output comparison with golden files
+- Add regression reporting and alerting
+- Create regression test CI integration
+
+**Success Criteria:**
+- Single command runs all regression tests
+- Performance and functional regressions detected
+- Clear regression reports with root cause hints
+- Integration with CI/CD pipeline
+
+**Why Important:**
+Prevents regressions during RSB migration and future development cycles.
+
+┌──────────────── TEST-11: Test Coverage Reporting ──────────────────┐
+│ Title: Implement test coverage reporting and analysis                │
+│ Priority: LOW                                                         │
+│ Effort: SMALL                                                         │
+│ Target: M3 Week 4                                                    │
+└───────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Add test coverage analysis to identify untested code paths and
+improve overall test quality.
+
+**Tasks:**
+- Add tarpaulin or grcov for coverage analysis
+- Integrate coverage reporting into test.sh
+- Set coverage thresholds and quality gates
+- Create coverage reports and documentation
+- Add coverage badges and tracking
+
+**Success Criteria:**
+- Coverage reports generated for all test runs
+- Coverage thresholds enforced (target: 80%+)
+- Coverage trends tracked over time
+- Documentation includes coverage information
+
+**Why Important:**
+Ensures comprehensive test coverage and identifies areas needing additional testing.
+
+================================================================================
+📋 PHASE 4: QUALITY ASSURANCE PROCESSES (Medium Priority)
+================================================================================
+
+┌──────────────── TEST-12: Performance Monitoring Dashboard ──────────────────┐
+│ Title: Create performance monitoring and alerting system               │
+│ Priority: MEDIUM                                                        │
+│ Effort: MEDIUM                                                          │
+│ Target: M3 Week 5                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Implement performance monitoring with historical tracking and alerting
+for performance degradation.
+
+**Tasks:**
+- Create performance dashboard from benchmark data
+- Add historical performance trend analysis
+- Implement alerting for performance degradation
+- Create performance reports and documentation
+- Add performance CI/CD integration
+
+**Success Criteria:**
+- Performance trends visible and tracked
+- Alerts for performance regressions
+- Performance reports for stakeholders
+- Performance data drives optimization decisions
+
+**Why Important:**
+Provides visibility into performance trends and enables proactive optimization.
+
+┌──────────────── TEST-13: RSB Compliance Tracking ──────────────────┐
+│ Title: Create RSB compliance tracking and progress reporting       │
+│ Priority: MEDIUM                                                    │
+│ Effort: SMALL                                                       │
+│ Target: M3 Week 5                                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Implement tracking system for RSB compliance progress with automated
+compliance validation and reporting.
+
+**Tasks:**
+- Create RSB compliance checklist and validation
+- Add automated RSB pattern detection
+- Implement compliance scoring and reporting
+- Create compliance documentation and guides
+- Add compliance CI checks
+
+**Success Criteria:**
+- RSB compliance percentage automatically calculated
+- Compliance reports for stakeholders
+- Compliance regressions prevented via CI
+- Clear compliance improvement roadmap
+
+**Why Important:**
+Ensures systematic progress toward full RSB compliance and prevents regressions.
+
+┌──────────────── TEST-14: Documentation Test Validation ──────────────────┐
+│ Title: Validate all code examples in documentation                    │
+│ Priority: LOW                                                          │
+│ Effort: SMALL                                                          │
+│ Target: M3 Week 5                                                     │
+└────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Implement automated testing of all code examples in documentation
+to ensure accuracy and prevent documentation drift.
+
+**Tasks:**
+- Extract code examples from documentation
+- Create test runners for documentation examples
+- Add documentation testing to CI pipeline
+- Implement documentation quality checks
+- Create documentation update workflows
+
+**Success Criteria:**
+- All documentation examples are tested
+- Documentation drift is prevented
+- Documentation quality is maintained
+- Examples stay current with code changes
+
+**Why Important:**
+Ensures documentation accuracy and prevents user confusion from outdated examples.
+
+================================================================================
+📋 ADDITIONAL TECHNICAL DEBT TICKETS
+================================================================================
+
+┌──────────────── TEST-15: Shell Script Standardization ──────────────────┐
+│ Title: Standardize and enhance shell script quality                   │
+│ Priority: LOW                                                          │
+│ Effort: SMALL                                                          │
+│ Target: M3 Week 6                                                     │
+└────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Improve shell script quality, error handling, and consistency across
+all test and utility scripts.
+
+**Tasks:**
+- Add proper error handling to all shell scripts
+- Implement consistent logging and output formatting
+- Add shell script linting and validation
+- Create shell script documentation and standards
+- Add shell script testing framework
+
+**Success Criteria:**
+- All shell scripts follow consistent patterns
+- Robust error handling in all scripts
+- Shell script quality gates in CI
+- Clear shell script documentation
+
+**Why Important:**
+Improves reliability and maintainability of test infrastructure.
+
+┌──────────────── TEST-16: CI/CD Pipeline Integration ──────────────────┐
+│ Title: Integrate all testing improvements into CI/CD pipeline       │
+│ Priority: MEDIUM                                                     │
+│ Effort: MEDIUM                                                       │
+│ Target: M3 Week 6                                                   │
+└──────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Ensure all testing improvements are properly integrated into CI/CD
+pipeline for automated validation.
+
+**Tasks:**
+- Add benchmark testing to CI pipeline
+- Integrate performance regression detection
+- Add RSB compliance checking to CI
+- Implement quality gates and validation
+- Create CI/CD documentation and runbooks
+
+**Success Criteria:**
+- All tests run automatically in CI/CD
+- Quality gates prevent problematic merges
+- Performance regressions blocked automatically
+- Clear CI/CD failure reporting and resolution
+
+**Why Important:**
+Ensures all quality improvements are enforced automatically.
+
+┌──────────────── TEST-17: Test Environment Standardization ──────────────────┐
+│ Title: Standardize test environments and dependencies                    │
+│ Priority: LOW                                                             │
+│ Effort: MEDIUM                                                            │
+│ Target: M3 Week 6                                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Ensure consistent test environments across development, CI, and production
+to eliminate environment-specific test failures.
+
+**Tasks:**
+- Document all test dependencies and requirements
+- Create containerized test environments
+- Add environment validation to test.sh
+- Create environment setup documentation
+- Add environment consistency checks
+
+**Success Criteria:**
+- Tests run consistently across all environments
+- Environment issues are detected early
+- Clear environment setup documentation
+- Reproducible test environments
+
+**Why Important:**
+Eliminates "works on my machine" issues and improves test reliability.
+
+┌──────────────── TEST-18: Security Testing Integration ──────────────────┐
+│ Title: Add security testing and validation to test suite              │
+│ Priority: LOW                                                          │
+│ Effort: SMALL                                                          │
+│ Target: M3 Week 6                                                     │
+└────────────────────────────────────────────────────────────────────────┘
+
+**Description:**
+Integrate security testing into the test suite to identify potential
+security vulnerabilities and ensure secure coding practices.
+
+**Tasks:**
+- Add cargo audit to test pipeline
+- Implement security linting and validation
+- Add dependency security scanning
+- Create security testing documentation
+- Add security quality gates
+
+**Success Criteria:**
+- Security vulnerabilities detected automatically
+- Security regressions prevented
+- Clear security reporting and remediation
+- Security best practices enforced
+
+**Why Important:**
+Ensures security vulnerabilities are caught early and security standards maintained.
+
+================================================================================
+📊 TICKET SUMMARY & PRIORITIZATION
+================================================================================
+
+**PHASE 1 (Week 1-2): CRITICAL INFRASTRUCTURE** 🚨
+- TEST-01: Benchmark Integration (HIGH/MEDIUM)
+- TEST-02: Performance Regression Detection (HIGH/MEDIUM)
+- TEST-03: Enhanced Snap.sh Versioning (MEDIUM/SMALL)
+- TEST-04: Cargo Test Integration (MEDIUM/SMALL)
+
+**PHASE 2 (Week 2-3): RSB ARCHITECTURE** 🏗️
+- TEST-05: RSB Module Structure Migration (HIGH/LARGE)
+- TEST-06: Typed Error System Implementation (HIGH/MEDIUM)
+- TEST-07: Feature Gate Implementation (MEDIUM/MEDIUM)
+- TEST-08: Curated Prelude Implementation (MEDIUM/SMALL)
+
+**PHASE 3 (Week 4): TEST AUTOMATION** 🤖
+- TEST-09: Automated Visual Test Assertions (MEDIUM/MEDIUM)
+- TEST-10: Comprehensive Regression Testing (MEDIUM/MEDIUM)
+- TEST-11: Test Coverage Reporting (LOW/SMALL)
+
+**PHASE 4 (Week 5-6): QUALITY ASSURANCE** 🛡️
+- TEST-12: Performance Monitoring Dashboard (MEDIUM/MEDIUM)
+- TEST-13: RSB Compliance Tracking (MEDIUM/SMALL)
+- TEST-14: Documentation Test Validation (LOW/SMALL)
+- TEST-15: Shell Script Standardization (LOW/SMALL)
+- TEST-16: CI/CD Pipeline Integration (MEDIUM/MEDIUM)
+- TEST-17: Test Environment Standardization (LOW/MEDIUM)
+- TEST-18: Security Testing Integration (LOW/SMALL)
+
+**EFFORT DISTRIBUTION:**
+- LARGE: 1 ticket (TEST-05 - RSB Module Migration)
+- MEDIUM: 8 tickets (Primary development work)
+- SMALL: 9 tickets (Quick wins and polish)
+
+**PRIORITY DISTRIBUTION:**
+- HIGH: 4 tickets (Critical path items)
+- MEDIUM: 8 tickets (Important improvements)
+- LOW: 6 tickets (Nice to have enhancements)
+
+================================================================================
+🎯 M3 MILESTONE SUCCESS CRITERIA
+================================================================================
+
+**By M3 Completion, the following must be achieved:**
+
+✅ **Testing Integration (Phase 1):**
+- Benchmarks integrated into test.sh workflow
+- Performance regression detection operational
+- Automated test/benchmark/snap workflow
+
+✅ **RSB Compliance (Phase 2):**
+- Flat file structure converted to RSB modules
+- Typed error system implemented
+- Feature gates operational
+- 90%+ RSB compliance achieved
+
+✅ **Test Automation (Phase 3):**
+- Visual tests run without manual inspection
+- Comprehensive regression testing operational
+- Test coverage >80%
+
+✅ **Quality Assurance (Phase 4):**
+- Performance monitoring dashboard operational
+- CI/CD pipeline enforces all quality gates
+- Security testing integrated
+
+================================================================================
+⚠️ DISCLAIMER
+================================================================================
+
+These task tickets are based on the comprehensive analysis performed on
+2025-09-20 and reflect the current state of the Boxy project. Task estimates
+may vary based on developer experience with RSB patterns and the complexity
+of maintaining functionality during restructuring.
+
+Priority levels assume M3 milestone deadline constraints. Actual implementation
+order may be adjusted based on team capacity and dependencies discovered during
+development.
+
+Performance thresholds and quality gates may need adjustment based on production
+requirements and stakeholder feedback.
+
+================================================================================
+🐔 TINA'S TASK TICKET CERTIFICATION
+================================================================================
+
+📋 **TICKET EXTRACTION COMPLETENESS**:
+✅ 18 comprehensive task tickets created
+✅ 4-phase strategic organization implemented
+✅ Priority and effort estimation provided
+✅ Clear success criteria for each ticket
+✅ M3 milestone alignment verified
+✅ Dependency relationships identified
+
+🎯 **TINA'S EXPERT ASSESSMENT**: These tickets address ALL critical issues
+identified in my comprehensive red egg analysis! The phased approach ensures
+systematic progress while maintaining project stability. Start with Phase 1
+benchmark integration for immediate value, then tackle RSB compliance in Phase 2.
+
+🥚 **CLUCK CLUCK CONCLUSION**: Time to crack these task eggs into action!
+This systematic approach will transform boxy from 35% to 90%+ RSB compliance
+while dramatically improving test automation and quality assurance.
+
+Ready to peck through this technical debt! 🐔⚡
+
+**Feed me when you start working these tickets!** 🍞🥖
+
+================================================================================

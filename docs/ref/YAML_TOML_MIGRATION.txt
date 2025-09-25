@@ -1,0 +1,242 @@
+# YAML → TOML Migration Plan for Boxy Theme Engine
+# Task: [M3-009..011] - Evaluate serde_yaml replacement and migrate themes
+
+## Current State Analysis
+
+### YAML Dependencies
+- `serde_yaml = "0.9"` in Cargo.toml
+- Used in 4 core files:
+  - `src/theme_engine.rs:445` - Theme file parsing
+  - `src/themes/utils.rs:34,42` - YAML validation and parsing
+  - `src/themes/utils.rs:702,733` - YAML serialization
+  - Legacy backup files in `src/ref/bak/themes.rs.backup`
+
+### Current YAML Structure
+```yaml
+metadata:
+  name: "theme-name"
+  version: "1.0.0"
+  description: "Description"
+  author: "author"
+  created: "2025-09-03"
+  updated: "2025-09-03"
+  compatibility: "boxy v0.6+"
+
+colors: {}  # Custom color definitions
+
+themes:
+  base:
+    color: "azure"
+    text_color: "auto"
+    style: "normal"
+    text_style: "normal"
+    padding: 1
+    title_align: "center"
+    # ... other properties
+
+  inherited_theme:
+    inherits: "base"
+    color: "red"
+    # ... overrides
+
+presets: {}
+text_styles: {}
+settings:
+  default_theme: info
+  fallback_color: slate
+  max_width: 120
+  min_width: 10
+  cache_themes: true
+  validate_colors: true
+```
+
+## Migration Strategy
+
+### Phase 1: Add TOML Support (Backward Compatible)
+1. **Add TOML dependencies**
+   - `toml = "0.8"` for parsing/serialization
+   - `serde = { version = "1.0", features = ["derive"] }` (already present)
+
+2. **Dual format detection**
+   - Check file extension (.yml/.yaml vs .toml)
+   - Fallback to content-based detection if needed
+   - Maintain YAML as primary for existing files
+
+3. **Parser abstraction**
+   ```rust
+   enum ThemeFormat {
+       Yaml,
+       Toml,
+   }
+
+   impl ThemeEngine {
+       fn detect_format(path: &Path) -> ThemeFormat { ... }
+       fn parse_theme_file(content: &str, format: ThemeFormat) -> Result<ThemeFile> { ... }
+   }
+   ```
+
+### Phase 2: TOML Schema Design
+
+#### Equivalent TOML Structure
+```toml
+[metadata]
+name = "theme-name"
+version = "1.0.0"
+description = "Description"
+author = "author"
+created = "2025-09-03"
+updated = "2025-09-03"
+compatibility = "boxy v0.6+"
+
+[colors]
+# Custom color definitions
+
+[themes.base]
+color = "azure"
+text_color = "auto"
+style = "normal"
+text_style = "normal"
+padding = 1
+title_align = "center"
+
+[themes.inherited_theme]
+inherits = "base"
+color = "red"
+
+[presets]
+# Theme presets
+
+[text_styles]
+# Text style definitions
+
+[settings]
+default_theme = "info"
+fallback_color = "slate"
+max_width = 120
+min_width = 10
+cache_themes = true
+validate_colors = true
+```
+
+### Phase 3: Implementation Plan
+
+#### 3.1 Core Changes Required
+
+**File: `src/theme_engine.rs`**
+- Add `toml` dependency import
+- Modify `load_theme_file()` method (line ~445)
+- Add format detection logic
+- Implement dual parser support
+
+**File: `src/themes/utils.rs`**
+- Update `validate_yaml_structure()` → `validate_theme_structure()`
+- Modify `load_theme_file_content()` (lines 34, 42)
+- Update serialization functions (lines 702, 733)
+- Add TOML validation support
+
+**File: `Cargo.toml`**
+- Add `toml = "0.8"`
+- Keep `serde_yaml = "0.9"` for backward compatibility
+
+#### 3.2 New Theme Files
+- Create `themes/boxy_default.toml` (converted from YAML)
+- Create `themes/theme_template.toml`
+- Keep existing YAML files for compatibility
+
+### Phase 4: Migration Tools
+
+#### 4.1 Conversion Utility
+```rust
+// src/cli/convert.rs - New CLI subcommand
+pub fn convert_theme_file(input: &Path, output: &Path, target_format: ThemeFormat) -> Result<()> {
+    // Load theme file in source format
+    // Convert to target format
+    // Write to output path
+}
+```
+
+#### 4.2 CLI Integration
+```bash
+boxy theme convert themes/custom.yml themes/custom.toml
+boxy theme validate themes/custom.toml
+boxy theme migrate-all --from yaml --to toml --backup
+```
+
+### Phase 5: Deprecation Timeline
+
+#### 5.1 Short Term (Current Release)
+- Implement dual format support
+- All new themes default to TOML
+- YAML remains fully supported
+- Add deprecation notice in documentation
+
+#### 5.2 Medium Term (Next Major Release)
+- Convert all built-in themes to TOML
+- YAML support marked as legacy
+- Migration tools provided
+- Warning messages for YAML usage
+
+#### 5.3 Long Term (Future Release)
+- YAML support removal (if desired)
+- `serde_yaml` dependency removal
+- Performance improvements from simpler parsing
+
+## Benefits of TOML Migration
+
+### Technical Advantages
+1. **Performance**: TOML parsing is faster and lighter than YAML
+2. **Simplicity**: Less ambiguous syntax, better error messages
+3. **Security**: No complex features like anchors/references that can cause issues
+4. **Maintenance**: One fewer dependency to manage
+5. **Readability**: More explicit structure, better for configuration files
+
+### User Experience
+1. **Easier Editing**: TOML is more straightforward for theme configuration
+2. **Better Tooling**: Most editors have better TOML support than YAML
+3. **Clearer Errors**: TOML parsing errors are more user-friendly
+4. **Configuration Style**: TOML aligns better with Rust ecosystem conventions
+
+## Implementation Priority
+
+### High Priority
+- [M3-009] Evaluate current YAML usage and performance impact
+- [M3-010] Implement dual format parser with TOML support
+- Add conversion utilities for existing themes
+
+### Medium Priority
+- [M3-011] Migrate default themes to TOML format
+- Update documentation and examples
+- Add CLI migration commands
+
+### Low Priority
+- Deprecate YAML support (optional, may keep for compatibility)
+- Remove serde_yaml dependency (if YAML support is removed)
+
+## Backward Compatibility Guarantees
+
+1. **Existing YAML themes continue to work unchanged**
+2. **No breaking changes to theme loading API**
+3. **Automatic format detection**
+4. **Migration tools provided for easy conversion**
+5. **Documentation for both formats during transition**
+
+## Testing Strategy
+
+1. **Dual Format Tests**: Ensure identical behavior between YAML and TOML versions
+2. **Migration Tests**: Verify conversion tools produce equivalent themes
+3. **Performance Tests**: Benchmark TOML vs YAML parsing performance
+4. **Compatibility Tests**: Ensure all existing themes work with new parser
+
+## Next Steps
+
+1. Create feature branch: `feature/toml-theme-support`
+2. Implement dual parser in `src/theme_engine.rs`
+3. Add conversion utilities
+4. Update test suite for dual format support
+5. Convert default themes to TOML
+6. Update documentation and CLI help
+
+---
+Status: Ready for implementation
+Estimated Effort: 2-3 development sessions
+Risk Level: Low (maintains full backward compatibility)

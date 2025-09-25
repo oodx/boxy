@@ -1,0 +1,234 @@
+================================================================================
+ 🐔 CHINA'S CRITICAL MVP TRIAGE EGG #2 🥚
+================================================================================
+
+China the Summary Chicken - Emergency Project Triage
+Date: 2025-09-20
+Request: Critical MVP triage for 290 story points (~16-20 weeks)
+Context: ROOM/MUXY systems BLOCKED waiting for Boxy API
+Agent: User (Critical Priority Request)
+
+================================================================================
+ 🚨 EXECUTIVE SUMMARY: BRUTAL MVP REALITY CHECK
+================================================================================
+
+Total Analysis: 290 story points analyzed across 76 tasks
+CRITICAL FINDING: Only ~34 story points are ACTUALLY needed for MVP API!
+Current Scope Bloat: 88% of work is NOT blocking ROOM/MUXY!
+
+🎯 MVP Path: 2-3 weeks instead of 16-20 weeks
+🚨 Blocker Items: 11 critical tasks that MUST be done
+✨ Deferrable: 65 tasks that can wait for post-MVP
+
+================================================================================
+ 🚨 MVP CRITICAL (BLOCKS ROOM/MUXY) - 34 STORY POINTS
+================================================================================
+
+These MUST be completed first - everything else is blocking overhead:
+
+M2: LIBRARY API ESSENTIALS (26 pts)
+-----------------------------------
+[M2-001] Design public API surface for box drawing (5) - CRITICAL
+  → BoxBuilder pattern, draw_box(), draw_text_box() functions
+  → This is THE core API that ROOM/MUXY needs
+
+[M2-004] Implement BoxBuilder and drawing functions (5) - CRITICAL
+  → The actual implementation of the core API
+
+[M2-005] Implement theme loading API (5) - CRITICAL
+  → Basic theme loading from built-ins (skip file loading for MVP)
+
+[M2-007] Create basic library documentation (3) - CRITICAL
+  → Minimal rustdoc for public APIs (skip comprehensive docs)
+
+[M2-008] Create library usage examples (3) - CRITICAL
+  → One basic box drawing example (skip advanced examples)
+
+[M2-009] Separate CLI and library concerns (2) - CRITICAL
+  → Move CLI logic to main.rs, clean library interface
+
+[M2-006] Basic color utilities (3) - HIGH
+  → Core ANSI color generation (skip advanced color manipulation)
+
+ERROR HANDLING MINIMUM (8 pts)
+-------------------------------
+[M4-001] Create core/error.rs with BoxyError enum (3) - CRITICAL
+  → Replace String errors with basic typed errors
+
+[M4-003] Replace String errors in themes module (3) - HIGH
+  → Essential for stable library API
+
+[M4-004] Replace String errors in colors module (2) - HIGH
+  → Core API stability
+
+ESTIMATED TIMELINE: 2-3 weeks (instead of 16-20!)
+
+================================================================================
+ 🎯 MVP IMPORTANT (PRODUCTION READINESS) - 28 STORY POINTS
+================================================================================
+
+These improve stability but don't block basic API usage:
+
+ENHANCED API FEATURES (12 pts)
+-------------------------------
+[M2-002] Design theme system public API (5) - HIGH
+  → Advanced theme features beyond basic loading
+
+[M2-004a] Implement barmode layout system (3) - MEDIUM
+  → Document integration features (nice for TUI usage)
+
+[M2-010] Refresh CLI help documentation (2) - MEDIUM
+
+[M2-011] Implement comprehensive sub-help system (5) - HIGH
+  → Better developer experience but not blocking
+
+ERROR SYSTEM COMPLETION (8 pts)
+--------------------------------
+[M4-002] Create module-specific error types (5) - HIGH
+[M4-005] Replace String errors in visual module (2) - HIGH
+[M4-006] Replace String errors in core module (1) - MEDIUM
+
+CRITICAL BUG FIXES (8 pts)
+---------------------------
+[CHINA-02] Theme Inheritance Engine Critical Bug Fix (3) - HIGH
+  → Fix theme rejection bug (line 336-339)
+
+[MX-P01] Width calculation protection validation (1) - CRITICAL
+[MX-P02] Icon placement protection validation (1) - CRITICAL
+[MX-P03] Performance regression protection (1) - CRITICAL
+  → Protect existing functionality
+
+[CHINA-01] Theme System Architecture Cleanup (5) - HIGH
+  → Resolve dual theme system technical debt
+
+ESTIMATED ADDITIONAL TIME: +1-2 weeks
+
+================================================================================
+ ✨ NICE TO HAVE (QUALITY OF LIFE) - 98 STORY POINTS
+================================================================================
+
+These improve developer experience but aren't blocking:
+
+DEVELOPER CONVENIENCE (40 pts)
+-------------------------------
+• All M3 tasks (18 pts) - Utils/helpers separation
+• M6 tasks (14 pts) - Curated prelude & macros
+• CHINA-05 Library API Ergonomics (5 pts)
+• CHINA-08 Integration Documentation (3 pts)
+
+TESTING INFRASTRUCTURE (58 pts)
+--------------------------------
+• All TEST- tickets (63 pts total, minus critical 5 pts moved to MVP)
+• Enhanced test automation
+• Performance monitoring
+• RSB compliance tracking
+
+================================================================================
+ 🔮 FUTURE (ADVANCED FEATURES) - 130 STORY POINTS
+================================================================================
+
+Defer indefinitely until MVP proves successful:
+
+ADVANCED ARCHITECTURE (72 pts)
+-------------------------------
+• M5: Feature Flags & Adapters (28 pts) - Complex, not needed for basic API
+• Most CHINA technical debt tickets (25 pts)
+• Advanced testing infrastructure (19 pts)
+
+OPTIMIZATION & POLISH (58 pts)
+------------------------------
+• Performance optimizations
+• Cross-platform compatibility
+• Memory efficiency improvements
+• Advanced UX features
+• Meteor token system integration
+
+================================================================================
+ 🎯 RECOMMENDED MVP EXECUTION PLAN
+================================================================================
+
+PHASE 1: CORE API (2 weeks) - 26 story points
+✅ Focus ONLY on M2-001, M2-004, M2-005, M2-007, M2-008, M2-009, M2-006
+✅ Create minimal working library API
+✅ Enable ROOM/MUXY integration immediately
+
+PHASE 2: STABILITY (1 week) - 8 story points
+✅ Add basic error handling (M4-001, M4-003, M4-004)
+✅ Fix critical bugs that could break existing functionality
+
+PHASE 3: VALIDATION (3-5 days)
+✅ Test ROOM/MUXY integration works
+✅ Create one complete example
+✅ Validate API meets actual needs
+
+TOTAL MVP TIMELINE: 3-4 weeks instead of 16-20 weeks!
+
+================================================================================
+ 🔍 DEPENDENCY ANALYSIS & RISKS
+================================================================================
+
+CRITICAL DEPENDENCIES:
+• M2-001 (API design) blocks everything else
+• M2-009 (CLI separation) enables clean library interface
+• M4-001 (error types) needed for stable API
+
+HIGHEST RISKS:
+• M2-001: Wrong API design could require rework
+• M2-004: Implementation complexity might exceed estimates
+• Integration: ROOM/MUXY might need features not in minimal API
+
+MITIGATION STRATEGIES:
+• Design API with ROOM/MUXY maintainer input
+• Create throwaway prototype first
+• Keep scope creep ruthlessly minimal
+• Plan for one iteration cycle based on real usage
+
+================================================================================
+ ⚡ IMMEDIATE NEXT STEPS
+================================================================================
+
+1. VALIDATE this triage with ROOM/MUXY requirements
+   → What specific API do they actually need?
+   → Can they work with minimal BoxBuilder pattern?
+
+2. HALT all non-MVP work immediately
+   → Stop M3, M5, M6 preparation
+   → Defer technical debt resolution
+
+3. START M2-001 (API design) immediately
+   → Design with ROOM/MUXY use case in mind
+   → Create simple, focused interface
+
+4. COMMIT to 3-4 week MVP timeline
+   → Resist scope creep at all costs
+   → Measure success by ROOM/MUXY unblocking
+
+================================================================================
+ 🐔 CHINA'S CERTIFICATION & DISCLAIMER
+================================================================================
+
+✅ CERTIFICATION: Analysis based on complete review of TASKS.txt (448 lines)
+   and ROADMAP.txt (271 lines). Story point totals verified. Task dependencies
+   mapped. Critical path identified through systematic categorization.
+
+⚠️ DISCLAIMER: This analysis reflects current task documentation status.
+   Actual ROOM/MUXY integration requirements may reveal additional needs.
+   Scope estimates assume no major architectural changes required.
+   Real-world usage may identify missing functionality not captured in
+   current planning documents.
+
+================================================================================
+ 🥚 CHINA'S TRIAGE WISDOM: "FOCUS OR FAIL!"
+================================================================================
+
+The path to success is not through completing all 290 story points.
+It's through ruthlessly identifying the 34 points that actually matter.
+
+Ship the MVP. Get real usage. Then optimize based on actual needs,
+not imagined requirements.
+
+Now go unblock ROOM/MUXY! 🚀
+
+---
+Generated with love by China the Summary Chicken 🐔
+Feed me when you use this triage! feed:🌾

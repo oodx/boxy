@@ -1,0 +1,54 @@
+================================================================================
+ ⚡ BOXY PROJECT - QUICK REFERENCE (30 second context)
+================================================================================
+
+🎯 **Current Focus**: Theme stability + technical debt resolution before M2 API
+
+📊 **Project Status**:
+- ✅ Foundation: Complete (64 story points archived in docs/procs/DONE.txt)
+- 🔴 Active: Pre-M3 technical debt (108 story points)
+- ⬆️ Next: M2 Library API (42 story points)
+
+🚨 **Critical Context**:
+- **Blocker**: ROOM/MUXY projects need library API
+- **MVP**: China identified 34 critical story points (vs 290 total)
+- **Current Sprint**: Theme inheritance bug fix (CHINA-02) + testing infrastructure
+
+📋 **Current Tasks** (see docs/procs/SPRINT.txt):
+1. CHINA-02: Fix theme inheritance crash (line 336-339 in theme_engine.rs)
+2. TEST-01: Integrate benchmarks into test.sh workflow
+3. CHINA-07: Add theme debugging tools (--explain-theme, --list-themes)
+
+🏗️ **Architecture**:
+- **Branch**: main
+- **RSB Compliance**: 35% → 90% target
+- **Test Command**: ./bin/test.sh run perfect
+- **Theme Bug**: Critical inheritance failure, needs graceful fallback
+
+⚡ **Immediate Next Steps**:
+1. Read docs/procs/CONTINUE.md for latest session status
+2. Check docs/procs/SPRINT.txt for current task details
+3. Use TodoWrite tool to track progress
+4. Update docs/procs/CONTINUE.md when session ends
+
+🔧 **Key Commands**:
+- Test: `./bin/test.sh run perfect`
+- Build: `cargo build --release`
+- Help: `./target/debug/boxy --help`
+- Benchmark: `cargo bench --bench status_render`
+
+📁 **Essential Files**:
+- docs/procs/PROCESS.txt ← Complete workflow
+- docs/procs/CONTINUE.md ← Current status
+- docs/procs/SPRINT.txt ← Active tasks
+- .eggs/egg.2.critical-mvp-triage.txt ← MVP analysis
+
+🚨 **Critical Rules**:
+- Follow RSB patterns for all code changes
+- Test all changes with bin/test.sh
+- Update CONTINUE.md at session end
+- Protect width calculation functions (see docs/ref/CRITICAL_FUNCTIONS_PROTECTION.md)
+
+================================================================================
+⏰ **READ TIME: 30 seconds** | For complete context: docs/procs/PROCESS.txt (3 min)
+================================================================================

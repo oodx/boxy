@@ -1,0 +1,343 @@
+================================================================================
+ 📋 BOXY DEVELOPMENT PROCESS - Self-Hydrating Workflow System
+================================================================================
+
+🎯 PURPOSE: Single source of truth for development workflow
+📅 Created: 2025-09-20
+🔄 Auto-updates: CONTINUE.md reflects latest session progress
+
+================================================================================
+ 🏗️ PROJECT STRUCTURE & KEY DOCUMENTS
+================================================================================
+
+📁 **Core Planning Documents** (READ THESE FIRST):
+├── PROCESS.txt         ← YOU ARE HERE (Master workflow guide)
+├── CONTINUE.md         ← Current session status & next steps
+├── SPRINT.txt          ← Current sprint tasks (poor-man's kanban)
+├── ROADMAP.txt         ← High-level milestones & strategy
+├── TASKS.txt           ← Detailed task breakdown with story points
+└── DONE.txt            ← Completed work archive (64 story points)
+
+📁 **Technical Debt Analysis**:
+├── .eggs/egg.GOLDEN.boxy-architecture-wisdom.txt    ← China's consolidated insights
+├── .eggs/CHINA-TECHNICAL-DEBT-TICKETS.txt          ← Architecture debt tasks
+├── .eggs/red_egg.2.technical-debt-task-tickets.txt ← Testing/RSB debt tasks
+└── .eggs/egg.2.critical-mvp-triage.txt             ← MVP vs nice-to-have triage
+
+📁 **Reference Documentation** (docs/ref/):
+├── CRITICAL_FUNCTIONS_PROTECTION.md               ← Width/emoji calculation protection
+├── THEME_SYSTEM.md                                ← Theme architecture & patterns
+├── HEIGHT_FEATURE.md                              ← Height system implementation
+├── WIDTH_CALCULATION.md                           ← Unicode width handling
+├── PUBLIC_API_STRAT.txt                          ← Library API strategy
+├── YAML_TOML_MIGRATION.txt                       ← Theme format migration
+├── BOXY_HEIGHT_STRAT.txt                         ← Height implementation strategy
+├── BOXY_LESSONS.md                               ← Development lessons learned
+└── TOKEN_NAMESPACE_CONCEPT.md                    ← Token system concepts
+
+================================================================================
+ 🔄 SELF-HYDRATING WORKFLOW PROCESS
+================================================================================
+
+## 🚀 **STEP 1: CONTEXT HYDRATION** (Start here every session)
+
+```bash
+# Essential reading order for new agents/sessions:
+1. Read PROCESS.txt (this file) - understand the workflow
+2. Read CONTINUE.md - get current status and next steps
+3. Read SPRINT.txt - see active sprint tasks
+4. Optional: ROADMAP.txt for broader context
+5. Optional: TASKS.txt for detailed task specs
+```
+
+**Context Hydration Checklist**:
+- [ ] Current branch: `main` (or check CONTINUE.md for branch info)
+- [ ] Foundation status: ✅ Complete (64 story points in DONE.txt)
+- [ ] Active phase: Pre-M3 Technical Debt Resolution (108 story points)
+- [ ] Sprint focus: Theme stability + debugging (CHINA-02, TEST-01, CHINA-07)
+- [ ] Blockers: ROOM/MUXY projects need library API
+- [ ] MVP triage: China identified 34 critical story points vs 290 total
+
+## 🎯 **STEP 2: DETERMINE CURRENT PHASE**
+
+**Phase Detection** (check CONTINUE.md and SPRINT.txt):
+
+### 📋 **A. Sprint Work (Active Development)**
+- Check SPRINT.txt for current sprint tasks
+- Use TodoWrite tool to track progress
+- Update SPRINT.txt as tasks complete
+- Move to Phase B when sprint complete
+
+### 🔍 **B. Planning & Triage (Between Sprints)**
+- Review China's MVP triage (.eggs/egg.2.critical-mvp-triage.txt)
+- Update ROADMAP.txt with priority changes
+- Create new SPRINT.txt with next batch of tasks
+- Move to Phase A for execution
+
+### 🚨 **C. Technical Debt Resolution (Current Priority)**
+- Work through CHINA-XX and TEST-XX tickets
+- Focus on MVP-critical items first
+- Address RSB compliance gaps (35% → 90%)
+- Prepare foundation for M2 Library API
+
+### 🎯 **D. Milestone Development (Future)**
+- Execute M2-M6 milestones in sequence
+- Only after technical debt is resolved
+- Follow TASKS.txt specifications
+
+## 📝 **STEP 3: WORK EXECUTION PATTERNS**
+
+### 🔧 **Development Work**:
+```bash
+1. Update TodoWrite with current task status
+2. Read relevant code/documentation
+3. Implement changes following RSB patterns
+4. Test changes: ./bin/test.sh run perfect
+5. Update SPRINT.txt with progress
+6. Update CONTINUE.md with session results
+```
+
+### 🧹 **Technical Debt Work**:
+```bash
+1. Reference specific CHINA-XX or TEST-XX ticket
+2. Read China's golden egg for architectural context
+3. Implement fixes maintaining backward compatibility
+4. Run comprehensive tests
+5. Update technical debt tracking
+```
+
+### 📋 **Planning Work**:
+```bash
+1. Read China's MVP triage analysis
+2. Review current ROADMAP.txt priorities
+3. Update TASKS.txt with any new findings
+4. Create focused SPRINT.txt for next phase
+5. Update CONTINUE.md with planning results
+```
+
+## 🔄 **STEP 4: SESSION CLOSURE & HYDRATION UPDATE**
+
+**REQUIRED: Update CONTINUE.md every session**:
+```markdown
+# Continue Log – [branch-name] + [phase-description]
+
+## Summary
+- [What was accomplished this session]
+- [Key decisions made]
+- [Problems encountered and solutions]
+
+## Current Status
+- **Branch**: [current branch]
+- **Phase**: [Sprint/Planning/Technical Debt/Milestone]
+- **Progress**: [percentage or milestone completion]
+
+## Next Steps (Priority Order)
+1. [Immediate next task]
+2. [Following task]
+3. [Longer-term task]
+
+## Context for Next Agent
+- **Key files modified**: [list]
+- **Important decisions**: [context that affects future work]
+- **Blockers/Risks**: [anything that could trip up next session]
+```
+
+================================================================================
+ 📊 PROJECT STATUS QUICK REFERENCE
+================================================================================
+
+## 🎯 **Current Priorities** (as of 2025-09-20):
+
+### 🚨 **CRITICAL PATH** (MVP for ROOM/MUXY):
+1. **Theme stability fix** (CHINA-02) - Critical bug in inheritance
+2. **Library API foundation** (M2-001 through M2-004) - 34 story points
+3. **Basic documentation** (M2-007) - Essential for adoption
+
+### 🔴 **Technical Debt** (108 story points):
+- **CHINA tickets** (45 pts): Architecture, performance, UX
+- **TEST tickets** (63 pts): RSB compliance, testing infrastructure
+
+### ⬆️ **Future Milestones** (118 story points):
+- **M2**: Library API Development (42 pts) ← NEXT AFTER DEBT
+- **M3**: Utils/helpers separation + YAML→TOML (18 pts)
+- **M4**: Typed error system (16 pts)
+- **M5**: Feature flags & adapters (28 pts)
+- **M6**: Curated prelude & macros (14 pts)
+
+## 📈 **Progress Tracking**:
+- ✅ **Completed**: 64/290 story points (22%)
+- 🔴 **Technical Debt**: 108 story points (37%)
+- ⬆️ **Core Work**: 118 story points (41%)
+
+## 🎲 **Decision Points**:
+- **MVP vs Full**: China recommends focusing on 34 critical story points
+- **RSB Compliance**: Currently 35%, target 90%
+- **API Priority**: ROOM/MUXY projects are blocked waiting for library API
+
+================================================================================
+ 🛠️ COMMON WORKFLOWS
+================================================================================
+
+## 🎯 **Sprint Planning Workflow**:
+```bash
+1. Read China's MVP triage (.eggs/egg.2.critical-mvp-triage.txt)
+2. Review current ROADMAP.txt priorities
+3. Select 3-4 tasks (10-15 story points max per sprint)
+4. Create focused SPRINT.txt with specific requirements
+5. Update CONTINUE.md with sprint goals
+```
+
+## 🔧 **Development Session Workflow**:
+```bash
+1. Read PROCESS.txt → CONTINUE.md → SPRINT.txt (hydration)
+2. Use TodoWrite to track current task
+3. Implement changes with tests
+4. Update SPRINT.txt progress
+5. Update CONTINUE.md with session results
+```
+
+## 🧹 **Technical Debt Resolution Workflow**:
+```bash
+1. Select CHINA-XX or TEST-XX ticket from triage
+2. Read relevant technical debt analysis in .eggs/
+3. Implement fix following RSB patterns
+4. Test thoroughly with bin/test.sh
+5. Update debt tracking and CONTINUE.md
+```
+
+## 📋 **Milestone Transition Workflow**:
+```bash
+1. Review DONE.txt to confirm previous milestone complete
+2. Update ROADMAP.txt with new phase
+3. Create initial SPRINT.txt for new milestone
+4. Update CONTINUE.md with milestone transition
+5. Begin development workflow
+```
+
+================================================================================
+ ⚡ AGENT QUICK START GUIDE
+================================================================================
+
+## 🚀 **For New Agents (ESSENTIAL CONTEXT)**:
+
+**Step 1**: Read this PROCESS.txt file completely
+**Step 2**: Read CONTINUE.md for current session status
+**Step 3**: Read SPRINT.txt for active tasks
+**Step 4**: Begin work using TodoWrite for progress tracking
+
+## 🎯 **Key Project Context**:
+- **Project**: Boxy CLI → Library with RSB MODULE_SPEC compliance
+- **Blocker**: ROOM/MUXY projects need library API to function
+- **Current Focus**: Technical debt resolution before M2 Library API
+- **Foundation**: Solid (4 milestones complete, 64 story points)
+- **Architecture**: Transitioning to RSB compliance (35% → 90%)
+- **Testing**: Comprehensive test suite with bin/test.sh workflow
+
+## ⚠️ **Critical Decisions Made**:
+- Foundation milestones complete and archived in DONE.txt
+- Technical debt identified and triaged by China/Tina analysis
+- MVP scope reduced from 290 → 34 story points for faster delivery
+- SPRINT.txt serves as poor-man's kanban for task management
+- CONTINUE.md is the single source of truth for session handoffs
+
+## 🔄 **Workflow Rules**:
+1. **Always read PROCESS.txt → CONTINUE.md → SPRINT.txt first**
+2. **Use TodoWrite tool for task tracking within sessions**
+3. **Update CONTINUE.md at end of every session**
+4. **Follow RSB patterns for all code changes**
+5. **Test all changes with bin/test.sh**
+6. **Keep SPRINT.txt focused (3-4 tasks max)**
+
+================================================================================
+ 📚 REFERENCE LINKS
+================================================================================
+
+## 🎯 **Essential Files** (in priority order):
+1. **docs/procs/CONTINUE.md** - Current status and next steps
+2. **docs/procs/SPRINT.txt** - Active sprint tasks
+3. **docs/procs/ROADMAP.txt** - Strategic overview
+4. **docs/procs/TASKS.txt** - Detailed specifications
+5. **docs/procs/DONE.txt** - Completed work archive
+
+## 🧠 **Technical Debt Analysis**:
+- **.eggs/egg.GOLDEN.boxy-architecture-wisdom.txt** - Consolidated wisdom
+- **.eggs/CHINA-TECHNICAL-DEBT-TICKETS.txt** - Architecture debt
+- **.eggs/red_egg.2.technical-debt-task-tickets.txt** - Testing/RSB debt
+- **.eggs/egg.2.critical-mvp-triage.txt** - MVP vs nice-to-have analysis
+
+## 📖 **Topic-Specific Reference** (docs/ref/):
+- **CRITICAL_FUNCTIONS_PROTECTION.md** - When modifying width/emoji calculations
+- **THEME_SYSTEM.md** - For theme-related development
+- **HEIGHT_FEATURE.md** - For height system work
+- **WIDTH_CALCULATION.md** - For Unicode width handling
+- **PUBLIC_API_STRAT.txt** - For library API development
+- **YAML_TOML_MIGRATION.txt** - For theme format migration
+- **BOXY_LESSONS.md** - Development best practices and lessons
+
+## 🧪 **Testing & Validation**:
+- **bin/test.sh** - Main testing workflow
+- **bin/snap.sh** - Performance snapshot management
+- **tests/** - Comprehensive test suite
+
+================================================================================
+ 🔧 MAINTENANCE & UPDATES
+================================================================================
+
+## 📝 **This File Should Be Updated When**:
+- New milestones are defined
+- Major architectural decisions are made
+- Workflow processes change
+- New critical documents are created
+- Sprint/kanban process evolves
+
+## 🔄 **CONTINUE.md Update Triggers**:
+- End of every development session
+- Completion of sprint tasks
+- Major blockers encountered
+- Milestone transitions
+- Critical decisions made
+
+## 📊 **Progress Tracking Updates**:
+- ROADMAP.txt when milestones complete
+- TASKS.txt when task specifications change
+- DONE.txt when work is completed and archived
+- SPRINT.txt when sprint scope changes
+
+================================================================================
+ ✅ PROCESS VERIFICATION CHECKLIST
+================================================================================
+
+Before starting any work session, verify:
+- [ ] Read PROCESS.txt (this file) for workflow understanding
+- [ ] Read CONTINUE.md for current session context
+- [ ] Read SPRINT.txt for active tasks
+- [ ] Understand current phase (Sprint/Planning/Debt/Milestone)
+- [ ] Know the current branch and any important state
+- [ ] Reviewed any relevant technical debt analysis
+- [ ] Ready to use TodoWrite for task tracking
+- [ ] Plan to update CONTINUE.md at session end
+
+================================================================================
+ 🎯 SUCCESS METRICS
+================================================================================
+
+## 📈 **Process Success Indicators**:
+- Agents can start productive work within 5 minutes of reading docs
+- Zero time wasted on context reconstruction
+- Consistent progress tracking across sessions
+- Clear handoffs between agents
+- Reduced rework from missing context
+
+## 🎯 **Project Success Metrics**:
+- ROOM/MUXY unblocked with working library API
+- Technical debt reduced (RSB compliance 35% → 90%)
+- Foundation stable for future development
+- Clean separation between MVP and nice-to-have features
+
+================================================================================
+
+🎉 **REMEMBER**: This process exists to eliminate context switching overhead
+and keep development momentum high. When in doubt, READ THE DOCS FIRST!
+
+Last Updated: 2025-09-20
+Next Review: When major workflow changes occur

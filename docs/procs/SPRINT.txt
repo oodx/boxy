@@ -1,0 +1,143 @@
+================================================================================
+ 🏃 BOXY DEVELOPMENT SPRINT - Theme Stability & Debugging
+================================================================================
+
+Sprint Goal: Fix critical theme inheritance bug and improve debugging/testing
+Duration: Current sprint (focused iteration)
+Story Points: ~10-12 points (manageable sprint size)
+
+================================================================================
+ 🎯 SPRINT TASKS
+================================================================================
+
+[CHINA-02] Theme Inheritance Engine Critical Bug Fix (MEDIUM) - High Priority
+──────────────────────────────────────────────────────────────────────────
+**Issue**: Critical bug in theme_engine.rs:336-339 causes boxy to crash when
+color properties become empty during inheritance, instead of graceful fallback.
+
+**Current Behavior**: Complete failure when inheritance chain breaks
+**Desired Behavior**: Graceful fallback to default theme + warning to stderr + exit code 1
+
+**Specific Requirements**:
+- Detect when theme inheritance results in invalid/empty properties
+- Implement fallback hierarchy: broken theme → parent theme → builtin default
+- Write warning to stderr with details about what failed and what fallback was used
+- Return exit code 1 (warning) instead of exit code 2 (error) for fallback scenarios
+- If even default theme fails, pipe input text directly through (no box) + stderr warning
+- Add comprehensive inheritance chain validation tests
+
+**Files to modify**:
+- src/theme_engine.rs (lines 336-339 and surrounding inheritance logic)
+- Add fallback detection and recovery logic
+- Update error handling to be more graceful
+
+**Testing**:
+- Create themes with broken inheritance chains
+- Test fallback scenarios
+- Verify stderr warnings and exit codes
+
+──────────────────────────────────────────────────────────────────────────
+
+[TEST-01] Benchmark Integration into test.sh workflow (MEDIUM) - High Priority
+──────────────────────────────────────────────────────────────────────────
+**Goal**: Integrate performance benchmarks into test.sh to catch regressions
+during theme bug fixes and future development.
+
+**Requirements**:
+- Add --benchmark flag to test.sh
+- Add --snap-benchmarks flag for performance snapshot preservation
+- Create tests/misc/benchmark-suite.sh script
+- Integrate with existing snap.sh workflow
+- Performance threshold validation (fail if render time > 2.0ms)
+
+**Benefits**:
+- Catch performance regressions while fixing CHINA-02
+- Establish baseline for theme fallback performance impact
+- Automated regression detection for ongoing development
+
+**Files to modify**:
+- bin/test.sh (add benchmark flags and integration)
+- Create tests/misc/benchmark-suite.sh
+- Update snap.sh integration
+
+──────────────────────────────────────────────────────────────────────────
+
+[CHINA-07] Theme Discovery UX Improvements (SMALL) - Medium Priority
+──────────────────────────────────────────────────────────────────────────
+**Goal**: Add debugging capabilities to help diagnose theme issues and improve
+user experience when themes fail.
+
+**Requirements**:
+- Add `--explain-theme <theme_name>` flag showing resolution path and inheritance
+- Add `--list-themes` flag showing available themes with source information
+- Add `--validate-theme <theme_name>` dry-run with detailed feedback
+- Add verbose logging option (--verbose-themes) for theme system debugging
+- Improve error messages when themes fail to load
+
+**Benefits**:
+- Complements CHINA-02 by providing better diagnostics
+- Helps users understand theme inheritance and resolve issues
+- Makes theme debugging much easier for both users and developers
+
+**Files to modify**:
+- src/main.rs (add new CLI flags)
+- src/theme_engine.rs (add explanation and validation functions)
+- Update help text and documentation
+
+================================================================================
+ 🎯 SPRINT SUCCESS CRITERIA
+================================================================================
+
+✅ **Theme Stability**: No more crashes on theme inheritance issues
+✅ **Graceful Degradation**: Fallback to defaults + meaningful warnings
+✅ **Performance Safety**: Benchmark integration prevents regressions
+✅ **Debugging Tools**: Users can diagnose and fix theme issues themselves
+✅ **Test Coverage**: Comprehensive tests for inheritance edge cases
+✅ **Documentation**: Clear error messages and troubleshooting guidance
+
+================================================================================
+ 🔄 SPRINT WORKFLOW
+================================================================================
+
+**Phase 1: Foundation** (TEST-01)
+- Set up benchmark integration first
+- Establish performance baseline before changes
+- Ensure regression detection is working
+
+**Phase 2: Core Fix** (CHINA-02)
+- Fix the critical inheritance bug
+- Implement graceful fallback logic
+- Add comprehensive error handling and recovery
+
+**Phase 3: UX Polish** (CHINA-07)
+- Add theme debugging and discovery tools
+- Improve error messages and user guidance
+- Test the complete theme experience end-to-end
+
+**Testing Strategy**:
+- Run benchmarks before/after each change
+- Test with broken themes, missing themes, complex inheritance
+- Verify fallback behavior and exit codes
+- Ensure no performance regressions
+
+================================================================================
+ 📋 SPRINT NOTES
+================================================================================
+
+**Why These Tasks**:
+- CHINA-02: Critical bug affecting user experience (user priority)
+- TEST-01: Safety net for performance during bug fixes
+- CHINA-07: Complements bug fix with better diagnostics (small, high value)
+
+**Task Synergy**:
+- All three tasks work together to improve theme system reliability
+- Benchmark integration helps catch any performance impact from bug fixes
+- Discovery tools help users and developers diagnose theme issues
+- Combined effort: ~10-12 story points (good sprint size)
+
+**Risk Mitigation**:
+- Performance regression detection via TEST-01
+- Comprehensive testing for edge cases
+- Graceful degradation instead of hard failures
+
+================================================================================

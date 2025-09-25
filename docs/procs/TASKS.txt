@@ -1,0 +1,447 @@
+================================================================================
+ 📋 BOXY RSB COMPLIANCE - DETAILED TASK BREAKDOWN
+================================================================================
+
+Format: [TICKET-ID] Task Description (Story Points) - Priority
+Story Point Scale: 1=Trivial, 2=Small, 3=Medium, 5=Large, 8=Complex, 13=Epic
+
+================================================================================
+ 📋 COMPLETED MILESTONES MOVED TO DONE.txt
+================================================================================
+
+✅ See DONE.txt for complete archive of finished work:
+   • M1: Basic Module Restructuring (23 pts) ✅ COMPLETED
+   • M1.5: Auto/None Properties Validation (8 pts) ✅ COMPLETED
+   • M1.7: Render Target Streaming (15 pts) ✅ COMPLETED
+   • MH: Terminal Height System (18 pts) ✅ COMPLETED
+
+🎯 Total Completed: 64 story points across 4 major milestones
+
+================================================================================
+ 🎯 MILESTONE 2: LIBRARY API DEVELOPMENT (34 pts)
+================================================================================
+Duration: 2-3 weeks | Risk: Medium | New Public API
+
+Theme: Core Library API Design (13 pts)
+---------------------------------------
+[M2-001] Design public API surface for box drawing (5) - Critical
+  - Define BoxBuilder pattern for ergonomic usage
+  - Create draw_box(), draw_text_box() functions
+  - Design width/height/padding configuration
+  - Plan async/sync variants
+
+[M2-002] Design theme system public API (5) - Critical
+  - Create ThemeLoader, ThemeApplicator traits
+  - Design theme selection and validation functions
+  - Plan theme customization and override API
+  - Consider theme caching strategies
+
+[M2-003] Design color system public API (3) - High
+  - Create color parsing and manipulation functions
+  - Design palette selection and validation
+  - Plan ANSI code generation utilities
+  - Consider color space conversions
+
+Theme: Library Implementation (13 pts)
+--------------------------------------
+[M2-004] Implement BoxBuilder and drawing functions (5) - High
+  - Create BoxBuilder with fluent interface
+  - Implement core drawing logic for library usage
+  - Handle text wrapping and width calculation
+  - Add validation and error handling
+
+[M2-004a] Implement barmode layout system (3) - Medium
+  - Add barmode layout rendering (top/bottom bars only, no sides/corners)
+  - Implement CLI support: --layout bm, --params ly='bm'
+  - Support barmode in BoxBuilder API for document integration
+  - Add barmode examples for document border use cases
+
+[M2-005] Implement theme loading API (5) - High
+  - Create theme loading from files/built-ins
+  - Implement theme application to boxes
+  - Add theme validation and error handling
+  - Support custom theme definitions
+
+[M2-006] Implement color manipulation utilities (3) - Medium
+  - Create color parsing and validation functions
+  - Implement ANSI code generation
+  - Add color palette utilities
+  - Support RGB/hex color inputs
+
+Theme: Documentation & Examples (8 pts)
+---------------------------------------
+[M2-007] Create comprehensive library documentation (3) - High
+  - Write rustdoc for all public APIs
+  - Create usage examples for common patterns
+  - Document theme system for library users
+  - Add migration guide from CLI usage
+
+[M2-008] Create library usage examples (3) - High
+  - Basic box drawing example
+  - Theme customization example
+  - Color manipulation example
+  - Integration with other CLI tools
+
+[M2-009] Separate CLI and library concerns (2) - Medium
+  - Move CLI-specific logic to main.rs
+  - Ensure library has no CLI dependencies
+  - Create clean separation of concerns
+  - Test library usage without CLI
+
+[M2-010] Refresh CLI help documentation (2) - Medium
+  - Add height-related options (--height, `height` subcommand, `--params h=`) to --help output
+  - Document streaming/RanderTarget guidance as part of help footer
+  - Ensure CLI help reflects current theme/height features
+  - Regenerate README/usage snippets after help update
+
+[M2-011] Implement comprehensive sub-help system (5) - High
+  - Create modular help screens: `boxy help layout`, `boxy help engine`, `boxy help params`, `boxy help themes`
+  - Implement `boxy help colors` with interactive color preview
+  - Add `boxy help examples` with copy-paste ready commands
+  - Create contextual help: `boxy layout --help`, `boxy engine --help`
+  - Refactor main --help to show overview + "See boxy help <topic> for details"
+  - Add help topic discovery: `boxy help` lists all available help topics
+
+================================================================================
+ 🎯 MILESTONE 3: UTILS/HELPERS SEPARATION (20 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Low | Internal Reorganization
+
+Theme: Themes Module Separation (5 pts)
+---------------------------------------
+[M3-001] Create themes/utils.rs with public helpers (3) - High
+  - Move load_theme(), validate_theme() to utils.rs
+  - Move theme application functions to utils.rs
+  - Ensure clean public interface
+
+[M3-002] Create themes/helpers.rs with internal logic (2) - Medium
+  - Move theme parsing internals to helpers.rs
+  - Move YAML processing to helpers.rs
+  - Keep implementation details private
+
+[M3-009] Evaluate serde YAML replacement (2) - Medium
+  - Investigate migration path from deprecated `serde_yaml 0.9` to the current community-supported crate (e.g. `serde_yml`)
+  - Ensure theme serialization/deserialization APIs remain compatible
+  - Update dependency tree and regression tests once replacement selected
+
+[M3-010] Evaluate TOML vs JSON for theme storage (3) - High
+  - Benchmark parse/serialize performance for representative theme sets
+  - Compare ecosystem support (toml, serde_json, ron) and recommend default format
+  - Decide on migration target (prefer TOML unless JSON yields material gains)
+
+[M3-011] Migrate theme system to chosen format (5) - High
+  - Implement new loader/saver using selected format
+  - Provide backward-compatible YAML importer or one-shot conversion tool
+  - Update documentation, examples, and tests to reflect new format
+  - Drop deprecated serde_yaml dependency once migration completes
+
+Theme: Colors Module Separation (4 pts)
+---------------------------------------
+[M3-003] Create colors/utils.rs with public helpers (2) - High
+  - Move get_color_code(), validate_color() to utils.rs
+  - Move ANSI generation functions to utils.rs
+
+[M3-004] Create colors/helpers.rs with internal logic (2) - Medium
+  - Move color parsing internals to helpers.rs
+  - Move palette management to helpers.rs
+
+Theme: Visual Module Separation (5 pts)
+---------------------------------------
+[M3-005] Create visual/utils.rs with public helpers (3) - High
+  - Move draw_box(), calculate_width() to utils.rs
+  - Move component rendering to utils.rs
+
+[M3-006] Create visual/helpers.rs with internal logic (2) - Medium
+  - Move internal width calculations to helpers.rs
+  - Move box character selection to helpers.rs
+
+Theme: Core Module Separation (4 pts)
+-------------------------------------
+[M3-007] Create core/utils.rs with public helpers (2) - High
+  - Move configuration utilities to utils.rs
+  - Move argument parsing helpers to utils.rs
+
+[M3-008] Create core/helpers.rs with internal logic (2) - Medium
+  - Move internal parsing logic to helpers.rs
+  - Move configuration merging to helpers.rs
+
+================================================================================
+ 🎯 MILESTONE 4: TYPED ERROR SYSTEM (16 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Medium | Error Handling Changes
+
+Theme: Error Type Definition (8 pts)
+------------------------------------
+[M4-001] Create core/error.rs with BoxyError master enum (3) - Critical
+  - Define BoxyError with variants for each module
+  - Add thiserror derive and proper error messages
+  - Include source error chaining
+
+[M4-002] Create module-specific error types (5) - High
+  - ThemeError in themes/error.rs
+  - ColorError in colors/error.rs
+  - VisualError in visual/error.rs
+  - CoreError in core/error.rs
+
+Theme: Error Migration (8 pts)
+------------------------------
+[M4-003] Replace String errors in themes module (3) - High
+  - Update all Result<T, String> to Result<T, ThemeError>
+  - Add proper error variants for theme operations
+  - Update error propagation
+
+[M4-004] Replace String errors in colors module (2) - High
+  - Update color operations to use ColorError
+  - Add proper error variants
+
+[M4-005] Replace String errors in visual module (2) - High
+  - Update drawing operations to use VisualError
+  - Add proper error variants
+
+[M4-006] Replace String errors in core module (1) - Medium
+  - Update configuration and parsing errors
+  - Ensure proper error propagation to CLI
+
+================================================================================
+ 🎯 MILESTONE 5: FEATURE FLAGS & ADAPTERS (28 pts)
+================================================================================
+Duration: 2-3 weeks | Risk: High | Complex Feature Interactions
+
+Theme: Feature Flag Design (8 pts)
+----------------------------------
+[M5-001] Design Cargo.toml feature hierarchy (5) - Critical
+  - Define visual-base, visual-advanced features
+  - Define colors-simple, colors-named features
+  - Define themes-builtin, themes-yaml features
+  - Plan default feature set
+
+[M5-002] Implement conditional compilation (3) - High
+  - Add #[cfg(feature = "...")] throughout codebase
+  - Ensure graceful degradation when features disabled
+  - Test feature combinations
+
+[M5-002a] Gate height system behind cargo feature (2) - High
+  - Introduce default-on `height` feature in Cargo.toml
+  - Wrap height_plugin, CLI flags, and BOXY_MULTIPLEX_MODE logic in #[cfg(feature = "height")]
+  - Provide no-op stubs when feature disabled to keep API compiling
+  - Document build instructions for height-enabled vs minimal builds
+
+Theme: Adapter Pattern Implementation (12 pts)
+----------------------------------------------
+[M5-003] Create themes/adapters.rs for color integration (5) - High
+  - Implement ColorAdapter for theme → color operations
+  - Add feature gating for color dependencies
+  - Provide fallbacks when colors disabled
+
+[M5-004] Create visual/adapters.rs for theme integration (5) - High
+  - Implement ThemeAdapter for visual → theme operations
+  - Add feature gating for theme dependencies
+  - Provide fallbacks when themes disabled
+
+[M5-005] Create cross-module dependency injection (2) - Medium
+  - Design service locator pattern if needed
+  - Implement dependency injection for adapters
+  - Ensure testability
+
+Theme: Feature Testing (8 pts)
+------------------------------
+[M5-006] Test all feature flag combinations (5) - Critical
+  - Create CI matrix for feature combinations
+  - Test minimal builds with reduced features
+  - Verify no compilation errors
+
+[M5-007] Performance testing with different features (3) - Medium
+  - Benchmark performance with minimal features
+  - Ensure no overhead when features disabled
+  - Validate binary size reduction
+
+================================================================================
+ 🎯 MILESTONE 6: CURATED PRELUDE & MACROS (14 pts)
+================================================================================
+Duration: 1-2 weeks | Risk: Medium | Public API Changes
+
+Theme: Prelude Curation (8 pts)
+-------------------------------
+[M6-001] Remove wildcard re-exports from lib.rs (5) - Critical
+  - Replace pub use module::* with specific exports
+  - Define intentional public API surface
+  - Ensure backward compatibility via explicit exports
+
+[M6-002] Implement ASCII-first naming conventions (3) - Medium
+  - Audit public API for non-ASCII names
+  - Provide ASCII alternatives where needed
+  - Document Unicode variants
+
+Theme: Macro System (6 pts)
+---------------------------
+[M6-003] Create module-owned macros (3) - Medium
+  - Add macros.rs to each module as needed
+  - Implement ergonomic macros for common operations
+  - Ensure macros follow RSB patterns
+
+[M6-004] Final RSB MODULE_SPEC compliance validation (3) - High
+  - Audit entire codebase against RSB MODULE_SPEC
+  - Fix any remaining compliance issues
+  - Document compliance status
+
+
+### CRITICAL FUNCTION PROTECTION TASKS (Added to All Milestones):
+
+[MX-P01] Width calculation protection validation (1) - Critical
+  - Test emoji width calculations before/after changes
+  - Validate: echo "✅🚀ℹ️👻" | cargo run -- --theme test
+  - Run: ./bin/test.sh && ./bin/feature-test.sh
+
+[MX-P02] Icon placement protection validation (1) - Critical
+  - Test icon auto-detection and spacing
+  - Validate: echo "test" | cargo run -- --title "📦 Status"
+  - Ensure parser.rs:385-410 logic preserved exactly
+
+[MX-P03] Performance regression protection (1) - Critical
+  - Benchmark width calculations before/after
+  - No performance degradation in emoji rendering
+  - Run: ./tests/misc/performance_test.sh
+
+================================================================================
+ 📊 PRE-M3 TECHNICAL DEBT TASKS
+================================================================================
+
+🐔 CHINA TECHNICAL DEBT (12 tickets, ~45 story points HIGH priority)
+================================================================
+
+Critical Pre-M3 Tasks (HIGH Priority):
+---------------------------------------
+[CHINA-01] Theme System Architecture Cleanup (LARGE) - High
+  - Resolve dual theme system technical debt (legacy HashMap vs YAML)
+  - Deprecate legacy system with migration warnings and tools
+  - Create compatibility shims with clear deprecation timeline
+
+[CHINA-02] Theme Inheritance Engine Critical Bug Fix (MEDIUM) - High
+  - Fix theme rejection when color empty after inheritance (line 336-339)
+  - Implement proper color property inheritance logic
+  - Add comprehensive inheritance chain validation tests
+
+[CHINA-05] Library API Ergonomics Enhancement (LARGE) - High
+  - Design and implement ergonomic BoxBuilder pattern for M2
+  - Create fluent interface with sensible defaults
+  - Maintain backward compatibility with CLI patterns
+
+[CHINA-08] Comprehensive Integration Documentation (MEDIUM) - High
+  - Create integration cookbook with TUI framework examples
+  - Document environment variables and configuration options
+  - Add troubleshooting guide and migration documentation
+
+Post-M3 Optimization Tasks (MEDIUM Priority):
+----------------------------------------------
+[CHINA-03] Performance Optimization - Template Caching (MEDIUM) - Medium
+[CHINA-04] Memory Efficiency - Large Padding Operations (MEDIUM) - Medium
+[CHINA-06] Error Handling Library vs CLI Consistency (MEDIUM) - Medium
+[CHINA-07] Theme Discovery UX Improvements (SMALL) - Medium
+[CHINA-09] Development Environment & Testing Improvements (MEDIUM) - Medium
+[CHINA-11] Feature Flag Architecture Refinement (MEDIUM) - Medium
+[CHINA-12] Cross-Platform Unicode Compatibility (MEDIUM) - Medium
+
+Strategic Preparation (LOW Priority):
+-------------------------------------
+[CHINA-10] Meteor Token System Integration Preparation (LARGE) - Low
+
+🔴 TINA TESTING DEBT (18 tickets, organized in 4 phases)
+=====================================================
+
+Phase 1: Testing Infrastructure (HIGH Priority):
+------------------------------------------------
+[TEST-01] Benchmark Integration into test.sh workflow (MEDIUM) - High
+  - Add --benchmark and --snap-benchmarks flags to test.sh
+  - Create automated performance regression detection
+
+[TEST-02] Performance Regression Detection (MEDIUM) - High
+  - Implement threshold-based validation (2.0ms max render time)
+  - Fail builds when performance degrades beyond acceptable limits
+
+[TEST-03] Enhanced Snap.sh Versioning (SMALL) - Medium
+  - Add versioned snapshots with timestamp tracking
+  - Enable performance comparison across versions
+
+[TEST-04] Cargo Test Integration (SMALL) - Medium
+  - Integrate unit tests into test.sh comprehensive workflow
+
+Phase 2: RSB Architecture Compliance (HIGH Priority):
+-----------------------------------------------------
+[TEST-05] RSB Module Structure Migration (LARGE) - High
+  - Convert 9 flat .rs files to proper RSB module directories
+  - Closes 65% RSB compliance gap (35% → 90%+)
+
+[TEST-06] Typed Error System Implementation (MEDIUM) - High
+  - Replace Result<T, String> with proper typed error enums
+  - Follow RSB error handling patterns
+
+[TEST-07] Feature Gate Implementation (MEDIUM) - Medium
+  - Add conditional compilation for visual components
+  - Enable lean builds for headless environments
+
+[TEST-08] Curated Prelude Implementation (SMALL) - Medium
+  - Replace wildcard re-exports with specific curated prelude
+
+Phase 3: Test Automation Enhancement (MEDIUM Priority):
+-------------------------------------------------------
+[TEST-09] Automated Visual Test Assertions (MEDIUM) - Medium
+[TEST-10] Comprehensive Regression Testing (MEDIUM) - Medium
+[TEST-11] Test Coverage Reporting (SMALL) - Low
+
+Phase 4: Quality Assurance Processes (MEDIUM Priority):
+-------------------------------------------------------
+[TEST-12] Performance Monitoring Dashboard (MEDIUM) - Medium
+[TEST-13] RSB Compliance Tracking (SMALL) - Medium
+[TEST-14] Documentation Test Validation (SMALL) - Low
+[TEST-15] Shell Script Standardization (SMALL) - Low
+[TEST-16] CI/CD Pipeline Integration (MEDIUM) - Medium
+[TEST-17] Test Environment Standardization (MEDIUM) - Low
+[TEST-18] Security Testing Integration (SMALL) - Low
+
+================================================================================
+ 📊 TASK SUMMARY BY MILESTONE
+================================================================================
+
+✅ COMPLETED (See DONE.txt):
+M1, M1.5, M1.7, MH: 64 story points across 4 major milestones
+
+🔴 PRE-M3 TECHNICAL DEBT:
+CHINA (45 pts): 12 tickets - Architecture, performance, UX, documentation debt
+TEST (63 pts): 18 tickets - RSB compliance, testing infrastructure, automation
+
+⬆️ UPCOMING MILESTONES:
+M2 (42 pts): 11 tasks - Library API development
+M3 (18 pts): 8 tasks - Utils/helpers separation + YAML→TOML migration
+M4 (16 pts): 6 tasks - Typed error system
+M5 (28 pts): 7 tasks - Feature flags & adapters
+M6 (14 pts): 4 tasks - Curated prelude & macros
+
+Completed: 64 story points (archived in DONE.txt)
+Technical Debt: 108 story points (CHINA + TEST tickets)
+Remaining Core: 118 story points across 36 tasks
+Total Project: 290 story points across 76 tasks
+
+================================================================================
+ 🎯 TASK PRIORITIZATION
+================================================================================
+
+Critical Path Tasks (Must complete first):
+- M1-001 through M1-008: Module structure setup
+- M2-001, M2-002: API design (blocks implementation)
+- M4-001: Master error enum (blocks error migration)
+- M5-001: Feature flag design (blocks implementation)
+- M6-001: Prelude curation (final API surface)
+
+High Risk Tasks (Need extra attention):
+- M2-001: Public API design (affects all future work)
+- M5-001: Feature flag hierarchy (complex interactions)
+- M5-006: Feature combination testing (high complexity)
+- M6-001: Wildcard removal (potential breaking changes)
+
+Dependencies:
+- M3 depends on M1 completion
+- M4 can run parallel to M3
+- M5 depends on M1-M4 completion
+- M6 depends on all previous milestones
+
+================================================================================

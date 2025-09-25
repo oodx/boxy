@@ -1,0 +1,31 @@
+================================================================================
+ 🚀 BOXY PROJECT - START HERE
+================================================================================
+
+👋 **Welcome to Boxy Development!**
+
+📋 **Single Entry Point**: Read docs/procs/PROCESS.txt for complete workflow
+
+🎯 **Quick Start** (5 minutes to productive work):
+1. Read docs/procs/PROCESS.txt ← Master workflow guide (3 min read)
+2. Read docs/procs/CONTINUE.md ← Current session status (1 min read)
+3. Read docs/procs/SPRINT.txt ← Active sprint tasks (1 min read)
+4. Begin work with full context
+
+⚡ **Ultra-Fast Start** (30 seconds):
+→ Read docs/procs/QUICK_REF.txt for essential context only
+
+🔍 **System Health Check**:
+→ Run ./bin/validate-docs.sh to verify documentation integrity
+
+📁 **All Process Documents Located in docs/procs/**:
+├── PROCESS.txt    ← Master workflow guide (START HERE)
+├── CONTINUE.md    ← Current session status & next steps
+├── SPRINT.txt     ← Current sprint tasks (poor-man's kanban)
+├── ROADMAP.txt    ← High-level milestones & strategy
+├── TASKS.txt      ← Detailed task breakdown
+└── DONE.txt       ← Completed work archive
+
+🔄 **Self-Hydrating System**: No manual context reconstruction needed!
+
+================================================================================

@@ -1,12 +1,18 @@
 [package]
 name = "boxy"
-version = "0.19.0"
+version = "0.19.1"
 edition = "2024"
 authors = ["qodeninja <1043235+qodeninja@users.noreply.github.com>"]
 description = "A simple box drawing utility with proper Unicode width handling. Qodeninja (c) 2025"
 license = "AGPL-3.0"            
 publish = false  
 
+
+[package.metadata.hub]
+notes = "Hub metadata for boxy repository"
+hub_sync = "true"  # Set to "false" to skip this repo in hub updates
+# priority = "medium"  # Options: high, medium, low
+# Add any custom fields below
 [dependencies]
 unicode-width = "0.2"  # For comparison with custom implementation
 strip-ansi-escapes = "0.2"
