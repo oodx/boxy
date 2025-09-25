@@ -51,8 +51,17 @@ pub enum VerticalAlign {
     Bottom,
 }
 
+/// Layout mode for box rendering
+#[derive(Debug, Clone, PartialEq)]
+pub enum LayoutMode {
+    /// Full box with all borders (default)
+    Box,
+    /// Barmode - horizontal lines only, no vertical borders
+    Bar,
+}
+
 /// Builder for header components
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeaderBuilder {
     content: Option<String>,
     align: HorizontalAlign,
@@ -526,6 +535,7 @@ pub struct BoxBuilder {
     body: BodyBuilder,
     style: BoxStyle,
     fixed_width: Option<usize>,
+    layout_mode: LayoutMode,
 }
 
 impl BoxBuilder {
@@ -537,6 +547,7 @@ impl BoxBuilder {
             body: BodyBuilder::new(content),
             style: NORMAL,
             fixed_width: None,
+            layout_mode: LayoutMode::Box,
         }
     }
 
@@ -565,16 +576,33 @@ impl BoxBuilder {
         self
     }
 
+    /// Enable barmode layout - horizontal lines only, no vertical borders
+    /// Perfect for document integration and text separation
+    pub fn with_barmode(mut self) -> Self {
+        self.layout_mode = LayoutMode::Bar;
+        self
+    }
+
     pub fn build(self) -> BoxLayout {
         let inner_width = self.calculate_inner_width();
 
-        // Auto-add empty header/footer if not provided to ensure closed box
-        let header = self.header
-            .or_else(|| Some(HeaderBuilder::empty()))
-            .map(|h| h.with_style(self.style).build_for_width(inner_width));
-        let footer = self.footer
-            .or_else(|| Some(FooterBuilder::empty()))
-            .map(|f| f.with_style(self.style).build_for_width(inner_width));
+        // Auto-add empty header/footer only in Box mode to ensure closed box
+        // In Bar mode, only render explicitly requested components
+        let header = match self.layout_mode {
+            LayoutMode::Box => self.header
+                .or_else(|| Some(HeaderBuilder::empty()))
+                .map(|h| h.with_style(self.style).build_for_width(inner_width)),
+            LayoutMode::Bar => self.header
+                .map(|h| h.with_style(self.style).build_for_width(inner_width)),
+        };
+
+        let footer = match self.layout_mode {
+            LayoutMode::Box => self.footer
+                .or_else(|| Some(FooterBuilder::empty()))
+                .map(|f| f.with_style(self.style).build_for_width(inner_width)),
+            LayoutMode::Bar => self.footer
+                .map(|f| f.with_style(self.style).build_for_width(inner_width)),
+        };
         let status = self.status.map(|s| s.build_for_width(inner_width, self.style));
         let body = self.body.build_for_width(inner_width, self.style);
 
@@ -585,6 +613,7 @@ impl BoxBuilder {
             body,
             total_width: inner_width + 2,
             style: self.style,
+            layout_mode: self.layout_mode,
         }
     }
 
@@ -611,6 +640,7 @@ pub struct BoxLayout {
     pub body: ComponentLayout,
     pub total_width: usize,
     pub style: BoxStyle,
+    pub layout_mode: LayoutMode,
 }
 
 impl BoxLayout {
@@ -622,6 +652,14 @@ impl BoxLayout {
     /// QOL: Render as individual lines for layout engines
     /// Returns Vec<String> for easier positioning in Room Runtime
     pub fn render_lines(&self) -> Vec<String> {
+        match self.layout_mode {
+            LayoutMode::Box => self.render_box_lines(),
+            LayoutMode::Bar => self.render_bar_lines(),
+        }
+    }
+
+    /// Render standard box layout with full borders
+    fn render_box_lines(&self) -> Vec<String> {
         let mut lines = Vec::new();
 
         if let Some(header) = &self.header {
@@ -639,6 +677,160 @@ impl BoxLayout {
         }
 
         lines
+    }
+
+    /// Render barmode layout with horizontal lines only
+    /// Uses the box style's horizontal character, but no corners or vertical borders
+    fn render_bar_lines(&self) -> Vec<String> {
+        let mut lines = Vec::new();
+
+        // Render each component, converting border lines to full-width bars
+        if let Some(header) = &self.header {
+            lines.extend(self.render_component_barmode(&header.content));
+        }
+
+        lines.extend(self.render_component_barmode(&self.body.content));
+
+        if let Some(status) = &self.status {
+            lines.extend(self.render_component_barmode(&status.content));
+        }
+
+        if let Some(footer) = &self.footer {
+            lines.extend(self.render_component_barmode(&footer.content));
+        }
+
+        lines
+    }
+
+    /// Render a component in barmode - convert borders to full bars, extract content
+    fn render_component_barmode(&self, component_content: &str) -> Vec<String> {
+        component_content
+            .lines()
+            .filter_map(|line| {
+                let trimmed = line.trim();
+
+                // Convert border lines to full-width horizontal bars
+                if let Some(full_bar) = self.convert_to_full_bar(line) {
+                    Some(full_bar)
+                } else if !trimmed.is_empty() {
+                    // Extract content from between vertical borders
+                    Some(self.extract_content_from_line(line))
+                } else {
+                    // Keep empty lines for spacing
+                    Some(line.to_string())
+                }
+            })
+            .collect()
+    }
+
+    /// Check if a line is a border line (corners and horizontals, may include text)
+    fn is_border_line(&self, line: &str) -> bool {
+        if line.len() < 2 {
+            return false;
+        }
+
+        let chars: Vec<char> = line.chars().collect();
+        let first_char = chars[0];
+        let last_char = chars[chars.len() - 1];
+
+        let top_left = self.style.top_left.chars().next().unwrap_or('┌');
+        let top_right = self.style.top_right.chars().next().unwrap_or('┐');
+        let bottom_left = self.style.bottom_left.chars().next().unwrap_or('└');
+        let bottom_right = self.style.bottom_right.chars().next().unwrap_or('┘');
+        let tee_left = self.style.tee_left.chars().next().unwrap_or('├');
+        let tee_right = self.style.tee_right.chars().next().unwrap_or('┤');
+
+        // Check if line starts and ends with corner characters (typical header/footer pattern)
+        let is_corner_line = (first_char == top_left && last_char == top_right) ||
+                            (first_char == bottom_left && last_char == bottom_right) ||
+                            (first_char == tee_left && last_char == tee_right);
+
+        is_corner_line
+    }
+
+    /// Convert a border line to full-width horizontal bar, preserving any text content
+    fn convert_to_full_bar(&self, line: &str) -> Option<String> {
+        if self.is_border_line(line.trim()) {
+            // Extract text content from the header/footer line
+            let extracted_text = self.extract_text_from_border_line(line);
+
+            // Create a horizontal bar with the text centered
+            let total_width = self.total_width;
+
+            if extracted_text.is_empty() {
+                // No text content, just a full horizontal bar
+                Some(self.style.horizontal.repeat(total_width))
+            } else if extracted_text.len() >= total_width {
+                // Text too long, truncate
+                Some(extracted_text[..total_width].to_string())
+            } else {
+                // Center the text with horizontal characters as padding
+                let padding_needed = total_width - extracted_text.len();
+                let left_padding = padding_needed / 2;
+                let right_padding = padding_needed - left_padding;
+
+                Some(format!("{}{}{}",
+                    self.style.horizontal.repeat(left_padding),
+                    extracted_text,
+                    self.style.horizontal.repeat(right_padding)
+                ))
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Extract just the text content from a header/footer border line
+    fn extract_text_from_border_line(&self, line: &str) -> String {
+        // Remove border characters and extract the text
+        let inner_content = self.extract_content_from_line(line);
+        let horizontal_char = self.style.horizontal.chars().next().unwrap_or('─');
+
+        // Split by horizontal characters and find non-horizontal text
+        let parts: Vec<&str> = inner_content.split(horizontal_char).collect();
+
+        // Find the part that contains actual text (not just spaces or empty)
+        for part in parts {
+            let trimmed = part.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
+        }
+
+        String::new()
+    }
+
+    /// Extract content from a line by removing borders (vertical and corner characters)
+    fn extract_content_from_line(&self, line: &str) -> String {
+        if line.len() < 2 {
+            return line.to_string();
+        }
+
+        let chars: Vec<char> = line.chars().collect();
+        let first_char = chars[0];
+        let last_char = chars[chars.len() - 1];
+
+        // Get all possible border characters for this style
+        let vertical_char = self.style.vertical.chars().next().unwrap_or('│');
+        let top_left = self.style.top_left.chars().next().unwrap_or('┌');
+        let top_right = self.style.top_right.chars().next().unwrap_or('┐');
+        let bottom_left = self.style.bottom_left.chars().next().unwrap_or('└');
+        let bottom_right = self.style.bottom_right.chars().next().unwrap_or('┘');
+        let tee_left = self.style.tee_left.chars().next().unwrap_or('├');
+        let tee_right = self.style.tee_right.chars().next().unwrap_or('┤');
+
+        // Check if first and last characters are any border characters
+        let is_left_border = first_char == vertical_char || first_char == top_left ||
+                            first_char == bottom_left || first_char == tee_left;
+        let is_right_border = last_char == vertical_char || last_char == top_right ||
+                             last_char == bottom_right || last_char == tee_right;
+
+        // If line starts and ends with border characters, extract the middle
+        if is_left_border && is_right_border {
+            chars[1..chars.len() - 1].iter().collect()
+        } else {
+            line.to_string()
+        }
     }
 
     /// Get individual component layouts for Room Runtime positioning
@@ -680,6 +872,8 @@ pub struct BoxOptions {
     pub width: Option<usize>,
     /// Box style (defaults to normal)
     pub style: Option<BoxStyle>,
+    /// Layout mode (defaults to Box)
+    pub layout_mode: Option<LayoutMode>,
 }
 
 /// QOL: Convenience function for simple box rendering
@@ -723,6 +917,10 @@ pub fn render_box(content: &str, options: BoxOptions) -> String {
         builder = builder.with_style(style);
     }
 
+    if let Some(LayoutMode::Bar) = options.layout_mode {
+        builder = builder.with_barmode();
+    }
+
     builder.build().render()
 }
 
@@ -748,6 +946,10 @@ pub fn render_box_lines(content: &str, options: BoxOptions) -> Vec<String> {
 
     if let Some(style) = options.style {
         builder = builder.with_style(style);
+    }
+
+    if let Some(LayoutMode::Bar) = options.layout_mode {
+        builder = builder.with_barmode();
     }
 
     builder.build().render_lines()
@@ -934,5 +1136,114 @@ mod tests {
                     "Should not have only horizontal lines after ellipsis. Got: '{}'", header.content);
             }
         }
+    }
+
+    #[test]
+    fn test_barmode_basic_functionality() {
+        let layout = BoxBuilder::new("Test content")
+            .with_header(HeaderBuilder::new("Header"))
+            .with_footer(FooterBuilder::new("Footer"))
+            .with_barmode()
+            .with_fixed_width(20)
+            .build();
+
+        assert_eq!(layout.layout_mode, LayoutMode::Bar);
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have horizontal lines as first and last
+        assert!(lines[0].chars().all(|c| c == '─'));
+        assert!(lines[lines.len() - 1].chars().all(|c| c == '─'));
+
+        // Content lines should not have vertical borders at start/end
+        for line in &lines[1..lines.len() - 1] {
+            if !line.trim().is_empty() {
+                assert!(!line.starts_with('┌'));
+                assert!(!line.starts_with('└'));
+                assert!(!line.starts_with('│'));
+                assert!(!line.ends_with('┐'));
+                assert!(!line.ends_with('┘'));
+                assert!(!line.ends_with('│'));
+            }
+        }
+    }
+
+    #[test]
+    fn test_barmode_vs_box_mode() {
+        let content = "Test";
+        let header = HeaderBuilder::new("Title");
+
+        // Standard box
+        let box_layout = BoxBuilder::new(content)
+            .with_header(header.clone())
+            .with_fixed_width(15)
+            .build();
+
+        // Barmode layout
+        let bar_layout = BoxBuilder::new(content)
+            .with_header(header)
+            .with_fixed_width(15)
+            .with_barmode()
+            .build();
+
+        let box_rendered = box_layout.render();
+        let bar_rendered = bar_layout.render();
+        let box_lines: Vec<&str> = box_rendered.lines().collect();
+        let bar_lines: Vec<&str> = bar_rendered.lines().collect();
+
+        // Box should have corner characters
+        assert!(box_lines[0].contains('┌') || box_lines[0].contains('╭'));
+        assert!(box_lines[0].contains('┐') || box_lines[0].contains('╮'));
+
+        // Bar should only have horizontal lines
+        assert!(bar_lines[0].chars().all(|c| c == '─' || c == '╶' || c == '╴'));
+        assert!(bar_lines[bar_lines.len() - 1].chars().all(|c| c == '─' || c == '╶' || c == '╴'));
+    }
+
+    #[test]
+    fn test_barmode_convenience_api() {
+        let output = render_box("Content", BoxOptions {
+            header: Some("Header".to_string()),
+            layout_mode: Some(LayoutMode::Bar),
+            width: Some(20),
+            ..Default::default()
+        });
+
+        let lines: Vec<&str> = output.lines().collect();
+
+        // First and last lines should be horizontal
+        assert!(lines[0].chars().all(|c| c == '─'));
+        assert!(lines[lines.len() - 1].chars().all(|c| c == '─'));
+
+        // Should contain header and content
+        assert!(output.contains("Header"));
+        assert!(output.contains("Content"));
+    }
+
+    #[test]
+    fn test_barmode_multiline_content() {
+        let multiline = "Line 1\nLine 2\nLine 3";
+        let layout = BoxBuilder::new(multiline)
+            .with_barmode()
+            .with_fixed_width(25)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have all content lines plus top and bottom bars
+        assert!(lines.len() >= 5); // 2 bars + at least 3 content lines
+
+        // All content should be present
+        assert!(rendered.contains("Line 1"));
+        assert!(rendered.contains("Line 2"));
+        assert!(rendered.contains("Line 3"));
+    }
+
+    #[test]
+    fn test_barmode_default_is_box_mode() {
+        let layout = BoxBuilder::new("Test").build();
+        assert_eq!(layout.layout_mode, LayoutMode::Box);
     }
 }

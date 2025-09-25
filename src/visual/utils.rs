@@ -114,6 +114,66 @@ pub const ASCII: BoxStyle = BoxStyle {
     cross: "+",
 };
 
+pub const THICKSII: BoxStyle = BoxStyle {
+    top_left: "#",
+    top_right: "#",
+    bottom_left: "#",
+    bottom_right: "#",
+    horizontal: "=",
+    vertical: "#",
+    tee_left: "#",
+    tee_right: "#",
+    cross: "#",
+};
+
+pub const COLON: BoxStyle = BoxStyle {
+    top_left: ":",
+    top_right: ":",
+    bottom_left: ":",
+    bottom_right: ":",
+    horizontal: ":",
+    vertical: ":",
+    tee_left: ":",
+    tee_right: ":",
+    cross: ":",
+};
+
+pub const DOT: BoxStyle = BoxStyle {
+    top_left: "•",
+    top_right: "•",
+    bottom_left: "•",
+    bottom_right: "•",
+    horizontal: "•",
+    vertical: "•",
+    tee_left: "•",
+    tee_right: "•",
+    cross: "•",
+};
+
+pub const STAR: BoxStyle = BoxStyle {
+    top_left: "*",
+    top_right: "*",
+    bottom_left: "*",
+    bottom_right: "*",
+    horizontal: "*",
+    vertical: "*",
+    tee_left: "*",
+    tee_right: "*",
+    cross: "*",
+};
+
+pub const DASHED: BoxStyle = BoxStyle {
+    top_left: "┌",
+    top_right: "┐",
+    bottom_left: "└",
+    bottom_right: "┘",
+    horizontal: "┄",
+    vertical: "┆",
+    tee_left: "├",
+    tee_right: "┤",
+    cross: "┼",
+};
+
 impl Default for BoxStyle {
     fn default() -> Self {
         NORMAL

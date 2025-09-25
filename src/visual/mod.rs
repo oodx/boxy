@@ -34,6 +34,9 @@ pub use utils::{
     Body,
     // CRITICAL: Protected macros for width calculations are exported via #[macro_export]
     BoxStyle,
+    COLON,
+    DASHED,
+    DOT,
     DOUBLE,
     Footer,
     HEAVY,
@@ -41,7 +44,9 @@ pub use utils::{
     Header,
     NORMAL,
     ROUNDED,
+    STAR,
     Status,
+    THICKSII,
     // Drawing functions with PROTECTED width calculations
     calculate_box_width,
     draw_box,
