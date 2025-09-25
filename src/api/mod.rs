@@ -68,6 +68,7 @@
 pub mod geometry;
 pub mod layout;
 pub mod theming;
+pub mod room_runtime;
 
 // Re-export curated public API (RSB MODULE_SPEC pattern)
 // Core geometry functions - always available
@@ -76,6 +77,10 @@ pub use geometry::{
     calculate_box_dimensions,
     BoxDimensions,
     TextMetrics,
+    // ANSI overhead calculation
+    calculate_ansi_overhead,
+    compare_ansi_sizes,
+    AnsiSizeComparison,
 };
 
 // Layout building blocks - no color coupling
@@ -86,6 +91,10 @@ pub use layout::{
     StatusBuilder,
     BodyBuilder,
     ComponentLayout,
+    // QOL convenience API
+    BoxOptions,
+    render_box,
+    render_box_lines,
 };
 
 // Optional theming - consumers can ignore entirely
@@ -95,6 +104,14 @@ pub use theming::{
     apply_colors,
     create_plain_renderer,  // For Room Runtime
     create_themed_renderer, // For traditional usage
+};
+
+// Room Runtime specific adapters
+pub use room_runtime::{
+    RoomRuntimeAdapter,
+    ComponentPosition,
+    ComponentType,
+    LayoutMetadata,
 };
 
 // Protected macros re-export (CRITICAL for layout engines)

@@ -69,10 +69,80 @@ pub fn get_text_width(text: &str) -> usize {
     get_display_width(text)
 }
 
+/// Calculate the size overhead of ANSI codes in a string
+///
+/// Returns (total_bytes, display_bytes, ansi_overhead_bytes)
+///
+/// # Example
+/// ```rust
+/// use boxy::api::geometry::calculate_ansi_overhead;
+///
+/// let colored = "\x1b[31mRed Text\x1b[0m";
+/// let (total, display, overhead) = calculate_ansi_overhead(colored);
+/// assert_eq!(display, 8); // "Red Text" = 8 chars
+/// assert!(overhead > 0);  // ANSI codes take up space
+/// ```
+pub fn calculate_ansi_overhead(text: &str) -> (usize, usize, usize) {
+    // Use our existing strip_ansi_codes function
+    let stripped = crate::strip_ansi_codes(text);
+
+    let total_bytes = text.len();
+    let display_bytes = stripped.len();
+    let ansi_overhead = total_bytes.saturating_sub(display_bytes);
+
+    (total_bytes, display_bytes, ansi_overhead)
+}
+
+/// Compare sizes of plain vs ANSI-colored text
+///
+/// Useful for understanding the storage/transmission cost of colors
+///
+/// # Example
+/// ```rust
+/// use boxy::api::geometry::compare_ansi_sizes;
+///
+/// let stats = compare_ansi_sizes("Plain", "\x1b[1;32mGreen\x1b[0m");
+/// println!("Plain: {} bytes, Colored: {} bytes, Overhead: {} bytes",
+///     stats.plain_bytes, stats.colored_bytes, stats.color_overhead);
+/// ```
+#[derive(Debug, Clone)]
+pub struct AnsiSizeComparison {
+    /// Size of plain text in bytes
+    pub plain_bytes: usize,
+    /// Size of colored text in bytes
+    pub colored_bytes: usize,
+    /// Additional bytes used by ANSI codes
+    pub color_overhead: usize,
+    /// Percentage increase from colors
+    pub overhead_percentage: f64,
+}
+
+pub fn compare_ansi_sizes(plain_text: &str, colored_text: &str) -> AnsiSizeComparison {
+    let plain_bytes = plain_text.len();
+    let (colored_bytes, _display_bytes, color_overhead) = calculate_ansi_overhead(colored_text);
+
+    let overhead_percentage = if plain_bytes > 0 {
+        (color_overhead as f64 / plain_bytes as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    AnsiSizeComparison {
+        plain_bytes,
+        colored_bytes,
+        color_overhead,
+        overhead_percentage,
+    }
+}
+
 /// Calculate box dimensions for given content and constraints
+///
+/// Note: The `style` parameter is reserved for future use when different
+/// box styles might affect dimensions (e.g., multi-byte border characters).
+/// Currently all box styles use single-width borders.
 pub fn calculate_box_dimensions(
     content: &str,
-    _style: BoxStyle,
+    _style: BoxStyle,  // Reserved for future: may affect dimensions with multi-byte borders
     h_padding: usize,
     v_padding: usize,
     fixed_width: Option<usize>,

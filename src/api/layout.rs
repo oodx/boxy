@@ -616,6 +616,12 @@ pub struct BoxLayout {
 impl BoxLayout {
     /// Render the complete box as a string (no colors)
     pub fn render(&self) -> String {
+        self.render_lines().join("\n")
+    }
+
+    /// QOL: Render as individual lines for layout engines
+    /// Returns Vec<String> for easier positioning in Room Runtime
+    pub fn render_lines(&self) -> Vec<String> {
         let mut lines = Vec::new();
 
         if let Some(header) = &self.header {
@@ -632,7 +638,7 @@ impl BoxLayout {
             lines.push(footer.content.clone());
         }
 
-        lines.join("\n")
+        lines
     }
 
     /// Get individual component layouts for Room Runtime positioning
@@ -655,6 +661,96 @@ impl BoxLayout {
 
         components
     }
+}
+
+// ============================================================================
+// QOL IMPROVEMENTS: Convenience API
+// ============================================================================
+
+/// Options for the convenience renderer
+#[derive(Debug, Clone, Default)]
+pub struct BoxOptions {
+    /// Optional header text
+    pub header: Option<String>,
+    /// Optional footer text
+    pub footer: Option<String>,
+    /// Optional status text
+    pub status: Option<String>,
+    /// Fixed width (defaults to auto)
+    pub width: Option<usize>,
+    /// Box style (defaults to normal)
+    pub style: Option<BoxStyle>,
+}
+
+/// QOL: Convenience function for simple box rendering
+/// Covers 80% of use cases with minimal boilerplate
+///
+/// # Example
+/// ```rust
+/// use boxy::api::layout::{render_box, BoxOptions};
+///
+/// // Simple usage
+/// let output = render_box("Hello, World!", BoxOptions::default());
+///
+/// // With options
+/// let output = render_box("Content", BoxOptions {
+///     header: Some("Title".to_string()),
+///     footer: Some("v1.0".to_string()),
+///     width: Some(50),
+///     ..Default::default()
+/// });
+/// ```
+pub fn render_box(content: &str, options: BoxOptions) -> String {
+    let mut builder = BoxBuilder::new(content);
+
+    if let Some(header_text) = options.header {
+        builder = builder.with_header(HeaderBuilder::new(&header_text));
+    }
+
+    if let Some(footer_text) = options.footer {
+        builder = builder.with_footer(FooterBuilder::new(&footer_text));
+    }
+
+    if let Some(status_text) = options.status {
+        builder = builder.with_status(StatusBuilder::new(&status_text));
+    }
+
+    if let Some(width) = options.width {
+        builder = builder.with_fixed_width(width);
+    }
+
+    if let Some(style) = options.style {
+        builder = builder.with_style(style);
+    }
+
+    builder.build().render()
+}
+
+/// QOL: Render box and return lines for positioning
+pub fn render_box_lines(content: &str, options: BoxOptions) -> Vec<String> {
+    let mut builder = BoxBuilder::new(content);
+
+    if let Some(header_text) = options.header {
+        builder = builder.with_header(HeaderBuilder::new(&header_text));
+    }
+
+    if let Some(footer_text) = options.footer {
+        builder = builder.with_footer(FooterBuilder::new(&footer_text));
+    }
+
+    if let Some(status_text) = options.status {
+        builder = builder.with_status(StatusBuilder::new(&status_text));
+    }
+
+    if let Some(width) = options.width {
+        builder = builder.with_fixed_width(width);
+    }
+
+    if let Some(style) = options.style {
+        builder = builder.with_style(style);
+    }
+
+    builder.build().render_lines()
 }
 
 #[cfg(test)]
