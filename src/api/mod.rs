@@ -1,29 +1,68 @@
-//! Boxy Library API - RSB MODULE_SPEC compliant public interface
+//! Boxy Library API - Pure Rust text box rendering with Unicode support
 //!
-//! This module provides a clean, decoupled API for library consumers like Room Runtime.
-//! Follows RSB MODULE_SPEC patterns for modularity and cross-module integration.
+//! This module provides a clean, modular API for creating text-based UI boxes
+//! with full Unicode, emoji, and multi-language support. Designed for both
+//! standalone use and integration with layout engines like Room Runtime.
 //!
-//! # Design Goals
-//! - Pure geometry calculations (emoji/glyph width, box dimensions)
-//! - Modular theming (optional color application)
-//! - Dynamic component system (Header, Footer, Status, Body)
-//! - Background color support
-//! - Bridge to internal boxy modernization
+//! # Features
 //!
-//! # Usage Patterns
+//! - 🌍 **Full Unicode Support**: Handles emoji, CJK characters, and complex scripts
+//! - 📐 **Pure Geometry**: Layout calculations without color dependencies
+//! - 🎨 **Optional Theming**: Apply colors only when needed
+//! - 🧩 **Component System**: Composable headers, footers, and bodies
+//! - 🎯 **Zero Dependencies**: Core geometry works without external crates
+//!
+//! # Quick Start
+//!
 //! ```rust
-//! use boxy::api::{geometry, layout, theming};
+//! use boxy::api::{layout::BoxBuilder};
 //!
-//! // Pure geometry (no colors)
-//! let dims = geometry::calculate_box_dimensions(content, style);
-//! let width = geometry::get_text_width("Hello 🌟 World");
+//! // Simple box
+//! let simple = BoxBuilder::new("Hello, World!").build();
+//! println!("{}", simple.render());
 //!
-//! // Component building (no color coupling)
-//! let header = layout::HeaderBuilder::new("Title").build();
-//! let body = layout::BodyBuilder::new(content).build();
+//! // Box with header and footer
+//! let complete = BoxBuilder::new("Main content")
+//!     .with_header("Title")
+//!     .with_footer("Status: OK")
+//!     .with_width(50)
+//!     .build();
+//! println!("{}", complete.render());
+//! ```
 //!
-//! // Optional theming (library consumers can skip)
-//! let styled = theming::apply_colors(layout, theme);
+//! # Room Runtime Integration
+//!
+//! ```rust
+//! use boxy::api::geometry;
+//!
+//! // Get precise text measurements
+//! let width = geometry::get_text_width("Hello 🌟 World 中文");
+//! assert_eq!(width, 19); // Handles emoji and CJK width
+//!
+//! // Calculate box dimensions
+//! let dims = geometry::calculate_box_dimensions(
+//!     "Content",
+//!     "rounded", // box style
+//!     2,        // h_padding
+//!     1         // v_padding
+//! );
+//! ```
+//!
+//! # Advanced Usage
+//!
+//! ```rust
+//! use boxy::api::{layout, theming};
+//!
+//! // Build complex layouts
+//! let layout = layout::BoxBuilder::new("Content")
+//!     .with_header(layout::HeaderBuilder::new("Title").align_center())
+//!     .with_footer(layout::FooterBuilder::new("Footer").align_right())
+//!     .with_padding(2)
+//!     .build();
+//!
+//! // Apply optional theming
+//! let scheme = theming::ColorScheme::default();
+//! let colored = theming::apply_colors(layout, &scheme);
 //! ```
 
 pub mod geometry;
