@@ -47,6 +47,20 @@ Duration: Immediate | Risk: High | Blocks Room Runtime
   - Cover all component types
 
 ================================================================================
+ ⚙️ PERFORMANCE & ARCHITECTURE BACKLOG (New)
+================================================================================
+
+[PERF-01] Hoist strip_box ANSI regex builders (2) - High
+  - src/visual/utils.rs:392-397 recompiles Regex objects for every line stripped; switch to a once_cell/lazy_static so multi-box renders stop paying compile costs.
+  - Collapse the duplicate Vec<char> rebuilds that trim border glyphs to cut per-line allocations on wide content.
+  - Add a micro-benchmark (e.g., benches/strip_box.rs) to track the improvement.
+
+[ARCH-01] Remove process::exit from theme helpers (5) - High
+  - src/themes/utils.rs:160-253 and src/themes/helpers.rs:18-216 call std::process::exit inside library helpers, which makes library embedding impossible.
+  - Refactor helpers to return Result<(), ThemeError> (or similar) and move CLI-only exit/println! handling into bin/main.rs.
+  - Update existing CLI commands/tests to surface errors without terminating the process inside library code.
+
+================================================================================
  🎯 MILESTONE 2: LIBRARY API DEVELOPMENT (34 pts)
 ================================================================================
 Duration: 2-3 weeks | Risk: Medium | New Public API

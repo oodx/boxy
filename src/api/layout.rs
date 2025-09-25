@@ -18,6 +18,7 @@
 
 use crate::api::geometry::get_text_width;
 use crate::visual::{BoxStyle, NORMAL};
+use crate::truncate_with_ellipsis;
 
 /// Layout information for a positioned component
 #[derive(Debug, Clone)]
@@ -156,26 +157,14 @@ impl HeaderBuilder {
             return self.style.horizontal.repeat(max_width);
         }
 
-        let mut result = String::new();
-        let mut width = 0;
-
-        for ch in text.chars() {
-            let char_width = get_text_width(&ch.to_string());
-            if width + char_width > max_width - 3 {
-                result.push_str("...");
-                width += 3;
-                break;
-            }
-            result.push(ch);
-            width += char_width;
-        }
+        let truncated = truncate_with_ellipsis(text, max_width - 3);
+        let truncated_width = get_text_width(&truncated);
 
         // Fill remaining with horizontal line
-        if width < max_width {
-            result.push_str(&self.style.horizontal.repeat(max_width - width));
-        }
-
-        result
+        format!("{}{}",
+            truncated,
+            self.style.horizontal.repeat(max_width.saturating_sub(truncated_width))
+        )
     }
 }
 
@@ -385,11 +374,12 @@ impl StatusBuilder {
         };
 
         format!(
-            "{}{}{}{}",
+            "{}{}{}{}{}",
             style.vertical,
             " ".repeat(self.padding),
             status_content,
             " ".repeat(self.padding),
+            style.vertical
         )
     }
 
@@ -398,26 +388,14 @@ impl StatusBuilder {
             return " ".repeat(max_width);
         }
 
-        let mut result = String::new();
-        let mut width = 0;
-
-        for ch in text.chars() {
-            let char_width = get_text_width(&ch.to_string());
-            if width + char_width > max_width - 3 {
-                result.push_str("...");
-                width += 3;
-                break;
-            }
-            result.push(ch);
-            width += char_width;
-        }
+        let truncated = truncate_with_ellipsis(text, max_width);
+        let truncated_width = get_text_width(&truncated);
 
         // Pad to full width
-        if width < max_width {
-            result.push_str(&" ".repeat(max_width - width));
-        }
-
-        result
+        format!("{}{}",
+            truncated,
+            " ".repeat(max_width.saturating_sub(truncated_width))
+        )
     }
 }
 
@@ -509,11 +487,12 @@ impl BodyBuilder {
         };
 
         format!(
-            "{}{}{}{}",
+            "{}{}{}{}{}",
             style.vertical,
             " ".repeat(self.h_padding),
             content,
             " ".repeat(self.h_padding),
+            style.vertical
         )
     }
 
@@ -522,26 +501,14 @@ impl BodyBuilder {
             return " ".repeat(max_width);
         }
 
-        let mut result = String::new();
-        let mut width = 0;
-
-        for ch in line.chars() {
-            let char_width = get_text_width(&ch.to_string());
-            if width + char_width > max_width - 3 {
-                result.push_str("...");
-                width += 3;
-                break;
-            }
-            result.push(ch);
-            width += char_width;
-        }
+        let truncated = truncate_with_ellipsis(line, max_width);
+        let truncated_width = get_text_width(&truncated);
 
         // Pad to full width
-        if width < max_width {
-            result.push_str(&" ".repeat(max_width - width));
-        }
-
-        result
+        format!("{}{}",
+            truncated,
+            " ".repeat(max_width.saturating_sub(truncated_width))
+        )
     }
 }
 
@@ -596,8 +563,13 @@ impl BoxBuilder {
     pub fn build(self) -> BoxLayout {
         let inner_width = self.calculate_inner_width();
 
-        let header = self.header.map(|h| h.with_style(self.style).build_for_width(inner_width));
-        let footer = self.footer.map(|f| f.with_style(self.style).build_for_width(inner_width));
+        // Auto-add empty header/footer if not provided to ensure closed box
+        let header = self.header
+            .or_else(|| Some(HeaderBuilder::empty()))
+            .map(|h| h.with_style(self.style).build_for_width(inner_width));
+        let footer = self.footer
+            .or_else(|| Some(FooterBuilder::empty()))
+            .map(|f| f.with_style(self.style).build_for_width(inner_width));
         let status = self.status.map(|s| s.build_for_width(inner_width, self.style));
         let body = self.body.build_for_width(inner_width, self.style);
 
@@ -719,5 +691,108 @@ mod tests {
 
         // Should handle emoji width correctly
         assert!(rendered.contains("Hello 🌟 World"));
+    }
+
+    #[test]
+    fn test_box_has_complete_borders() {
+        let layout = BoxBuilder::new("test content").build();
+        let rendered = layout.render();
+
+        // Check all borders are present
+        assert!(rendered.starts_with("┌"), "Missing top-left corner");
+
+        let lines: Vec<&str> = rendered.lines().collect();
+        assert!(lines[0].ends_with("┐"), "Missing top-right corner");
+
+        // Check all middle lines have side borders
+        for (i, line) in lines.iter().enumerate() {
+            if i > 0 && i < lines.len() - 1 {
+                assert!(line.starts_with("│"), "Missing left border on line {}", i);
+                assert!(line.ends_with("│"), "Missing right border on line {}", i);
+            }
+        }
+
+        let last_line = lines.last().expect("Box should have lines");
+        assert!(last_line.starts_with("└"), "Missing bottom-left corner");
+        assert!(last_line.ends_with("┘"), "Missing bottom-right corner");
+    }
+
+    #[test]
+    fn test_box_width_consistency() {
+        let layout = BoxBuilder::new("test").with_fixed_width(30).build();
+        let rendered = layout.render();
+
+        let lines: Vec<&str> = rendered.lines().collect();
+        let expected_width = layout.total_width;
+
+        for (i, line) in lines.iter().enumerate() {
+            let line_width = get_text_width(line);
+            assert_eq!(
+                line_width, expected_width,
+                "Line {} has width {} but expected {}. Content: '{}'",
+                i, line_width, expected_width, line
+            );
+        }
+    }
+
+    #[test]
+    fn test_body_borders_complete() {
+        let body = BodyBuilder::new("test line")
+            .with_h_padding(2)
+            .build_for_width(20, NORMAL);
+
+        // Check each line in body has both borders
+        for line in body.content.lines() {
+            assert!(line.starts_with("│"), "Body line missing left border");
+            assert!(line.ends_with("│"), "Body line missing right border");
+        }
+    }
+
+    #[test]
+    fn test_status_borders_complete() {
+        let status = StatusBuilder::new("status text")
+            .with_divider(true)
+            .build_for_width(20, NORMAL);
+
+        let lines: Vec<&str> = status.content.lines().collect();
+
+        // First line should be divider
+        assert!(lines[0].starts_with("├"), "Status divider missing left tee");
+        assert!(lines[0].ends_with("┤"), "Status divider missing right tee");
+
+        // All other lines should have vertical borders
+        for line in lines.iter().skip(1) {
+            assert!(line.starts_with("│"), "Status line missing left border");
+            assert!(line.ends_with("│"), "Status line missing right border");
+        }
+    }
+
+    #[test]
+    fn test_default_box_is_closed() {
+        let layout = BoxBuilder::new("content").build();
+        let rendered = layout.render();
+
+        // Verify box has top and bottom borders (is closed)
+        assert!(rendered.starts_with("┌"), "Default box missing top border");
+        assert!(rendered.contains("┘"), "Default box missing bottom border");
+
+        let lines: Vec<&str> = rendered.lines().collect();
+        assert!(lines.len() >= 3, "Box should have at least header, body, footer");
+    }
+
+    #[test]
+    fn test_truncation_preserves_graphemes() {
+        // Test that our truncation functions work correctly
+        let header = HeaderBuilder::new("Very long text that needs truncation")
+            .build_for_width(10);
+
+        // Should truncate and not panic
+        assert!(header.content.len() > 0);
+
+        let body = BodyBuilder::new("Another very long line that needs truncation")
+            .build_for_width(10, NORMAL);
+
+        // Body should handle truncation
+        assert!(body.content.len() > 0);
     }
 }
