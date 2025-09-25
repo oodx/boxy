@@ -80,12 +80,51 @@ let bg_color = theming::BackgroundColor::Rgb(255, 0, 0);
 ### Room Runtime (Pure Geometry)
 
 ```rust
-use boxy::api::{geometry, layout};
+use boxy::api::{geometry, layout, room_runtime};
 
 // Calculate dimensions without colors
 let dims = geometry::calculate_box_dimensions(content, style);
 let layout = layout::BoxBuilder::new(content).build();
-let rendered = layout.render(); // Pure Unicode
+let adapter = room_runtime::RoomRuntimeAdapter::new(layout);
+
+// Get line-by-line positioning
+let positions = adapter.positions();
+let header_component = adapter.component_at_line(0);
+```
+
+### Convenience Box Rendering
+
+```rust
+use boxy::api::layout;
+
+// Quick box creation with options
+let output = layout::render_box("Hello World!",
+    layout::BoxOptions {
+        header: Some("Welcome".to_string()),
+        width: Some(40),
+        ..Default::default()
+    }
+);
+
+// Line-by-line rendering for precise positioning
+let lines = layout::render_box_lines("Content",
+    layout::BoxOptions {
+        footer: Some("v1.0".to_string()),
+        ..Default::default()
+    }
+);
+```
+
+### ANSI Size Analysis
+
+```rust
+use boxy::api::geometry;
+
+let plain_text = "Hello, World!";
+let colored_text = "\x1b[32mHello, World!\x1b[0m";
+
+let size_comparison = geometry::compare_ansi_sizes(plain_text, colored_text);
+println!("Color Overhead: {}%", size_comparison.overhead_percentage);
 ```
 
 ### Traditional Usage with Theming
@@ -114,14 +153,24 @@ let styled_layout = theming::apply_colors(layout, &scheme);
 ### Main Types
 - `geometry::BoxDimensions`
 - `geometry::TextMetrics`
+- `geometry::AnsiSizeComparison`
 - `layout::ComponentLayout`
+- `layout::BoxOptions`
+- `room_runtime::RoomRuntimeAdapter`
+- `room_runtime::ComponentPosition`
+- `room_runtime::LayoutMetadata`
 - `theming::ColorScheme`
 - `theming::BackgroundColor`
 
 ### Key Functions
 - `geometry::get_text_width()`
 - `geometry::calculate_box_dimensions()`
+- `geometry::calculate_ansi_overhead()`
+- `geometry::compare_ansi_sizes()`
 - `layout::BoxBuilder::new()`
+- `layout::render_box()`
+- `layout::render_box_lines()`
+- `room_runtime::RoomRuntimeAdapter::new()`
 - `theming::apply_colors()`
 - `theming::apply_background_color()`
 

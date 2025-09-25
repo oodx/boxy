@@ -10,6 +10,7 @@ pub mod width_plugin;
 // Import colors module public API
 pub use colors::{
     RESET, generate_color_help, get_color_categories, get_color_code, validate_color,
+    strip_ansi_codes,
 };
 
 // Import core module public API (consolidates config, parser, help)

@@ -603,7 +603,7 @@ impl BoxBuilder {
 }
 
 /// Complete box layout result
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoxLayout {
     pub header: Option<ComponentLayout>,
     pub footer: Option<ComponentLayout>,

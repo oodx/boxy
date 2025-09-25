@@ -13,6 +13,7 @@ pub mod utils;
 // but downstream library users depend on this surface.
 #[allow(unused_imports)]
 pub use utils::{RESET, generate_color_help, get_color_categories, get_color_code, validate_color};
+pub use helpers::strip_ansi_codes;
 
 // Test module access
 #[cfg(test)]
