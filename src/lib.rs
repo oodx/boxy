@@ -1,3 +1,4 @@
+pub mod api;
 pub mod colors;
 pub mod core;
 pub mod emoji_debug;

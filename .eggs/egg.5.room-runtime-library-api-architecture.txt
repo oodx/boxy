@@ -1,0 +1,248 @@
+================================================================================
+🐔 CHINA'S ROOM RUNTIME LIBRARY API ARCHITECTURE EGG #5 🥚
+================================================================================
+
+📋 REQUEST ANALYSIS
+==================
+Agent: User
+Date: 2025-09-25 10:30 UTC
+Subject: Room Runtime Library API Architecture for Clean Box Geometry
+
+🎯 EXECUTIVE SUMMARY
+===================
+The Boxy project has excellent existing architecture that CAN be adapted for Room Runtime
+needs with a clean library API layer. The key insight is separating box GEOMETRY from
+STYLING/THEMING through a new `geometry` module that exposes pure calculation functions.
+
++----------------------------------------------------------------------+
+ 🏗️ CRITICAL ARCHITECTURAL DISCOVERY: SEPARATION ALREADY EXISTS!
++----------------------------------------------------------------------+
+
+The current architecture has THREE distinct layers that can be cleanly separated:
+
+1. **GEOMETRY LAYER** (width_plugin.rs + visual/utils.rs macros)
+   - Width calculations (get_display_width, get_terminal_width)
+   - Box dimension calculations (calculate_box_width, protected macros)
+   - Pure Unicode box characters (BOX_CHARS, BoxStyle structs)
+
+2. **RENDERING LAYER** (visual/utils.rs drawing functions)
+   - Box drawing logic (draw_box, render_to_string)
+   - Component system (Header, Footer, Body, Status)
+   - String assembly and formatting
+
+3. **STYLING/THEME LAYER** (theme_engine.rs + colors/)
+   - Color code generation (get_color_code)
+   - Theme resolution and inheritance
+   - ANSI escape sequences
+
+✨ ARCHITECTURAL INSIGHTS
+========================
+
+🧪 VERIFICATION TESTS PERFORMED:
+================================
+- ✅ Analyzed width_plugin.rs: Contains clean width calculation functions
+- ✅ Examined visual/utils.rs: Clear separation between geometry and rendering
+- ✅ Reviewed theme_engine.rs: Completely decoupled from box geometry
+- ✅ Checked lib.rs: Already exports key functions as public API
+
+🎪 KEY ARCHITECTURAL PATTERNS DISCOVERED:
+
+1. **Protected Macros Pattern** (visual/utils.rs:127-170)
+   - `box_width!` macro handles core dimension logic
+   - `max_width!` and `inner_target_width!` macros in calc_macros.rs
+   - These are ALREADY pure geometry calculations!
+
+2. **Style Constant Pattern** (visual/utils.rs:55-113)
+   - BoxStyle structs contain pure Unicode characters
+   - No ANSI codes or colors embedded
+   - Perfect for Room Runtime's "pure box drawing" requirement
+
+3. **Width Plugin Pattern** (width_plugin.rs:214-219)
+   - `get_display_width()` strips ANSI then calculates
+   - Handles emoji/CJK width correctly via unicode-width crate
+   - This is exactly what Room Runtime needs!
+
+📐 PROPOSED LIBRARY API ARCHITECTURE
+====================================
+
+Create a new `geometry` module as the Room Runtime interface:
+
+```rust
+// src/geometry/mod.rs - NEW MODULE
+pub mod calculations;
+pub mod styles;
+pub mod dimensions;
+
+// Pure geometry API for Room Runtime
+pub use calculations::{
+    calculate_content_width,
+    calculate_box_dimensions,
+    get_text_display_width,
+};
+
+pub use styles::{
+    BoxChars,          // Pure Unicode characters
+    BorderStyle,       // Style definitions without colors
+    get_box_chars,     // Get character set for style
+};
+
+pub use dimensions::{
+    BoxDimensions,     // Width/height calculation results
+    ContentConstraints, // Min/max width constraints
+    calculate_optimal_size,
+};
+```
+
+🔧 IMPLEMENTATION APPROACH
+==========================
+
+**PHASE 1: Extract Geometry Functions**
+- Move width calculation logic from width_plugin.rs → geometry/calculations.rs
+- Extract BoxStyle constants → geometry/styles.rs
+- Create dimension calculation helpers → geometry/dimensions.rs
+
+**PHASE 2: Create Clean Interfaces**
+- BoxChars struct (pure Unicode, no colors)
+- BoxDimensions struct (width/height results)
+- Pure calculation functions (no theme dependencies)
+
+**PHASE 3: Modular Colorization**
+- Optional color module that Room Runtime can ignore
+- Color application as separate step after geometry
+- Room Runtime applies its own styling post-geometry
+
+🎯 ROOM RUNTIME INTEGRATION PATTERN
+==================================
+
+```rust
+// Room Runtime usage pattern:
+use boxy::geometry::{calculate_box_dimensions, get_box_chars, BorderStyle};
+
+let content = "Hello World";
+let style = BorderStyle::Normal;
+let constraints = ContentConstraints::auto_width();
+
+// 1. Get pure geometry
+let dimensions = calculate_box_dimensions(content, style, constraints)?;
+let box_chars = get_box_chars(style);
+
+// 2. Room applies its own styling
+let styled_output = room_runtime.apply_layout_styling(
+    content,
+    dimensions,
+    box_chars,
+    room_styling_rules
+);
+```
+
+🔍 SPECIFIC ANSWERS TO YOUR QUESTIONS
+====================================
+
+**Q1: Can we create a clean library API module that separates box geometry from theming?**
+✅ YES! The separation already exists in the codebase:
+- Geometry: width_plugin.rs + visual/utils.rs protected macros
+- Theming: theme_engine.rs + colors/ module
+- Just need to expose geometry through a clean API
+
+**Q2: What would be the cleanest way to expose width/height calculations as first-class API?**
+🎯 Create geometry/calculations.rs with these functions:
+- `get_text_display_width(text: &str) -> usize` (from width_plugin.rs:214)
+- `calculate_box_width(content, padding, constraints) -> usize` (from visual/utils.rs:174)
+- `calculate_box_height(content, constraints) -> usize` (NEW)
+
+**Q3: How can we make colorization completely optional/modular?**
+🎨 The theme_engine.rs is ALREADY completely separate from geometry!
+- Room Runtime imports only geometry module
+- Colors module remains separate
+- Zero coupling between width calculations and color generation
+
+**Q4: What architectural pattern would allow Room Runtime to get pure boxes + apply its own styling?**
+🏗️ Adapter Pattern with Clean Separation:
+```
+Room Runtime → boxy::geometry (pure) → Room styling system
+            ↖ (skips boxy::colors entirely)
+```
+
+🚀 IMPLEMENTATION ROADMAP
+========================
+
+**IMMEDIATE (Can be done today):**
+1. Create src/geometry/ module structure
+2. Move key functions to geometry/calculations.rs
+3. Export through lib.rs as pub mod geometry
+
+**SHORT TERM (Next iteration):**
+4. Add BoxDimensions return struct
+5. Create comprehensive tests
+6. Document Room Runtime usage patterns
+
+**OPTIONAL (If Room Runtime needs it):**
+7. Add box height calculations
+8. Add text wrapping geometry helpers
+9. Add constraint validation functions
+
+📊 CODE REFERENCES FOR IMPLEMENTATION
+====================================
+
+**Key Functions to Extract:**
+- width_plugin.rs:214 `get_display_width()` → geometry/calculations.rs
+- visual/utils.rs:174 `calculate_box_width()` → geometry/calculations.rs
+- visual/utils.rs:55-113 BoxStyle constants → geometry/styles.rs
+- visual/utils.rs:127-170 `box_width!` macro → geometry/calculations.rs
+
+**Current Public API (lib.rs:44-66):**
+- Already exports calculate_box_width, BoxStyle, strip_box
+- Just need to add geometry module export
+
+**Files That DON'T Need Changes:**
+- theme_engine.rs (completely separate)
+- colors/ module (Room Runtime ignores this)
+- visual/render_target.rs (rendering, not geometry)
+
+⚠️ CRITICAL IMPLEMENTATION NOTES
+================================
+
+1. **Preserve Protected Macros**: The box_width! macro (visual/utils.rs:127) contains working logic that MUST be preserved exactly
+2. **Unicode-Width Dependency**: Keep unicode-width crate dependency for proper emoji/CJK handling
+3. **ANSI Stripping**: get_display_width() correctly strips ANSI before calculation
+4. **Terminal Width**: get_terminal_width() provides dynamic sizing that Room Runtime may want
+
+🏆 RECOMMENDED NEXT STEPS
+========================
+
+1. **Create geometry module** with extracted functions
+2. **Test Room Runtime integration** with simple examples
+3. **Benchmark performance** of pure geometry vs full boxy rendering
+4. **Document API** with Room Runtime usage examples
+
+🎪 KEY TAKEAWAYS
+===============
+
+✅ **EXCELLENT NEWS**: Boxy architecture is ALREADY well-separated!
+✅ **CLEAN SEPARATION**: Geometry calculations are independent of theming
+✅ **MINIMAL WORK NEEDED**: Just need to expose existing functions through new module
+✅ **ZERO BREAKING CHANGES**: Current boxy API remains unchanged
+✅ **ROOM RUNTIME READY**: Can ignore colors/themes entirely and use pure geometry
+
+⚠️ DISCLAIMER ABOUT VALIDITY/STATUS/SCOPE
+=========================================
+This analysis reflects the codebase state as of Sep 25, 2025. Code may have changed
+since analysis. Actual implementation should verify all function signatures and
+test integration thoroughly. Analysis focuses on architectural patterns, not
+implementation details.
+
+📋 EGG METADATA
+===============
+- Analysis Target: Boxy codebase architecture for Room Runtime library API
+- Files Analyzed: 6 core Rust files (lib.rs, width_plugin.rs, visual/utils.rs, theme_engine.rs, visual/mod.rs, visual/calc_macros.rs)
+- Lines of Code Reviewed: ~2000+ LOC
+- Architecture Patterns Identified: 3 distinct layers with clean separation
+- API Functions Identified: 15+ candidate functions for geometry module
+- Room Runtime Requirements: All supported with minimal modification
+
+================================================================================
+🐔 China the Summary Chicken - Architectural Detective Work Complete! 🔍✨
+
+"Sometimes the best architecture is the one you already have -
+ you just need to expose it properly!" - China the Wise Chicken 🐔
+================================================================================
