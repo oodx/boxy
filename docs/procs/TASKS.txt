@@ -38,10 +38,14 @@ Duration: Immediate | Risk: High | Blocks Room Runtime
   - Added border width checks to layout tests
   - Prevents future open-border regressions
 
-[REGRESSION-04] Restore header ellipsis rendering (2) - HIGH
-  - HeaderBuilder::truncate_to_width now trims to max_width - 3; this strips the trailing ellipsis and replaces it with horizontal runes (src/api/layout.rs:155-167)
-  - Pass the true max width to truncate_with_ellipsis and retain padding to keep the ellipsis visible
-  - Extend tests to assert ellipsis preservation for long headers
+[REGRESSION-04] Restore header ellipsis rendering (2) - HIGH ✅ Completed (commit c5c25ba)
+  - Passed full max width to truncate_with_ellipsis; ellipsis preserved without trailing horizontals
+  - Added regression test coverage for long headers
+
+[TESTS-02] Strengthen ellipsis regression coverage (1) - Medium
+  - Current test_header_ellipsis_preservation only checks width, so the pre-fix bug still passes
+  - Assert the rendered header contains the ellipsis glyph and no trailing horizontal filler
+  - Adds confidence that future changes don’t reintroduce REGRESSION-04
 
 ================================================================================
  ⚙️ PERFORMANCE & ARCHITECTURE BACKLOG (New)

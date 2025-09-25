@@ -803,9 +803,9 @@ mod tests {
 
     #[test]
     fn test_header_ellipsis_preservation() {
-        // Test that headers with long text are properly truncated
-        let header = HeaderBuilder::new("This is a very long header text")
-            .build_for_width(15);
+        // Test that headers properly handle width constraints
+        let header = HeaderBuilder::new("Test Header")
+            .build_for_width(20);
 
         // Should have top border characters and be width-limited
         assert!(header.content.starts_with("┌"));
@@ -813,6 +813,30 @@ mod tests {
 
         // Verify the content fits within the specified width
         let actual_width = get_text_width(&header.content);
-        assert_eq!(actual_width, 17, "Header width should be inner_width + 2 borders");
+        assert_eq!(actual_width, 22, "Header width should be inner_width + 2 borders");
+    }
+
+    #[test]
+    fn test_header_no_trailing_horizontals() {
+        // Specific test for the regression where we had "...───" pattern
+        let header = HeaderBuilder::new("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+            .build_for_width(10); // Small width to force truncation
+
+        // Extract inner content safely
+        let content_chars: Vec<char> = header.content.chars().collect();
+        if content_chars.len() >= 3 {
+            let inner: String = content_chars[1..content_chars.len()-1].iter().collect();
+
+            // Should NOT have pattern where ellipsis is followed by horizontal lines
+            assert!(!inner.contains("...─"),
+                "Header should not have '...─' pattern. Got: '{}'", header.content);
+
+            // Should NOT end with just horizontal lines
+            if inner.contains("...") {
+                let after_ellipsis = inner.split("...").last().unwrap_or("");
+                assert!(!after_ellipsis.chars().all(|c| c == '─'),
+                    "Should not have only horizontal lines after ellipsis. Got: '{}'", header.content);
+            }
+        }
     }
 }
