@@ -1,13 +1,45 @@
 ================================================================================
- 🏃 BOXY DEVELOPMENT SPRINT - Theme Stability & Debugging
+ 🏃 BOXY DEVELOPMENT SPRINT - API Fixes & Theme Stability
 ================================================================================
 
-Sprint Goal: Fix critical theme inheritance bug and improve debugging/testing
+Sprint Goal: Fix critical API regressions and theme inheritance bug
 Duration: Current sprint (focused iteration)
-Story Points: ~10-12 points (manageable sprint size)
+Story Points: ~14-16 points (expanded for API fixes)
 
 ================================================================================
- 🎯 SPRINT TASKS
+ 🚨 NEW CRITICAL TASKS - CODEX REVIEW REGRESSIONS
+================================================================================
+
+[API-FIX-01] Fix Missing Closing Borders in Body/Status (2) - CRITICAL
+──────────────────────────────────────────────────────────────────────────
+**Issue**: Body and Status components missing right vertical border
+**Files**: src/api/layout.rs:387, 511
+**Impact**: Boxes render open, width calculations wrong
+**Fix**: Add style.vertical to closing position in format strings
+
+[API-FIX-02] Fix BoxBuilder Default Open Box (2) - CRITICAL
+──────────────────────────────────────────────────────────────────────────
+**Issue**: BoxBuilder::new() creates box with no header/footer
+**File**: src/api/layout.rs:560
+**Impact**: Violates closed-box contract, surprises API consumers
+**Fix**: Auto-add empty header/footer if not provided
+
+[API-FIX-03] Fix Unicode-Unsafe Truncation (3) - HIGH
+──────────────────────────────────────────────────────────────────────────
+**Issue**: Custom truncation can split grapheme clusters
+**Files**: src/api/layout.rs:154, 396, 520
+**Impact**: Emoji/combining chars may break
+**Fix**: Use existing truncate_with_ellipsis utility
+
+[API-TEST-01] Add Geometry Assertions to Tests (2) - HIGH
+──────────────────────────────────────────────────────────────────────────
+**Issue**: Tests only check substrings, not complete geometry
+**File**: src/api/layout.rs (test module)
+**Impact**: Border regressions went undetected
+**Fix**: Add explicit border presence and width consistency checks
+
+================================================================================
+ 🎯 ORIGINAL SPRINT TASKS
 ================================================================================
 
 [CHINA-02] Theme Inheritance Engine Critical Bug Fix (MEDIUM) - High Priority

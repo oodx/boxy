@@ -1,14 +1,19 @@
-# Continue Log – perf/render-write + Technical Debt Analysis
+# Continue Log – main + Library API Development
 
 ## Summary
-- `RenderTarget` now streams into any `std::io::Write` sink; the CLI path locks `stdout` instead of allocating an intermediate `String`.
-- Snapshot coverage for `render_to_string` lives in `tests/render_snapshots.rs` with fixtures under `tests/fixtures/` to catch accidental byte regressions.
-- Roadmap synced (Milestone 1.7 marked complete; height milestone flagged as done) and README/docs updated to advertise streaming + height features.
-- Bench snapshots refreshed earlier (`meta/snaps/`), full test suite continues to pass.
-- **NEW**: Comprehensive technical debt analysis completed by China & Tina with actionable task tickets.
+- Created new `src/api/` module for Room Runtime integration with pure geometry/layout capabilities
+- CODEX review identified 3 CRITICAL regressions that must be fixed before Room Runtime use
+- Sprint updated to include API fixes as highest priority (9 story points)
+- Tasks added to SPRINT.txt and TASKS.txt tracking boards
 
 ## Current Branch
-- `perf/render-write`
+- `main`
+
+## Latest Work
+- Library API module created (`src/api/`) with geometry, layout, and theming submodules
+- Background color feature added (ANSI, RGB, Named, Hex support)
+- China review: 4.5/5 stars on architecture
+- CODEX review: Found 3 critical regressions that need immediate fixes
 
 ## Latest Benchmarks
 - Rounded: ~1.21 ms (down from ~1.39 ms).
@@ -32,12 +37,13 @@ High priority technical debt that should be addressed before M3:
 - **TEST-01, TEST-02, TEST-03**: Benchmark integration & performance regression detection
 - **TEST-05 through TEST-08**: RSB architecture compliance (65% gap to close)
 
-## What's Next
-- **Immediate**: Review and prioritize technical debt tickets (CHINA-XX, TEST-XX)
-- **[M2-010]**: Refresh CLI `--help` output for height/streaming features
-- **[M3-009..011]**: Execute YAML→TOML migration with backward compatibility
-- **Pre-M3**: Address critical technical debt from China/Tina analysis
-- **[M5-002a]**: Add `height` Cargo feature gate during feature-flag milestone
+## What's Next (Priority Order)
+- **[API-FIX-01]**: Fix missing closing borders in Body/Status (CRITICAL)
+- **[API-FIX-02]**: Fix BoxBuilder default open box issue (CRITICAL)
+- **[API-FIX-03]**: Replace custom truncation with Unicode-safe utility (HIGH)
+- **[API-TEST-01]**: Add comprehensive geometry assertions (HIGH)
+- **[CHINA-02]**: Fix theme inheritance engine critical bug (after API fixes)
+- **[TEST-01]**: Integrate benchmarks into test.sh workflow
 
 ## Handy Commands
 ```bash

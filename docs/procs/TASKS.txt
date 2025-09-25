@@ -18,17 +18,46 @@ Story Point Scale: 1=Trivial, 2=Small, 3=Medium, 5=Large, 8=Complex, 13=Epic
 🎯 Total Completed: 64 story points across 4 major milestones
 
 ================================================================================
+ 🚨 CRITICAL API FIXES - CODEX REVIEW (9 pts)
+================================================================================
+Duration: Immediate | Risk: High | Blocks Room Runtime
+
+[API-FIX-01] Fix Missing Closing Borders in Body/Status (2) - CRITICAL
+  - Add missing style.vertical to src/api/layout.rs:387
+  - Add missing style.vertical to src/api/layout.rs:511
+  - Verify boxes render with complete borders
+  - Update width calculations
+
+[API-FIX-02] Fix BoxBuilder Default Open Box (2) - CRITICAL
+  - Auto-add empty header/footer in src/api/layout.rs:560
+  - Ensure default BoxBuilder produces closed box
+  - Maintain API contract expectations
+  - Test default behavior
+
+[API-FIX-03] Fix Unicode-Unsafe Truncation (3) - HIGH
+  - Replace custom truncation in src/api/layout.rs:154
+  - Replace custom truncation in src/api/layout.rs:396
+  - Replace custom truncation in src/api/layout.rs:520
+  - Use truncate_with_ellipsis for grapheme safety
+
+[API-TEST-01] Add Geometry Assertions (2) - HIGH
+  - Add border presence checks to tests
+  - Add width consistency validation
+  - Ensure regressions cannot pass tests
+  - Cover all component types
+
+================================================================================
  🎯 MILESTONE 2: LIBRARY API DEVELOPMENT (34 pts)
 ================================================================================
 Duration: 2-3 weeks | Risk: Medium | New Public API
 
-Theme: Core Library API Design (13 pts)
+Theme: Core Library API Design (13 pts) - ✅ PARTIALLY COMPLETE
 ---------------------------------------
-[M2-001] Design public API surface for box drawing (5) - Critical
-  - Define BoxBuilder pattern for ergonomic usage
-  - Create draw_box(), draw_text_box() functions
-  - Design width/height/padding configuration
-  - Plan async/sync variants
+[M2-001] Design public API surface for box drawing (5) - ✅ DONE
+  - Define BoxBuilder pattern for ergonomic usage ✅
+  - Create draw_box(), draw_text_box() functions ✅
+  - Design width/height/padding configuration ✅
+  - Plan async/sync variants (deferred)
 
 [M2-002] Design theme system public API (5) - Critical
   - Create ThemeLoader, ThemeApplicator traits
