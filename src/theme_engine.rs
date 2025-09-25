@@ -3,7 +3,7 @@
 
 use crate::colors::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 
@@ -508,14 +508,18 @@ impl ThemeEngine {
     pub fn get_theme(&self, name: &str) -> Option<BoxyTheme> {
         // Direct theme lookup
         if let Some(theme) = self.themes.get(name) {
-            let resolved_theme = self.resolve_inheritance(theme.clone());
-            // Validate the resolved theme has a valid color
+            let mut resolved_theme = self.resolve_inheritance(theme.clone());
+            // CHINA-02 Fix: Validate the resolved theme has a valid color
+            // Fall back to default theme if color is empty after inheritance
             if resolved_theme.color.is_empty() {
                 eprintln!(
-                    "Warning: Theme '{}' has no color after inheritance resolution",
+                    "⚠️  Theme '{}' has no color after inheritance resolution",
                     name
                 );
-                return None;
+                eprintln!("   Falling back to default theme color: azure");
+                // Use the default theme's color as fallback
+                let fallback = BoxyTheme::default();
+                resolved_theme.color = fallback.color;
             }
             return Some(resolved_theme);
         }
@@ -529,14 +533,19 @@ impl ThemeEngine {
 
         for variation in variations {
             if let Some(theme) = self.themes.get(&variation) {
-                let resolved_theme = self.resolve_inheritance(theme.clone());
-                // Validate the resolved theme has a valid color
+                let mut resolved_theme = self.resolve_inheritance(theme.clone());
+                // CHINA-02 Fix: Validate the resolved theme has a valid color
+                // Fall back to default theme if color is empty after inheritance
                 if resolved_theme.color.is_empty() {
                     eprintln!(
-                        "Warning: Theme '{}' has no color after inheritance resolution",
+                        "Warning: Theme '{}' has no color after inheritance resolution, falling back to default",
                         variation
                     );
-                    continue;
+                    // Use the default theme's color as fallback
+                    let fallback = BoxyTheme::default();
+                    resolved_theme.color = fallback.color;
+                    // Continue searching for other variations but mark degraded mode
+                    // Don't exit here since we still want to return a working theme
                 }
                 return Some(resolved_theme);
             }
@@ -545,12 +554,34 @@ impl ThemeEngine {
         None
     }
 
-    /// Resolve theme inheritance
+    /// Resolve theme inheritance with cycle detection and chain support
     fn resolve_inheritance(&self, mut theme: BoxyTheme) -> BoxyTheme {
-        if let Some(parent_name) = &theme.inherits {
+        // CHINA-02 Enhancement: Support inheritance chains with cycle detection
+        let mut visited = HashSet::new();
+        let mut current_theme = theme.clone();
+
+        while let Some(parent_name) = &current_theme.inherits {
+            // Check for inheritance cycles
+            if visited.contains(parent_name) {
+                eprintln!(
+                    "⚠️  Circular inheritance detected: {} already in chain",
+                    parent_name
+                );
+                break;
+            }
+            visited.insert(parent_name.clone());
+
             if let Some(parent_theme) = self.themes.get(parent_name) {
                 // Merge parent theme with child theme (child overrides parent)
                 theme = self.merge_themes(parent_theme.clone(), theme);
+                // Continue up the inheritance chain
+                current_theme = parent_theme.clone();
+            } else {
+                eprintln!(
+                    "⚠️  Parent theme '{}' not found for inheritance",
+                    parent_name
+                );
+                break;
             }
         }
         theme

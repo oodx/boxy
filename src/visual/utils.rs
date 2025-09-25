@@ -16,6 +16,8 @@ use crate::{
     RESET, expand_variables, get_color_code, get_display_width, get_terminal_width,
     render_title_or_footer, truncate_with_ellipsis,
 };
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::io;
 
 // ============================================================================
@@ -388,13 +390,18 @@ pub fn strip_box(text: &str, strict: bool) -> String {
             // Remove emojis and special Unicode (keep basic ASCII)
             content = content.chars().filter(|c| c.is_ascii()).collect();
         } else {
+            // PERF-01: Use lazy static regex to avoid recompilation on every line
             // For normal mode, clean up leading/trailing ANSI codes that might be left over
             // after box character removal
-            use regex::Regex;
-            let ansi_regex = Regex::new(r"^\x1b\[[0-9;]*m").unwrap();
-            content = ansi_regex.replace(&content, "").to_string();
-            let ansi_regex = Regex::new(r"\x1b\[[0-9;]*m$").unwrap();
-            content = ansi_regex.replace(&content, "").to_string();
+            static LEADING_ANSI_REGEX: Lazy<Regex> = Lazy::new(|| {
+                Regex::new(r"^\x1b\[[0-9;]*m").unwrap()
+            });
+            static TRAILING_ANSI_REGEX: Lazy<Regex> = Lazy::new(|| {
+                Regex::new(r"\x1b\[[0-9;]*m$").unwrap()
+            });
+
+            content = LEADING_ANSI_REGEX.replace(&content, "").to_string();
+            content = TRAILING_ANSI_REGEX.replace(&content, "").to_string();
         }
 
         if !content.is_empty() || !strict {

@@ -42,10 +42,9 @@ Duration: Immediate | Risk: High | Blocks Room Runtime
   - Passed full max width to truncate_with_ellipsis; ellipsis preserved without trailing horizontals
   - Added regression test coverage for long headers
 
-[TESTS-02] Strengthen ellipsis regression coverage (1) - Medium
-  - Current test_header_ellipsis_preservation only checks width, so the pre-fix bug still passes
-  - Assert the rendered header contains the ellipsis glyph and no trailing horizontal filler
-  - Adds confidence that future changes don’t reintroduce REGRESSION-04
+[TESTS-02] Strengthen ellipsis regression coverage (1) - Medium ✅ Completed (commit 9149282)
+  - Added test_header_no_trailing_horizontals to guard the '...─' regression
+  - Ensures truncated headers contain ellipsis glyph without residual horizontal filler
 
 ================================================================================
  ⚙️ PERFORMANCE & ARCHITECTURE BACKLOG (New)
@@ -55,6 +54,11 @@ Duration: Immediate | Risk: High | Blocks Room Runtime
   - src/visual/utils.rs:392-397 recompiles Regex objects for every line stripped; switch to a once_cell/lazy_static so multi-box renders stop paying compile costs.
   - Collapse the duplicate Vec<char> rebuilds that trim border glyphs to cut per-line allocations on wide content.
   - Add a micro-benchmark (e.g., benches/strip_box.rs) to track the improvement.
+
+[PERF-02] Benchmark theme loading cache impact (3) - Medium
+  - ThemeEngine::new() (src/themes/utils.rs:171) rebuilds caches on every CLI invocation; profile and cache intermediate YAML parsing results.
+  - Add benches/theme_engine.rs to capture before/after timings.
+  - Determine whether global lazy caches are worth the memory trade-off.
 
 [ARCH-01] Remove process::exit from theme helpers (5) - High
   - src/themes/utils.rs:160-253 and src/themes/helpers.rs:18-216 call std::process::exit inside library helpers, which makes library embedding impossible.
