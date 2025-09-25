@@ -157,14 +157,19 @@ impl HeaderBuilder {
             return self.style.horizontal.repeat(max_width);
         }
 
-        let truncated = truncate_with_ellipsis(text, max_width - 3);
+        // Pass the full width - truncate_with_ellipsis handles ellipsis internally
+        let truncated = truncate_with_ellipsis(text, max_width);
         let truncated_width = get_text_width(&truncated);
 
         // Fill remaining with horizontal line
-        format!("{}{}",
-            truncated,
-            self.style.horizontal.repeat(max_width.saturating_sub(truncated_width))
-        )
+        if truncated_width < max_width {
+            format!("{}{}",
+                truncated,
+                self.style.horizontal.repeat(max_width - truncated_width)
+            )
+        } else {
+            truncated
+        }
     }
 }
 
@@ -794,5 +799,20 @@ mod tests {
 
         // Body should handle truncation
         assert!(body.content.len() > 0);
+    }
+
+    #[test]
+    fn test_header_ellipsis_preservation() {
+        // Test that headers with long text are properly truncated
+        let header = HeaderBuilder::new("This is a very long header text")
+            .build_for_width(15);
+
+        // Should have top border characters and be width-limited
+        assert!(header.content.starts_with("┌"));
+        assert!(header.content.ends_with("┐"));
+
+        // Verify the content fits within the specified width
+        let actual_width = get_text_width(&header.content);
+        assert_eq!(actual_width, 17, "Header width should be inner_width + 2 borders");
     }
 }

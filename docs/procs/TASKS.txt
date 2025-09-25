@@ -22,29 +22,26 @@ Story Point Scale: 1=Trivial, 2=Small, 3=Medium, 5=Large, 8=Complex, 13=Epic
 ================================================================================
 Duration: Immediate | Risk: High | Blocks Room Runtime
 
-[API-FIX-01] Fix Missing Closing Borders in Body/Status (2) - CRITICAL
-  - Add missing style.vertical to src/api/layout.rs:387
-  - Add missing style.vertical to src/api/layout.rs:511
-  - Verify boxes render with complete borders
-  - Update width calculations
+[API-FIX-01] Fix Missing Closing Borders in Body/Status (2) - CRITICAL ✅ Completed (commit 646c0dd)
+  - Added missing right-side borders in src/api/layout.rs:387 and :511
+  - Verified closed geometry via new snapshot-style tests
 
-[API-FIX-02] Fix BoxBuilder Default Open Box (2) - CRITICAL
-  - Auto-add empty header/footer in src/api/layout.rs:560
-  - Ensure default BoxBuilder produces closed box
-  - Maintain API contract expectations
-  - Test default behavior
+[API-FIX-02] Fix BoxBuilder Default Open Box (2) - CRITICAL ✅ Completed (commit 646c0dd)
+  - Auto-add empty header/footer so default builds remain sealed
+  - Tests guard for closed boxes by default
 
-[API-FIX-03] Fix Unicode-Unsafe Truncation (3) - HIGH
-  - Replace custom truncation in src/api/layout.rs:154
-  - Replace custom truncation in src/api/layout.rs:396
-  - Replace custom truncation in src/api/layout.rs:520
-  - Use truncate_with_ellipsis for grapheme safety
+[API-FIX-03] Fix Unicode-Unsafe Truncation (3) - HIGH ✅ Completed (commit 646c0dd)
+  - Reused truncate_with_ellipsis for header/status/body components
+  - Added coverage ensuring grapheme-safe truncation
 
-[API-TEST-01] Add Geometry Assertions (2) - HIGH
-  - Add border presence checks to tests
-  - Add width consistency validation
-  - Ensure regressions cannot pass tests
-  - Cover all component types
+[API-TEST-01] Add Geometry Assertions (2) - HIGH ✅ Completed (commit 646c0dd)
+  - Added border width checks to layout tests
+  - Prevents future open-border regressions
+
+[REGRESSION-04] Restore header ellipsis rendering (2) - HIGH
+  - HeaderBuilder::truncate_to_width now trims to max_width - 3; this strips the trailing ellipsis and replaces it with horizontal runes (src/api/layout.rs:155-167)
+  - Pass the true max width to truncate_with_ellipsis and retain padding to keep the ellipsis visible
+  - Extend tests to assert ellipsis preservation for long headers
 
 ================================================================================
  ⚙️ PERFORMANCE & ARCHITECTURE BACKLOG (New)
