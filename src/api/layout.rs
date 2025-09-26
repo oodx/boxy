@@ -52,7 +52,7 @@ pub enum VerticalAlign {
 }
 
 /// Layout mode for box rendering
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LayoutMode {
     /// Full box with all borders (default)
     Box,
@@ -617,8 +617,14 @@ impl BoxBuilder {
         self
     }
 
-    /// Set exact height (content will be padded or truncated to match this height)
-    /// Height includes borders and all components (header, body, footer, status)
+    /// Set exact height - box will render at exactly this height
+    /// - Pads body with empty lines when content is shorter
+    /// - Truncates body with ellipsis when content is taller
+    /// - Height includes all components (header, body, footer, status, borders)
+    ///
+    /// # Panics
+    /// Will panic if height is too small to fit header/footer/status chrome.
+    /// Minimum safe height = 2 (borders) + header_lines + footer_lines + status_lines + 1 (body)
     pub fn with_fixed_height(mut self, height: usize) -> Self {
         self.fixed_height = Some(height);
         self
@@ -755,14 +761,23 @@ impl BoxBuilder {
 
         // Apply height adjustment if needed
         if let Some(total_height) = target_height {
-            let available_body_height = total_height.saturating_sub(non_body_height);
+            // Ensure chrome doesn't exceed the fixed height
+            if non_body_height >= total_height {
+                panic!(
+                    "Fixed height {} is too small for header/footer/status chrome ({} lines). \
+                     Minimum required: {} lines (chrome) + 1 (body) = {} lines total.",
+                    total_height, non_body_height, non_body_height, non_body_height + 1
+                );
+            }
+
+            let available_body_height = total_height - non_body_height;
 
             if body.height > available_body_height {
                 // Truncate body if it exceeds available height
                 body = Self::truncate_body_to_height(body, available_body_height, inner_width, self.style);
             } else if body.height < available_body_height {
                 // Pad body to fill available height
-                body = Self::pad_body_to_height(body, available_body_height, inner_width, self.style);
+                body = Self::pad_body_to_height(body, available_body_height, inner_width, self.style, self.layout_mode);
             }
         }
 
@@ -896,6 +911,7 @@ impl BoxBuilder {
         target_height: usize,
         inner_width: usize,
         style: BoxStyle,
+        layout_mode: LayoutMode,
     ) -> ComponentLayout {
         let current_lines: Vec<&str> = body.content.lines().collect();
         let current_height = current_lines.len();
@@ -907,13 +923,22 @@ impl BoxBuilder {
         let padding_needed = target_height - current_height;
         let mut result_lines: Vec<String> = current_lines.iter().map(|s| s.to_string()).collect();
 
-        // Add empty padded lines
-        let empty_line = format!(
-            "{}{}{}",
-            style.vertical,
-            " ".repeat(inner_width),
-            style.vertical
-        );
+        // Add empty padded lines (format depends on layout mode)
+        let empty_line = match layout_mode {
+            LayoutMode::Box => {
+                // Box mode: add vertical borders
+                format!(
+                    "{}{}{}",
+                    style.vertical,
+                    " ".repeat(inner_width),
+                    style.vertical
+                )
+            }
+            LayoutMode::Bar => {
+                // Bar mode: no vertical borders, just spaces
+                " ".repeat(inner_width)
+            }
+        };
 
         for _ in 0..padding_needed {
             result_lines.push(empty_line.clone());
@@ -1917,5 +1942,82 @@ mod tests {
         let lines: Vec<&str> = rendered.lines().collect();
         assert!(lines.len() >= 8);
         assert!(lines.len() <= 15);
+    }
+
+    #[test]
+    #[should_panic(expected = "Fixed height")]
+    fn test_fixed_height_chrome_too_large() {
+        // Create a box with header, footer, and status that together exceed fixed height
+        BoxBuilder::new("Content")
+            .with_header(HeaderBuilder::new("Header"))
+            .with_footer(FooterBuilder::new("Footer"))
+            .with_status(StatusBuilder::new("Status"))
+            .with_fixed_height(3)  // Too small for chrome (header=1, footer=1, status=3 minimum)
+            .build();
+    }
+
+    #[test]
+    fn test_barmode_fixed_height_padding() {
+        let layout = BoxBuilder::new("Line 1\nLine 2")
+            .with_header(HeaderBuilder::new("Header"))
+            .with_barmode()
+            .with_fixed_width(30)
+            .with_fixed_height(8)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should pad to exactly 8 lines
+        assert_eq!(lines.len(), 8);
+
+        // In barmode, padding lines should NOT have vertical borders
+        for line in &lines[2..] {  // Skip header and content lines
+            if !line.trim().is_empty() && !line.contains("Line") {
+                // Padded lines should not start/end with vertical borders
+                assert!(!line.starts_with('│'));
+                assert!(!line.ends_with('│'));
+            }
+        }
+    }
+
+    #[test]
+    fn test_box_mode_vs_bar_mode_padding() {
+        let content = "Short";
+
+        // Box mode padding
+        let box_layout = BoxBuilder::new(content)
+            .with_fixed_width(25)
+            .with_fixed_height(8)
+            .build();
+
+        let box_rendered = box_layout.render();
+        let box_lines: Vec<&str> = box_rendered.lines().collect();
+
+        // Bar mode padding
+        let bar_layout = BoxBuilder::new(content)
+            .with_barmode()
+            .with_fixed_width(25)
+            .with_fixed_height(8)
+            .build();
+
+        let bar_rendered = bar_layout.render();
+        let bar_lines: Vec<&str> = bar_rendered.lines().collect();
+
+        // Both should have 8 lines
+        assert_eq!(box_lines.len(), 8);
+        assert_eq!(bar_lines.len(), 8);
+
+        // Box mode should have vertical borders on padding
+        let box_last_line = box_lines.last().unwrap();
+        if !box_last_line.contains("└") && !box_last_line.contains("Short") {
+            assert!(box_last_line.contains('│'));
+        }
+
+        // Bar mode should NOT have vertical borders on padding
+        let bar_last_line = bar_lines.last().unwrap();
+        if !bar_last_line.contains("─") && !bar_last_line.contains("Short") {
+            assert!(!bar_last_line.contains('│'));
+        }
     }
 }
