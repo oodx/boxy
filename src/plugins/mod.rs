@@ -13,8 +13,6 @@ pub mod theme_engine;
 pub mod themes;
 pub mod themes_builtin;
 
-pub use emoji_debug::*;
 pub use jynx::*;
 pub use theme_engine::*;
 pub use themes::*;
-pub use themes_builtin::*;

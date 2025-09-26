@@ -37,6 +37,8 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
+// API module is for external library consumers, not used by CLI binary
+#[allow(dead_code)]
 mod api;
 mod colors;
 mod core;
@@ -46,8 +48,8 @@ mod visual;
 mod width_plugin;
 
 use std::env;
-use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::fs::File;
+use std::io::{self, Read};
 use std::process::{Command, Stdio};
 
 use regex::Regex;

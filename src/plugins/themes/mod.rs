@@ -16,8 +16,6 @@ pub mod helpers;
 pub mod migration;
 pub mod utils;
 
-pub use error::{ThemeError, ThemeResult, ExitCode};
-pub use migration::{handle_cli_error, run_theme_command};
 
 // Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
 // Allow unused lint since the CLI touches only part of the theme surface.

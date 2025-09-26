@@ -4,7 +4,9 @@
 use std::fmt;
 
 /// Theme subsystem errors
+/// Some variants are for external library consumers
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum ThemeError {
     /// Invalid theme name
     InvalidName(String),
@@ -55,6 +57,7 @@ pub type ThemeResult<T> = Result<T, ThemeError>;
 
 /// Exit code suggestions for CLI usage
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub enum ExitCode {
     Success = 0,
     GeneralError = 1,

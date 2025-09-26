@@ -1,5 +1,8 @@
 // Migration utilities for process::exit removal
 // Provides compatibility layer for gradual refactoring
+//
+// These utilities are kept for external library consumers and future CLI enhancements
+#![allow(dead_code)]
 
 use super::error::{ThemeError, ThemeResult, ExitCode};
 
