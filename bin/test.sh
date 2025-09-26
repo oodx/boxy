@@ -72,6 +72,7 @@ declare -A TESTS=(
     ["varied"]="misc/perfect-demo.sh"
     ["perfect"]="misc/perfect.sh"
     ["showcase"]="misc/v021-showcase.sh"
+    ["api-features"]="misc/api-features.sh"
     ["uat:pantheon"]="uat/ceremony.sh"
     ["suite:uat-helpers"]="misc/uat-ceremonies.sh"
 
