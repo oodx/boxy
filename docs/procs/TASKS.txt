@@ -126,11 +126,18 @@ Theme: Core Library API Design (13 pts) - ✅ PARTIALLY COMPLETE
 
 Theme: Library Implementation (13 pts)
 --------------------------------------
-[M2-004] Implement BoxBuilder and drawing functions (5) - High
-  - Create BoxBuilder with fluent interface
-  - Implement core drawing logic for library usage
-  - Handle text wrapping and width calculation
-  - Add validation and error handling
+[M2-004] Implement BoxBuilder and drawing functions (5) - High ✅ COMPLETED
+  - Create BoxBuilder with fluent interface ✅
+  - Implement core drawing logic for library usage ✅
+  - Handle text wrapping and width calculation ✅
+    * Implement with_wrapping() API for word boundary wrapping
+    * Added with_fixed_height() for content truncation
+    * Enhanced Unicode-safe dynamic width calculations
+  - Add validation and error handling ✅
+  - Supported all 10 box styles in geometry module ✅
+  - Implemented comprehensive text wrapping and height constraint features
+    * Preserves header, footer, and status components
+    * Works with all box styles and layout modes
 
 [M2-004a] Implement barmode layout system (3) - Medium
   - Add barmode layout rendering (top/bottom bars only, no sides/corners)

@@ -132,7 +132,7 @@ let professional_doc = BoxBuilder::new("Executive summary content")
 - **Style Compatibility**: Works with all box styles (NORMAL, DASHED, HEAVY, etc.)
 - **Flexible Layout**: Header and footer still fully customizable
 
-### Box Styles Module (NEW)
+### Box Styles Module (Expanded with 10 Total Styles)
 
 Five new box styles for enhanced visual variety and document integration.
 
