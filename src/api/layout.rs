@@ -680,9 +680,17 @@ impl BoxBuilder {
             let non_body_height = header_height + footer_height + status_height;
             let available_body_height = max_height.saturating_sub(non_body_height);
 
+            eprintln!("DEBUG: max_height={}, header_h={}, footer_h={}, status_h={}, non_body={}, available_body={}, body.height={}",
+                     max_height, header_height, footer_height, status_height, non_body_height, available_body_height, body.height);
+
             // Truncate body if it exceeds available height
             if body.height > available_body_height {
+                eprintln!("DEBUG: Truncating body from {} to {}", body.height, available_body_height);
                 body = Self::truncate_body_to_height(body, available_body_height, inner_width, self.style);
+            } else if body.height < available_body_height {
+                // Pad body to fill available height
+                eprintln!("DEBUG: Padding body from {} to {}", body.height, available_body_height);
+                body = Self::pad_body_to_height(body, available_body_height, inner_width, self.style);
             }
         }
 
@@ -786,6 +794,44 @@ impl BoxBuilder {
         ComponentLayout {
             width: inner_width + 2,
             height: result_lines.len(),
+            content: result_lines.join("\n"),
+            h_align: body.h_align,
+            v_align: body.v_align,
+        }
+    }
+
+    /// Pad body content to fill a target height
+    fn pad_body_to_height(
+        body: ComponentLayout,
+        target_height: usize,
+        inner_width: usize,
+        style: BoxStyle,
+    ) -> ComponentLayout {
+        let current_lines: Vec<&str> = body.content.lines().collect();
+        let current_height = current_lines.len();
+
+        if current_height >= target_height {
+            return body;
+        }
+
+        let padding_needed = target_height - current_height;
+        let mut result_lines: Vec<String> = current_lines.iter().map(|s| s.to_string()).collect();
+
+        // Add empty padded lines
+        let empty_line = format!(
+            "{}{}{}",
+            style.vertical,
+            " ".repeat(inner_width),
+            style.vertical
+        );
+
+        for _ in 0..padding_needed {
+            result_lines.push(empty_line.clone());
+        }
+
+        ComponentLayout {
+            width: inner_width + 2,
+            height: target_height,
             content: result_lines.join("\n"),
             h_align: body.h_align,
             v_align: body.v_align,
@@ -1632,6 +1678,30 @@ mod tests {
         assert!(rendered.contains("Header"));
         assert!(rendered.contains("Footer"));
         assert!(rendered.contains("more lines"));
+    }
+
+    #[test]
+    fn test_height_padding_fills_target() {
+        let short_content = "Line 1\nLine 2\nLine 3";
+
+        let layout = BoxBuilder::new(short_content)
+            .with_fixed_width(30)
+            .with_fixed_height(15)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should pad to exactly 15 lines (target height)
+        assert_eq!(lines.len(), 15);
+
+        // All content should be present
+        assert!(rendered.contains("Line 1"));
+        assert!(rendered.contains("Line 2"));
+        assert!(rendered.contains("Line 3"));
+
+        // Should not contain ellipsis (content fits, just padded)
+        assert!(!rendered.contains("more lines"));
     }
 
     #[test]

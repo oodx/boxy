@@ -72,22 +72,20 @@ let wrapped_box = layout::BoxBuilder::new(
     "This is a long paragraph that will automatically wrap to the next line when it exceeds the specified width. \
      The text will be neatly broken at word boundaries to maintain readability."
 )
-    .with_wrapping(true)     // Enable text wrapping
     .with_fixed_height(10)   // Limit box height, truncate if needed
-    .with_fixed_width(40)    // Set maximum width for wrapping
+    .with_fixed_width(40)    // Set maximum width for wrapping (wrapping enabled by default)
     .build();
 
 let ellipsis_box = layout::BoxBuilder::new(
     "Very long content with multiple paragraphs. \
      If the total content exceeds the fixed height, it will be truncated with an '... (N more lines)' indicator."
 )
-    .with_fixed_height(5)    // Truncate content if taller than 5 lines
-    .with_wrapping(true)     // Wrap text within the height constraint
+    .with_fixed_height(5)    // Truncate content if taller than 5 lines (wrapping enabled by default)
     .build();
 ```
 
 **Wrapping and Height Constraint Features:**
-- Automatic text wrapping at word boundaries
+- Automatic text wrapping at word boundaries (enabled by default)
 - Precise height limitations with intelligent truncation
 - Preserves header, footer, and status components within height constraints
 - Works seamlessly with all box styles and layout modes
@@ -629,16 +627,21 @@ The `BoxBuilder` now supports advanced text rendering through convenience method
 use boxy::api::layout::BoxBuilder;
 
 let box_layout = BoxBuilder::new("Dynamic content")
-    .with_wrapping(true)         // Word boundary text wrapping
     .with_fixed_height(10)       // Truncate if content exceeds 10 lines
-    .with_fixed_width(50)        // Wrap text within 50 characters
+    .with_fixed_width(50)        // Wrap text within 50 characters (wrapping enabled by default)
     .with_h_padding(3)           // Horizontal padding
     .with_v_padding(1)           // Vertical padding
+    .build();
+
+// Optionally disable wrapping for truncation behavior
+let truncated = BoxBuilder::new("Long text")
+    .with_fixed_width(20)
+    .with_wrapping(false)        // Disable wrapping to truncate with ellipsis
     .build();
 ```
 
 **Enhanced BoxBuilder Features:**
-- `with_wrapping(bool)`: Toggle text wrapping at word boundaries
+- `with_wrapping(bool)`: Control text wrapping (enabled by default, set to `false` to truncate with ellipsis)
 - `with_fixed_height(usize)`: Limit total box height with truncation
 - `with_fixed_width(usize)`: Set box width for wrapping
 - `with_h_padding(usize)`: Control horizontal padding
@@ -656,7 +659,7 @@ Note: `BodyBuilder` is used internally but `BoxBuilder` provides the main API.
 - `layout::BoxBuilder::new()`
 - `layout::BoxBuilder::with_barmode()` *(NEW)* - Enable barmode layout
 - `layout::BoxBuilder::with_style()` - Apply box styles
-- `layout::BoxBuilder::with_wrapping(bool)` *(NEW)* - Enable text wrapping at word boundaries
+- `layout::BoxBuilder::with_wrapping(bool)` *(NEW)* - Control text wrapping (enabled by default)
 - `layout::BoxBuilder::with_fixed_height(usize)` *(NEW)* - Set maximum box height, truncate if needed
 - `layout::BoxBuilder::with_fixed_width(usize)` - Set maximum box width
 - `layout::render_box()`
