@@ -15,7 +15,7 @@
 //! # Quick Start
 //!
 //! ```rust
-//! use boxy::api::{layout::BoxBuilder};
+//! use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
 //!
 //! // Simple box
 //! let simple = BoxBuilder::new("Hello, World!").build();
@@ -53,18 +53,20 @@
 //! # Advanced Usage
 //!
 //! ```rust
-//! use boxy::api::{layout, theming};
+//! use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+//! use boxy::api::theming;
 //!
 //! // Build complex layouts
-//! let layout = layout::BoxBuilder::new("Content")
-//!     .with_header(layout::HeaderBuilder::new("Title").align_center())
-//!     .with_footer(layout::FooterBuilder::new("Footer").align_right())
+//! let layout = BoxBuilder::new("Content")
+//!     .with_header(HeaderBuilder::new("Title").align_center())
+//!     .with_footer(FooterBuilder::new("Footer").align_right())
 //!     .with_padding(2)
 //!     .build();
 //!
 //! // Apply optional theming
+//! let rendered = layout.render();
 //! let scheme = theming::ColorScheme::default();
-//! let colored = theming::apply_colors(layout, &scheme);
+//! let colored = theming::apply_colors(&rendered, &scheme);
 //! ```
 
 pub mod geometry;

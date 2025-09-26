@@ -36,10 +36,17 @@ Key Features:
 
 ```rust
 use boxy::api::geometry;
+use boxy::visual::NORMAL;
 
 let text = "Hello 🌟 World 中文";
 let metrics = geometry::get_text_metrics(text);
-let dims = geometry::calculate_box_dimensions(text, style, h_padding, v_padding);
+let dims = geometry::calculate_box_dimensions(
+    text,
+    NORMAL,      // BoxStyle
+    2,           // h_padding
+    1,           // v_padding
+    None         // fixed_width: Option<usize>
+);
 ```
 
 ### Layout Module
@@ -304,9 +311,18 @@ let styled_text = theming::apply_background_color("Hello World", &bg_color);
 
 ```rust
 use boxy::api::{geometry, layout, room_runtime};
+use boxy::visual::NORMAL;
 
 // Calculate dimensions without colors
-let dims = geometry::calculate_box_dimensions(content, style);
+let content = "Hello World";
+let dims = geometry::calculate_box_dimensions(
+    content,
+    NORMAL,  // BoxStyle
+    2,       // h_padding
+    1,       // v_padding
+    None     // fixed_width
+);
+
 let layout = layout::BoxBuilder::new(content).build();
 let adapter = room_runtime::RoomRuntimeAdapter::new(layout);
 
@@ -605,26 +621,32 @@ println!("{}", log_display);
 - `theming::BackgroundColor` *(ENHANCED)* - 5 color specification methods
 - `visual::BoxStyle` - Box drawing styles including 5 new styles
 
-#### Enhanced BodyBuilder
+#### Enhanced BoxBuilder Features
 
-The `BodyBuilder` now supports advanced text rendering:
+The `BoxBuilder` now supports advanced text rendering through convenience methods:
 
 ```rust
-use boxy::api::layout;
+use boxy::api::layout::BoxBuilder;
 
-let body_builder = layout::BodyBuilder::new()
-    .with_content("Dynamic content")
-    .enable_wrapping(true)       // Word boundary text wrapping
-    .set_max_height(10)           // Truncate if content exceeds 10 lines
-    .set_max_width(50);           // Wrap text within 50 characters
+let box_layout = BoxBuilder::new("Dynamic content")
+    .with_wrapping(true)         // Word boundary text wrapping
+    .with_fixed_height(10)       // Truncate if content exceeds 10 lines
+    .with_fixed_width(50)        // Wrap text within 50 characters
+    .with_h_padding(3)           // Horizontal padding
+    .with_v_padding(1)           // Vertical padding
+    .build();
 ```
 
-**Enhanced BodyBuilder Features:**
-- `enable_wrapping(bool)`: Toggle text wrapping
-- `set_max_height(usize)`: Limit content height
-- `set_max_width(usize)`: Control text wrapping width
-- Intelligent truncation with ellipsis for overflow
+**Enhanced BoxBuilder Features:**
+- `with_wrapping(bool)`: Toggle text wrapping at word boundaries
+- `with_fixed_height(usize)`: Limit total box height with truncation
+- `with_fixed_width(usize)`: Set box width for wrapping
+- `with_h_padding(usize)`: Control horizontal padding
+- `with_v_padding(usize)`: Control vertical padding
+- Intelligent truncation with "… (N more lines)" ellipsis for overflow
 - Maintains component integrity during resizing
+
+Note: `BodyBuilder` is used internally but `BoxBuilder` provides the main API.
 
 ### Key Functions
 - `geometry::get_text_width()`
