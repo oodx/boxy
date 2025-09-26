@@ -19,7 +19,7 @@ fn main() {
     println!("=================================\n");
 
     let wide_box = BoxBuilder::new("This is a wider box with more content")
-        .with_width(60)
+        .with_fixed_width(60)
         .build();
 
     println!("{}", wide_box.render());
@@ -32,7 +32,7 @@ fn main() {
     let full_box = BoxBuilder::new("Main content goes here\nMultiple lines are supported")
         .with_header("Title")
         .with_footer("Status: Ready")
-        .with_width(50)
+        .with_fixed_width(50)
         .build();
 
     println!("{}", full_box.render());
@@ -44,7 +44,7 @@ fn main() {
 
     let padded_box = BoxBuilder::new("Extra padding for emphasis")
         .with_padding(3)
-        .with_width(40)
+        .with_fixed_width(40)
         .build();
 
     println!("{}", padded_box.render());

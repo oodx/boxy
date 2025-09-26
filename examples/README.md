@@ -108,7 +108,7 @@ use boxy::api::{layout, theming};
 
 // Create layout
 let layout = layout::BoxBuilder::new(content)
-    .with_width(terminal_width)
+    .with_fixed_width(terminal_width)
     .build();
 
 // Optionally apply colors

@@ -7,7 +7,7 @@
 use std::env;
 
 // Import from the main boxy crate
-use boxy::emoji_debug::*;
+use boxy::plugins::emoji_debug::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

@@ -15,41 +15,30 @@
 pub mod helpers;
 pub mod utils;
 
-// Re-export public API (curated, no wildcards per RSB MODULE_SPEC)
-// The crate binary does not use many of these directly, but we keep them for
-// library consumers. Silence lint noise until the wider API consolidation lands.
 #[allow(unused_imports)]
 pub use utils::{
     AlignmentConfig,
-    // Configuration types
     BodyAlignment,
     BoxColors,
     BoxyConfig,
     DESCRIPTION,
-
     DividerConfig,
     NAME,
     PaddingConfig,
     ParsedContent,
-
-    // Constants
     VERSION,
     WidthConfig,
-    // Parser functions with CRITICAL icon detection logic
     expand_variables,
     parse_content_stream,
     render_title_or_footer,
-
-    // Configuration functions
     resolve_box_config,
-
-    // Help functions
-    show_comprehensive_help,
-    show_usage_examples,
     truncate_with_ellipsis,
     unescape_stream_value,
     wrap_text_at_word_boundaries,
 };
+
+#[cfg(feature = "cli")]
+pub use utils::{show_comprehensive_help, show_usage_examples};
 
 // Test module access to helpers
 #[cfg(test)]

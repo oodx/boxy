@@ -11,7 +11,7 @@ fn main() {
     let layout = layout::BoxBuilder::new("This box can be styled with different themes")
         .with_header(layout::HeaderBuilder::new("Theming Demo"))
         .with_footer(layout::FooterBuilder::new("Theme: Active"))
-        .with_width(60)
+        .with_fixed_width(60)
         .build();
 
     // Example 1: Plain rendering (no colors)
@@ -61,7 +61,7 @@ fn main() {
 
     let content = "Same content, different rendering modes";
     let simple_layout = layout::BoxBuilder::new(content)
-        .with_width(45)
+        .with_fixed_width(45)
         .build();
 
     println!("Plain mode:");

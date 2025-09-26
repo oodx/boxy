@@ -25,7 +25,7 @@ fn main() {
 
         let layout = layout::BoxBuilder::new(text)
             .with_header(layout::HeaderBuilder::new(label))
-            .with_width(optimal_width.min(80)) // Cap at 80 chars
+            .with_fixed_width(optimal_width.min(80)) // Cap at 80 chars
             .build();
 
         println!("{}", layout.render());
@@ -38,17 +38,19 @@ fn main() {
 
     let column1 = layout::BoxBuilder::new("Column 1\nContent\nGoes\nHere")
         .with_header(layout::HeaderBuilder::new("Left"))
-        .with_width(25)
+        .with_fixed_width(25)
         .build();
 
     let column2 = layout::BoxBuilder::new("Column 2\nMore\nContent\nHere")
         .with_header(layout::HeaderBuilder::new("Right"))
-        .with_width(25)
+        .with_fixed_width(25)
         .build();
 
     // Render side by side (simulated)
-    let lines1: Vec<_> = column1.render().lines().collect();
-    let lines2: Vec<_> = column2.render().lines().collect();
+    let render1 = column1.render();
+    let render2 = column2.render();
+    let lines1: Vec<_> = render1.lines().collect();
+    let lines2: Vec<_> = render2.lines().collect();
 
     let max_lines = lines1.len().max(lines2.len());
     for i in 0..max_lines {
@@ -77,7 +79,7 @@ fn main() {
                 layout::FooterBuilder::new(&format!("{} - {}", status, progress))
                     .align_center()
             )
-            .with_width(40)
+            .with_fixed_width(40)
             .build();
 
         // In a real app, you'd clear and redraw
@@ -90,12 +92,12 @@ fn main() {
     println!("--------------------\n");
 
     let inner_box = layout::BoxBuilder::new("Inner content")
-        .with_width(20)
+        .with_fixed_width(20)
         .build();
 
     let outer_box = layout::BoxBuilder::new(&format!("Outer box containing:\n{}", inner_box.render()))
         .with_header(layout::HeaderBuilder::new("Container"))
-        .with_width(40)
+        .with_fixed_width(40)
         .build();
 
     println!("{}", outer_box.render());
@@ -110,7 +112,7 @@ fn main() {
     for width in &[30, 50, 70] {
         let layout = layout::BoxBuilder::new(unicode_text)
             .with_header(layout::HeaderBuilder::new(&format!("Width: {}", width)))
-            .with_width(*width)
+            .with_fixed_width(*width)
             .build();
 
         println!("{}", layout.render());

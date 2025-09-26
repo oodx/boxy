@@ -105,8 +105,10 @@ mod api_tests {
             .with_fixed_width(40)
             .build();
 
-        let narrow_lines: Vec<_> = narrow.render().lines().collect();
-        let wide_lines: Vec<_> = wide.render().lines().collect();
+        let narrow_output = narrow.render();
+        let narrow_lines: Vec<_> = narrow_output.lines().collect();
+        let wide_output = wide.render();
+        let wide_lines: Vec<_> = wide_output.lines().collect();
 
         // Check that first line (top border) has correct width
         assert!(narrow_lines[0].contains("─"));
@@ -120,8 +122,8 @@ mod api_tests {
 
     #[test]
     fn test_plain_renderer() {
-        let layout = layout::BoxBuilder::new("Test").build();
-        let renderer = theming::create_plain_renderer();
+        let _layout = layout::BoxBuilder::new("Test").build();
+        let _renderer = theming::create_plain_renderer();
 
         // Plain renderer is a function, not an object with render method
         // Just test that we can create it

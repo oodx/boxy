@@ -41,7 +41,7 @@ fn main() {
     let layout = BoxBuilder::new("Room Runtime can use this pure Unicode output")
         .with_header(HeaderBuilder::new("Layout Engine").align_center())
         .with_footer(FooterBuilder::new("v1.0.0"))
-        .with_width(60)
+        .with_fixed_width(60)
         .build();
 
     // Render without any ANSI color codes

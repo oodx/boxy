@@ -13,10 +13,12 @@
 //! Version: boxy v0.16.0+ (RSB MODULE_SPEC reorganization)
 
 use crate::colors::*;
-use crate::jynx_plugin::*;
 use crate::visual::BoxStyle;
 use crate::width_plugin::*;
 use crate::{HashMap, Regex};
+
+#[cfg(feature = "cli")]
+use crate::plugins::jynx::*;
 
 // =============== CONSTANTS ===============
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -586,8 +588,9 @@ pub fn render_title_or_footer(
     )
 }
 
-// =============== HELP FUNCTIONS ===============
+// =============== HELP FUNCTIONS (CLI-only) ===============
 
+#[cfg(feature = "cli")]
 /// Show comprehensive CLI help with examples and usage patterns
 pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     // Generate help content - if jynx is available, we'll enhance it
@@ -840,6 +843,7 @@ pub fn show_comprehensive_help(jynx: &JynxPlugin) {
     );
 }
 
+#[cfg(feature = "cli")]
 /// Show practical usage examples for different scenarios
 pub fn show_usage_examples() {
     println!("{} {} - Usage Examples", NAME, VERSION);

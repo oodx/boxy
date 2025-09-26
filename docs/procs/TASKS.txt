@@ -46,6 +46,16 @@ Duration: Immediate | Risk: High | Blocks Room Runtime
   - Added test_header_no_trailing_horizontals to guard the '...─' regression
   - Ensures truncated headers contain ellipsis glyph without residual horizontal filler
 
+[TEST-API-01] Update dynamic_layout example to compile (1) - High
+  - Replace BoxBuilder::with_width(...) calls with with_fixed_width(...) in examples/dynamic_layout.rs (lines 28, 41, 46, 80, 93, 98, 113).
+  - Re-run cargo test and ensure no other examples reference deprecated builders.
+  - Verify API-only feature-flag build uses the fixed API.
+
+[TEST-API-02] Sweep examples/doc snippets for deprecated API usage (2) - Medium
+  - Search the repo for `.with_width(` and other removed builder methods.
+  - Update API_README.md, examples/*.rs, and tests/api_integration.rs to the current API.
+  - Add a #[cfg(test)] smoke test or compiletest to catch drift in examples.
+
 ================================================================================
  ⚙️ PERFORMANCE & ARCHITECTURE BACKLOG (New)
 ================================================================================

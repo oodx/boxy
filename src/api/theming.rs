@@ -81,32 +81,47 @@ impl ColorScheme {
     }
 }
 
-/// Apply background color to text content
+/// Apply background color to text content (line-by-line to prevent bleeding)
 pub fn apply_background_color(text: &str, bg_color: &BackgroundColor) -> String {
     match bg_color {
         BackgroundColor::None => text.to_string(),
         BackgroundColor::Ansi(code) => {
-            format!("\x1b[48;5;{}m{}{}", code, text, RESET)
+            apply_background_per_line(text, &format!("\x1b[48;5;{}m", code))
         }
         BackgroundColor::Rgb(r, g, b) => {
-            format!("\x1b[48;2;{};{};{}m{}{}", r, g, b, text, RESET)
+            apply_background_per_line(text, &format!("\x1b[48;2;{};{};{}m", r, g, b))
         }
         BackgroundColor::Named(name) => {
             let color_code = get_background_color_code(name);
             if color_code.is_empty() {
                 text.to_string()
             } else {
-                format!("{}{}{}", color_code, text, RESET)
+                apply_background_per_line(text, color_code)
             }
         }
         BackgroundColor::Hex(hex) => {
             if let Some((r, g, b)) = parse_hex_color(hex) {
-                format!("\x1b[48;2;{};{};{}m{}{}", r, g, b, text, RESET)
+                apply_background_per_line(text, &format!("\x1b[48;2;{};{};{}m", r, g, b))
             } else {
                 text.to_string()
             }
         }
     }
+}
+
+/// Apply background color code to each line individually to prevent bleeding
+fn apply_background_per_line(text: &str, bg_code: &str) -> String {
+    text.lines()
+        .map(|line| {
+            if line.is_empty() {
+                // For empty lines, just add a reset to prevent bleeding
+                RESET.to_string()
+            } else {
+                format!("{}{}{}", bg_code, line, RESET)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Get ANSI background color code for named colors
@@ -207,6 +222,22 @@ mod tests {
     fn test_background_color_hex() {
         let result = apply_background_color("Hello", &BackgroundColor::Hex("#FF0000".to_string()));
         assert_eq!(result, "\x1b[48;2;255;0;0mHello\x1b[0m");
+    }
+
+    #[test]
+    fn test_background_color_multiline() {
+        let multiline = "Line 1\nLine 2\nLine 3";
+        let result = apply_background_color(multiline, &BackgroundColor::Ansi(196));
+        let expected = "\x1b[48;5;196mLine 1\x1b[0m\n\x1b[48;5;196mLine 2\x1b[0m\n\x1b[48;5;196mLine 3\x1b[0m";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_background_color_with_empty_lines() {
+        let text_with_empty = "Line 1\n\nLine 3";
+        let result = apply_background_color(text_with_empty, &BackgroundColor::Rgb(255, 0, 0));
+        let expected = "\x1b[48;2;255;0;0mLine 1\x1b[0m\n\x1b[0m\n\x1b[48;2;255;0;0mLine 3\x1b[0m";
+        assert_eq!(result, expected);
     }
 
     #[test]

@@ -37,14 +37,11 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
+mod api;
 mod colors;
 mod core;
-mod emoji_debug;
 mod height_plugin;
-mod jynx_plugin;
-mod theme_engine;
-mod themes;
-mod themes_builtin;
+mod plugins;
 mod visual;
 mod width_plugin;
 
@@ -58,11 +55,9 @@ use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
 use colors::*;
-use core::*; // Import core module (consolidates config, parser, help)
+use core::*;
 use height_plugin::*;
-use jynx_plugin::*;
-use theme_engine::*;
-use themes::{handle_engine_command, handle_theme_command}; // RSB MODULE_SPEC compliant imports
+use plugins::*;
 use visual::*;
 use width_plugin::*;
 

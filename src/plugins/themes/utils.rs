@@ -3,11 +3,12 @@
 //! This module contains the public API for theme operations that users may
 //! explicitly use. Functions here are the main interface for theme functionality.
 
-use crate::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
-use crate::{HashMap, Write, core::*, visual::*};
-use crate::{JynxPlugin, jynx_println};
-use crate::{fs, io};
+use crate::plugins::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
+use crate::plugins::jynx::*;
+use crate::{HashMap, core::*, visual::*};
 use crate::{validate_color, validate_width};
+use std::fs;
+use std::io::{self, Write};
 use std::path::PathBuf;
 
 use super::helpers::*;

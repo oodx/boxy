@@ -158,6 +158,14 @@ pub fn get_color_code(color: &str) -> &'static str {
         "pastel_purple" => "\x1B[38;5;183m",
         "pastel_orange" => "\x1B[38;5;223m",
 
+        // === YOUR PREFERRED DEBUG/STATUS COLORS ===
+
+        // Debug/Status semantic colors from jynx project
+        "silly" => "\x1B[38;5;201m",          // Bright magenta - ridiculous debugging/invalid conditions
+        "magic" => "\x1B[38;5;213m",          // Lighter purple - "how did this even work?" moments
+        "trace" => "\x1B[38;5;242m",          // Medium grey - tracing state progression/function output
+        "think" => "\x1B[38;5;15m",           // Bright white - tracing function calls
+
         // Special control values
         "none" | "default" | "auto" => "", // No color (use default)
 
@@ -255,6 +263,10 @@ pub fn get_color_categories() -> Vec<(&'static str, Vec<&'static str>)> {
         (
             "Priority Levels",
             vec!["critical", "high", "medium", "low", "trivial"],
+        ),
+        (
+            "Debug/Status Colors",
+            vec!["silly", "magic", "trace", "think"],
         ),
     ]
 }

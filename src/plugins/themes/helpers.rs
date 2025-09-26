@@ -4,9 +4,9 @@
 //! Functions here are not part of the public API.
 
 use crate::core::{NAME, VERSION};
-use crate::theme_engine::ThemeEngine;
-use crate::{JynxPlugin, jynx_println};
-use crate::{fs, io};
+use crate::plugins::theme_engine::ThemeEngine;
+use crate::plugins::jynx::*;
+use std::{fs, io};
 use std::io::Write;
 use std::path::PathBuf;
 
