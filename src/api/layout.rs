@@ -565,6 +565,11 @@ pub struct BoxBuilder {
     style: BoxStyle,
     fixed_width: Option<usize>,
     fixed_height: Option<usize>,
+    min_width: Option<usize>,
+    max_width: Option<usize>,
+    min_height: Option<usize>,
+    max_height: Option<usize>,
+    visible: bool,
     layout_mode: LayoutMode,
 }
 
@@ -578,6 +583,11 @@ impl BoxBuilder {
             style: NORMAL,
             fixed_width: None,
             fixed_height: None,
+            min_width: None,
+            max_width: None,
+            min_height: None,
+            max_height: None,
+            visible: true,
             layout_mode: LayoutMode::Box,
         }
     }
@@ -607,10 +617,52 @@ impl BoxBuilder {
         self
     }
 
-    /// Set maximum height (content will be truncated if it exceeds this height)
+    /// Set exact height (content will be padded or truncated to match this height)
     /// Height includes borders and all components (header, body, footer, status)
     pub fn with_fixed_height(mut self, height: usize) -> Self {
         self.fixed_height = Some(height);
+        self
+    }
+
+    /// Set minimum width - box will be at least this wide, but can grow if content requires it
+    /// Useful for dynamic grid cells that can expand
+    pub fn with_min_width(mut self, width: usize) -> Self {
+        self.min_width = Some(width);
+        self
+    }
+
+    /// Set maximum width - box will be at most this wide, truncating/wrapping content if needed
+    /// Useful for constraining dynamic content within grid bounds
+    pub fn with_max_width(mut self, width: usize) -> Self {
+        self.max_width = Some(width);
+        self
+    }
+
+    /// Set minimum height - box will be at least this tall, padding if content is shorter
+    /// Useful for dynamic grid cells that can expand
+    pub fn with_min_height(mut self, height: usize) -> Self {
+        self.min_height = Some(height);
+        self
+    }
+
+    /// Set maximum height - box will be at most this tall, truncating content if needed
+    /// Useful for constraining dynamic content within grid bounds
+    pub fn with_max_height(mut self, height: usize) -> Self {
+        self.max_height = Some(height);
+        self
+    }
+
+    /// Control box visibility - when false, render() returns empty string
+    /// Useful for conditional UI elements in grid layouts
+    pub fn with_visibility(mut self, visible: bool) -> Self {
+        self.visible = visible;
+        self
+    }
+
+    /// Hide the box - render() will return empty string
+    /// Convenience method for with_visibility(false)
+    pub fn hide(mut self) -> Self {
+        self.visible = false;
         self
     }
 
@@ -670,26 +722,46 @@ impl BoxBuilder {
         let status = self.status.map(|s| s.build_for_width(inner_width, self.style));
         let mut body = self.body.build_for_width(inner_width, self.style);
 
-        // Apply height constraint if specified
-        if let Some(max_height) = self.fixed_height {
-            // Calculate heights of other components
-            let header_height = header.as_ref().map(|h| h.height).unwrap_or(0);
-            let footer_height = footer.as_ref().map(|f| f.height).unwrap_or(0);
-            let status_height = status.as_ref().map(|s| s.height).unwrap_or(0);
+        // Calculate current total height
+        let header_height = header.as_ref().map(|h| h.height).unwrap_or(0);
+        let footer_height = footer.as_ref().map(|f| f.height).unwrap_or(0);
+        let status_height = status.as_ref().map(|s| s.height).unwrap_or(0);
+        let non_body_height = header_height + footer_height + status_height;
 
-            let non_body_height = header_height + footer_height + status_height;
-            let available_body_height = max_height.saturating_sub(non_body_height);
+        // Determine target height based on constraints
+        let target_height = if let Some(fixed_h) = self.fixed_height {
+            Some(fixed_h)
+        } else {
+            let current_total = non_body_height + body.height;
+            let mut target = current_total;
 
-            eprintln!("DEBUG: max_height={}, header_h={}, footer_h={}, status_h={}, non_body={}, available_body={}, body.height={}",
-                     max_height, header_height, footer_height, status_height, non_body_height, available_body_height, body.height);
+            // Apply min height
+            if let Some(min_h) = self.min_height {
+                target = target.max(min_h);
+            }
 
-            // Truncate body if it exceeds available height
+            // Apply max height
+            if let Some(max_h) = self.max_height {
+                target = target.min(max_h);
+            }
+
+            // Only adjust if constraints changed the height
+            if target != current_total {
+                Some(target)
+            } else {
+                None
+            }
+        };
+
+        // Apply height adjustment if needed
+        if let Some(total_height) = target_height {
+            let available_body_height = total_height.saturating_sub(non_body_height);
+
             if body.height > available_body_height {
-                eprintln!("DEBUG: Truncating body from {} to {}", body.height, available_body_height);
+                // Truncate body if it exceeds available height
                 body = Self::truncate_body_to_height(body, available_body_height, inner_width, self.style);
             } else if body.height < available_body_height {
                 // Pad body to fill available height
-                eprintln!("DEBUG: Padding body from {} to {}", body.height, available_body_height);
                 body = Self::pad_body_to_height(body, available_body_height, inner_width, self.style);
             }
         }
@@ -702,11 +774,12 @@ impl BoxBuilder {
             total_width: inner_width + 2,
             style: self.style,
             layout_mode: self.layout_mode,
+            visible: self.visible,
         }
     }
 
     fn calculate_inner_width(&self) -> usize {
-        match self.fixed_width {
+        let base_width = match self.fixed_width {
             Some(w) => w.saturating_sub(2),
             None => {
                 // Calculate width from body
@@ -735,7 +808,24 @@ impl BoxBuilder {
                 // Use the maximum width from all components
                 body_width.max(header_width).max(footer_width).max(status_width)
             }
+        };
+
+        // Apply min/max constraints
+        let mut final_width = base_width;
+
+        // Apply minimum width constraint
+        if let Some(min_w) = self.min_width {
+            let min_inner = min_w.saturating_sub(2);
+            final_width = final_width.max(min_inner);
         }
+
+        // Apply maximum width constraint
+        if let Some(max_w) = self.max_width {
+            let max_inner = max_w.saturating_sub(2);
+            final_width = final_width.min(max_inner);
+        }
+
+        final_width
     }
 
     /// Truncate body content to fit within a maximum height
@@ -866,6 +956,7 @@ pub struct BoxLayout {
     pub total_width: usize,
     pub style: BoxStyle,
     pub layout_mode: LayoutMode,
+    pub visible: bool,
 }
 
 impl BoxLayout {
@@ -877,6 +968,11 @@ impl BoxLayout {
     /// QOL: Render as individual lines for layout engines
     /// Returns Vec<String> for easier positioning in Room Runtime
     pub fn render_lines(&self) -> Vec<String> {
+        // Return empty if not visible
+        if !self.visible {
+            return Vec::new();
+        }
+
         match self.layout_mode {
             LayoutMode::Box => self.render_box_lines(),
             LayoutMode::Bar => self.render_bar_lines(),
@@ -1717,5 +1813,109 @@ mod tests {
 
         assert!(lines.len() > 50);
         assert!(!rendered.contains("more lines"));
+    }
+
+    #[test]
+    fn test_min_width_constraint() {
+        let layout = BoxBuilder::new("Short")
+            .with_min_width(40)
+            .build();
+
+        assert_eq!(layout.total_width, 40);
+    }
+
+    #[test]
+    fn test_max_width_constraint() {
+        let long_text = "This is a very long line that should be constrained";
+
+        let layout = BoxBuilder::new(long_text)
+            .with_max_width(25)
+            .with_wrapping(false)
+            .build();
+
+        assert_eq!(layout.total_width, 25);
+        let rendered = layout.render();
+        assert!(rendered.contains("…")); // Should truncate
+    }
+
+    #[test]
+    fn test_min_height_constraint() {
+        let layout = BoxBuilder::new("Short content")
+            .with_fixed_width(30)
+            .with_min_height(12)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should pad to min height
+        assert_eq!(lines.len(), 12);
+    }
+
+    #[test]
+    fn test_max_height_constraint() {
+        let many_lines = "Line\n".repeat(20);
+
+        let layout = BoxBuilder::new(&many_lines)
+            .with_fixed_width(30)
+            .with_max_height(8)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should truncate to max height
+        assert_eq!(lines.len(), 8);
+        assert!(rendered.contains("more lines"));
+    }
+
+    #[test]
+    fn test_visibility_shown() {
+        let layout = BoxBuilder::new("Visible content")
+            .with_visibility(true)
+            .build();
+
+        let rendered = layout.render();
+        assert!(!rendered.is_empty());
+        assert!(rendered.contains("Visible content"));
+    }
+
+    #[test]
+    fn test_visibility_hidden() {
+        let layout = BoxBuilder::new("Hidden content")
+            .with_visibility(false)
+            .build();
+
+        let rendered = layout.render();
+        assert!(rendered.is_empty());
+    }
+
+    #[test]
+    fn test_hide_convenience_method() {
+        let layout = BoxBuilder::new("Hidden content")
+            .hide()
+            .build();
+
+        assert_eq!(layout.visible, false);
+        assert_eq!(layout.render(), "");
+    }
+
+    #[test]
+    fn test_combined_min_max_constraints() {
+        let layout = BoxBuilder::new("Test")
+            .with_min_width(30)
+            .with_max_width(50)
+            .with_min_height(8)
+            .with_max_height(15)
+            .build();
+
+        // Width should be at least min_width
+        assert!(layout.total_width >= 30);
+        assert!(layout.total_width <= 50);
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+        assert!(lines.len() >= 8);
+        assert!(lines.len() <= 15);
     }
 }
