@@ -3,6 +3,7 @@
 
 use boxy::api::geometry;
 use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+use boxy::visual::ROUNDED;
 
 fn main() {
     println!("Room Runtime Integration Example");
@@ -22,16 +23,17 @@ fn main() {
     // Calculate box dimensions with padding
     let box_dims = geometry::calculate_box_dimensions(
         content,
-        "rounded",  // box style
+        ROUNDED,   // box style
         2,         // horizontal padding
-        1          // vertical padding
+        1,         // vertical padding
+        None       // no fixed width
     );
 
     println!("Box dimensions:");
     println!("  - Total width: {}", box_dims.total_width);
     println!("  - Total height: {}", box_dims.total_height);
-    println!("  - Content width: {}", box_dims.content_width);
-    println!("  - Content height: {}", box_dims.content_height);
+    println!("  - Inner width: {}", box_dims.inner_width);
+    println!("  - Inner height: {}", box_dims.inner_height);
     println!();
 
     // Example 2: Building layouts without colors
@@ -62,8 +64,8 @@ fn main() {
         .align_right()
         .build_for_width(50);
 
-    println!("Header: {}", header.render());
-    println!("Footer: {}", footer.render());
+    println!("Header: {}", header.content);
+    println!("Footer: {}", footer.content);
     println!();
 
     // Example 4: Getting metrics for layout calculations
@@ -78,6 +80,4 @@ fn main() {
     println!("  - Display width: {}", metrics.display_width);
     println!("  - Character count: {}", metrics.char_count);
     println!("  - Has wide chars: {}", metrics.has_wide_chars);
-    println!("  - Has emoji: {}", metrics.has_emoji);
-    println!("  - Line count: {}", metrics.line_count);
 }

@@ -15,7 +15,7 @@
 //! - Pure calculation functions
 //! - Curated re-exports from existing boxy internals
 
-use crate::{get_display_width, visual::{BoxStyle, NORMAL, ROUNDED, DOUBLE, HEAVY, ASCII}};
+use crate::{get_display_width, visual::{BoxStyle, NORMAL, ROUNDED, DOUBLE, HEAVY, ASCII, THICKSII, COLON, DOT, STAR, DASHED}};
 
 /// Text width and display metrics
 #[derive(Debug, Clone, PartialEq)]
@@ -186,6 +186,11 @@ pub fn get_box_styles() -> Vec<(&'static str, BoxStyle)> {
         ("double", DOUBLE),
         ("heavy", HEAVY),
         ("ascii", ASCII),
+        ("thicksii", THICKSII),
+        ("colon", COLON),
+        ("dot", DOT),
+        ("star", STAR),
+        ("dashed", DASHED),
     ]
 }
 
@@ -197,8 +202,13 @@ pub fn validate_box_style_name(style_name: &str) -> Result<BoxStyle, String> {
         "double" => Ok(DOUBLE),
         "heavy" => Ok(HEAVY),
         "ascii" => Ok(ASCII),
+        "thicksii" => Ok(THICKSII),
+        "colon" => Ok(COLON),
+        "dot" => Ok(DOT),
+        "star" => Ok(STAR),
+        "dashed" => Ok(DASHED),
         _ => Err(format!(
-            "Invalid style '{}'. Valid: normal, rounded, double, heavy, ascii",
+            "Invalid style '{}'. Valid: normal, rounded, double, heavy, ascii, thicksii, colon, dot, star, dashed",
             style_name
         )),
     }
@@ -211,8 +221,8 @@ mod tests {
     #[test]
     fn test_emoji_width_calculation() {
         let metrics = get_text_metrics("Hello 🌟 World");
-        assert_eq!(metrics.display_width, 13); // 🌟 takes 2 columns
-        assert_eq!(metrics.char_count, 12);    // But only 1 character
+        assert_eq!(metrics.display_width, 14); // "Hello " (6) + 🌟 (2) + " World" (6) = 14
+        assert_eq!(metrics.char_count, 13);    // 13 characters including emoji as 1
         assert!(metrics.has_wide_chars);
     }
 

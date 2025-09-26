@@ -419,6 +419,7 @@ pub struct BodyBuilder {
     lines: Vec<String>,
     h_padding: usize,
     v_padding: usize,
+    enable_wrapping: bool,
 }
 
 impl BodyBuilder {
@@ -427,6 +428,7 @@ impl BodyBuilder {
             lines: content.lines().map(|s| s.to_string()).collect(),
             h_padding: 2,
             v_padding: 0,
+            enable_wrapping: false,
         }
     }
 
@@ -435,6 +437,7 @@ impl BodyBuilder {
             lines,
             h_padding: 2,
             v_padding: 0,
+            enable_wrapping: false,
         }
     }
 
@@ -448,6 +451,12 @@ impl BodyBuilder {
         self
     }
 
+    /// Enable text wrapping at word boundaries
+    pub fn with_wrapping(mut self, enabled: bool) -> Self {
+        self.enable_wrapping = enabled;
+        self
+    }
+
     pub fn build_for_width(self, inner_width: usize, style: BoxStyle) -> ComponentLayout {
         let mut result_lines = Vec::new();
 
@@ -456,9 +465,29 @@ impl BodyBuilder {
             result_lines.push(self.create_padding_line(inner_width, &style));
         }
 
-        // Add content lines
-        for line in &self.lines {
-            result_lines.push(self.create_content_line(line, inner_width, &style));
+        // Add content lines (with optional wrapping)
+        if self.enable_wrapping {
+            // Import wrap function
+            use crate::core::wrap_text_at_word_boundaries;
+
+            // Calculate available width (inner_width minus h_padding on both sides)
+            let available_width = inner_width.saturating_sub(self.h_padding * 2);
+
+            // Join all lines back into single text for wrapping
+            let full_text = self.lines.join("\n");
+
+            // Wrap the text
+            let wrapped_lines = wrap_text_at_word_boundaries(&full_text, available_width);
+
+            // Create content lines from wrapped text
+            for line in &wrapped_lines {
+                result_lines.push(self.create_content_line(line, inner_width, &style));
+            }
+        } else {
+            // No wrapping - original behavior
+            for line in &self.lines {
+                result_lines.push(self.create_content_line(line, inner_width, &style));
+            }
         }
 
         // Add bottom padding
@@ -535,6 +564,7 @@ pub struct BoxBuilder {
     body: BodyBuilder,
     style: BoxStyle,
     fixed_width: Option<usize>,
+    fixed_height: Option<usize>,
     layout_mode: LayoutMode,
 }
 
@@ -547,6 +577,7 @@ impl BoxBuilder {
             body: BodyBuilder::new(content),
             style: NORMAL,
             fixed_width: None,
+            fixed_height: None,
             layout_mode: LayoutMode::Box,
         }
     }
@@ -573,6 +604,39 @@ impl BoxBuilder {
 
     pub fn with_fixed_width(mut self, width: usize) -> Self {
         self.fixed_width = Some(width);
+        self
+    }
+
+    /// Set maximum height (content will be truncated if it exceeds this height)
+    /// Height includes borders and all components (header, body, footer, status)
+    pub fn with_fixed_height(mut self, height: usize) -> Self {
+        self.fixed_height = Some(height);
+        self
+    }
+
+    /// Set horizontal padding (convenience method that forwards to body)
+    pub fn with_padding(mut self, padding: usize) -> Self {
+        self.body = self.body.with_h_padding(padding);
+        self
+    }
+
+    /// Set horizontal padding (convenience method that forwards to body)
+    pub fn with_h_padding(mut self, padding: usize) -> Self {
+        self.body = self.body.with_h_padding(padding);
+        self
+    }
+
+    /// Set vertical padding (convenience method that forwards to body)
+    pub fn with_v_padding(mut self, padding: usize) -> Self {
+        self.body = self.body.with_v_padding(padding);
+        self
+    }
+
+    /// Enable text wrapping at word boundaries (convenience method that forwards to body)
+    /// When enabled, long text will wrap to the next line instead of being truncated.
+    /// Perfect for responsive layouts and dynamic content.
+    pub fn with_wrapping(mut self, enabled: bool) -> Self {
+        self.body = self.body.with_wrapping(enabled);
         self
     }
 
@@ -604,7 +668,23 @@ impl BoxBuilder {
                 .map(|f| f.with_style(self.style).build_for_width(inner_width)),
         };
         let status = self.status.map(|s| s.build_for_width(inner_width, self.style));
-        let body = self.body.build_for_width(inner_width, self.style);
+        let mut body = self.body.build_for_width(inner_width, self.style);
+
+        // Apply height constraint if specified
+        if let Some(max_height) = self.fixed_height {
+            // Calculate heights of other components
+            let header_height = header.as_ref().map(|h| h.height).unwrap_or(0);
+            let footer_height = footer.as_ref().map(|f| f.height).unwrap_or(0);
+            let status_height = status.as_ref().map(|s| s.height).unwrap_or(0);
+
+            let non_body_height = header_height + footer_height + status_height;
+            let available_body_height = max_height.saturating_sub(non_body_height);
+
+            // Truncate body if it exceeds available height
+            if body.height > available_body_height {
+                body = Self::truncate_body_to_height(body, available_body_height, inner_width, self.style);
+            }
+        }
 
         BoxLayout {
             header,
@@ -621,12 +701,111 @@ impl BoxBuilder {
         match self.fixed_width {
             Some(w) => w.saturating_sub(2),
             None => {
+                // Calculate width from body
                 let body_width = self.body.lines.iter()
                     .map(|line| get_text_width(line))
                     .max()
+                    .unwrap_or(0) + (2 * self.body.h_padding);
+
+                // Calculate width from header if present
+                let header_width = self.header.as_ref()
+                    .and_then(|h| h.content.as_ref())
+                    .map(|text| get_text_width(text))
                     .unwrap_or(0);
-                body_width + (2 * self.body.h_padding) // Account for body padding
+
+                // Calculate width from footer if present
+                let footer_width = self.footer.as_ref()
+                    .and_then(|f| f.content.as_ref())
+                    .map(|text| get_text_width(text))
+                    .unwrap_or(0);
+
+                // Calculate width from status if present (including padding)
+                let status_width = self.status.as_ref()
+                    .map(|s| get_text_width(&s.content) + (2 * s.padding))
+                    .unwrap_or(0);
+
+                // Use the maximum width from all components
+                body_width.max(header_width).max(footer_width).max(status_width)
             }
+        }
+    }
+
+    /// Truncate body content to fit within a maximum height
+    fn truncate_body_to_height(
+        body: ComponentLayout,
+        max_height: usize,
+        inner_width: usize,
+        style: BoxStyle,
+    ) -> ComponentLayout {
+        if max_height == 0 {
+            // Return empty body
+            return ComponentLayout {
+                width: inner_width + 2,
+                height: 0,
+                content: String::new(),
+                h_align: body.h_align,
+                v_align: body.v_align,
+            };
+        }
+
+        let lines: Vec<&str> = body.content.lines().collect();
+
+        if max_height == 1 {
+            // Only room for ellipsis line
+            let ellipsis_line = format!(
+                "{}{}{}",
+                style.vertical,
+                format!("  … ({} more lines)", lines.len()).pad_to_width(inner_width),
+                style.vertical
+            );
+            return ComponentLayout {
+                width: inner_width + 2,
+                height: 1,
+                content: ellipsis_line,
+                h_align: body.h_align,
+                v_align: body.v_align,
+            };
+        }
+
+        // Take max_height - 1 lines, then add ellipsis line
+        let visible_lines = max_height.saturating_sub(1);
+        let truncated_lines: Vec<&str> = lines.iter().take(visible_lines).copied().collect();
+        let hidden_count = lines.len().saturating_sub(visible_lines);
+
+        let mut result_lines = truncated_lines.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+
+        // Add ellipsis indicator
+        let ellipsis_line = format!(
+            "{}{}{}",
+            style.vertical,
+            format!("  … ({} more lines)", hidden_count).pad_to_width(inner_width),
+            style.vertical
+        );
+        result_lines.push(ellipsis_line);
+
+        ComponentLayout {
+            width: inner_width + 2,
+            height: result_lines.len(),
+            content: result_lines.join("\n"),
+            h_align: body.h_align,
+            v_align: body.v_align,
+        }
+    }
+}
+
+/// Helper trait for padding strings to a specific width
+trait PadToWidth {
+    fn pad_to_width(&self, width: usize) -> String;
+}
+
+impl PadToWidth for String {
+    fn pad_to_width(&self, width: usize) -> String {
+        use crate::api::geometry::get_text_width;
+        let current_width = get_text_width(self);
+        if current_width >= width {
+            self.clone()
+        } else {
+            format!("{}{}", self, " ".repeat(width - current_width))
         }
     }
 }
@@ -704,6 +883,8 @@ impl BoxLayout {
 
     /// Render a component in barmode - convert borders to full bars, extract content
     fn render_component_barmode(&self, component_content: &str) -> Vec<String> {
+        let bar_width = self.total_width.saturating_sub(2);
+
         component_content
             .lines()
             .filter_map(|line| {
@@ -713,8 +894,20 @@ impl BoxLayout {
                 if let Some(full_bar) = self.convert_to_full_bar(line) {
                     Some(full_bar)
                 } else if !trimmed.is_empty() {
-                    // Extract content from between vertical borders
-                    Some(self.extract_content_from_line(line))
+                    // Extract content from between vertical borders and pad to bar width
+                    let content = self.extract_content_from_line(line);
+                    // Pad content to match bar width for alignment (Unicode-aware)
+                    use crate::api::geometry::get_text_width;
+                    let content_width = get_text_width(&content);
+
+                    if content_width < bar_width {
+                        Some(format!("{}{}", content, " ".repeat(bar_width - content_width)))
+                    } else if content_width > bar_width {
+                        use crate::core::truncate_with_ellipsis;
+                        Some(truncate_with_ellipsis(&content, bar_width))
+                    } else {
+                        Some(content)
+                    }
                 } else {
                     // Keep empty lines for spacing
                     Some(line.to_string())
@@ -755,25 +948,33 @@ impl BoxLayout {
             let extracted_text = self.extract_text_from_border_line(line);
 
             // Create a horizontal bar with the text centered
-            let total_width = self.total_width;
+            // Use inner width (total_width - 2) for barmode to align with content
+            let bar_width = self.total_width.saturating_sub(2);
 
             if extracted_text.is_empty() {
                 // No text content, just a full horizontal bar
-                Some(self.style.horizontal.repeat(total_width))
-            } else if extracted_text.len() >= total_width {
-                // Text too long, truncate
-                Some(extracted_text[..total_width].to_string())
+                Some(self.style.horizontal.repeat(bar_width))
             } else {
-                // Center the text with horizontal characters as padding
-                let padding_needed = total_width - extracted_text.len();
-                let left_padding = padding_needed / 2;
-                let right_padding = padding_needed - left_padding;
+                use crate::api::geometry::get_text_width;
+                let text_width = get_text_width(&extracted_text);
 
-                Some(format!("{}{}{}",
-                    self.style.horizontal.repeat(left_padding),
-                    extracted_text,
-                    self.style.horizontal.repeat(right_padding)
-                ))
+                if text_width >= bar_width {
+                    // Text too long, truncate using Unicode-aware function
+                    use crate::core::truncate_with_ellipsis;
+                    Some(truncate_with_ellipsis(&extracted_text, bar_width))
+                } else {
+                    // Center the text with horizontal characters as padding
+                    // Use display width for Unicode-aware padding calculation
+                    let padding_needed = bar_width - text_width;
+                    let left_padding = padding_needed / 2;
+                    let right_padding = padding_needed - left_padding;
+
+                    Some(format!("{}{}{}",
+                        self.style.horizontal.repeat(left_padding),
+                        extracted_text,
+                        self.style.horizontal.repeat(right_padding)
+                    ))
+                }
             }
         } else {
             None
@@ -1152,9 +1353,16 @@ mod tests {
         let rendered = layout.render();
         let lines: Vec<&str> = rendered.lines().collect();
 
-        // Should have horizontal lines as first and last
-        assert!(lines[0].chars().all(|c| c == '─'));
-        assert!(lines[lines.len() - 1].chars().all(|c| c == '─'));
+        // First and last lines should be horizontal bars with embedded header/footer text
+        assert!(lines[0].contains("Header"));
+        assert!(lines[0].chars().filter(|&c| c == '─').count() > 0); // Has horizontal chars
+        assert!(!lines[0].contains('┌')); // No corner glyphs
+        assert!(!lines[0].contains('┐'));
+
+        assert!(lines[lines.len() - 1].contains("Footer"));
+        assert!(lines[lines.len() - 1].chars().filter(|&c| c == '─').count() > 0);
+        assert!(!lines[lines.len() - 1].contains('└'));
+        assert!(!lines[lines.len() - 1].contains('┘'));
 
         // Content lines should not have vertical borders at start/end
         for line in &lines[1..lines.len() - 1] {
@@ -1196,9 +1404,13 @@ mod tests {
         assert!(box_lines[0].contains('┌') || box_lines[0].contains('╭'));
         assert!(box_lines[0].contains('┐') || box_lines[0].contains('╮'));
 
-        // Bar should only have horizontal lines
-        assert!(bar_lines[0].chars().all(|c| c == '─' || c == '╶' || c == '╴'));
-        assert!(bar_lines[bar_lines.len() - 1].chars().all(|c| c == '─' || c == '╶' || c == '╴'));
+        // Bar should have horizontal lines with embedded text (no corners)
+        assert!(bar_lines[0].contains("Title"));
+        assert!(!bar_lines[0].contains('┌'));
+        assert!(!bar_lines[0].contains('┐'));
+
+        // No auto-injected footer in barmode, so last line is body content
+        assert!(bar_rendered.contains("Test"));
     }
 
     #[test]
@@ -1212,13 +1424,16 @@ mod tests {
 
         let lines: Vec<&str> = output.lines().collect();
 
-        // First and last lines should be horizontal
-        assert!(lines[0].chars().all(|c| c == '─'));
-        assert!(lines[lines.len() - 1].chars().all(|c| c == '─'));
+        // First line should have header text embedded in horizontal bar
+        assert!(lines[0].contains("Header"));
+        assert!(lines[0].chars().filter(|&c| c == '─').count() > 0);
+        assert!(!lines[0].contains('┌'));
 
-        // Should contain header and content
-        assert!(output.contains("Header"));
+        // Should contain content
         assert!(output.contains("Content"));
+
+        // No auto-footer in barmode, so we just verify header and content are present
+        assert!(lines.len() >= 2);
     }
 
     #[test]
@@ -1232,8 +1447,8 @@ mod tests {
         let rendered = layout.render();
         let lines: Vec<&str> = rendered.lines().collect();
 
-        // Should have all content lines plus top and bottom bars
-        assert!(lines.len() >= 5); // 2 bars + at least 3 content lines
+        // Should have at least the content lines (no header/footer = no bars in barmode)
+        assert!(lines.len() >= 3); // at least 3 content lines
 
         // All content should be present
         assert!(rendered.contains("Line 1"));
@@ -1245,5 +1460,172 @@ mod tests {
     fn test_barmode_default_is_box_mode() {
         let layout = BoxBuilder::new("Test").build();
         assert_eq!(layout.layout_mode, LayoutMode::Box);
+    }
+
+    #[test]
+    fn test_wrapping_disabled_by_default() {
+        let long_text = "This is a very long line that exceeds the box width and should be truncated";
+
+        let layout = BoxBuilder::new(long_text)
+            .with_fixed_width(30)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have only 3 lines (top border, content, bottom border)
+        // Without wrapping, long text is truncated to one line
+        assert_eq!(lines.len(), 3);
+
+        // Content line should contain ellipsis
+        assert!(lines[1].contains("…"));
+    }
+
+    #[test]
+    fn test_wrapping_enabled() {
+        let long_text = "This is a very long line that exceeds the box width and should wrap to multiple lines";
+
+        let layout = BoxBuilder::new(long_text)
+            .with_fixed_width(30)
+            .with_wrapping(true)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have more than 3 lines (top border + multiple content lines + bottom border)
+        assert!(lines.len() > 3);
+
+        // Should NOT contain ellipsis since text is wrapped
+        assert!(!rendered.contains("…"));
+
+        // All the words should appear somewhere in the output
+        assert!(rendered.contains("This"));
+        assert!(rendered.contains("long"));
+        assert!(rendered.contains("wrap"));
+        assert!(rendered.contains("lines"));
+    }
+
+    #[test]
+    fn test_wrapping_multiline_content() {
+        let multi_line = "First paragraph here.\n\nSecond paragraph with more text that should wrap.";
+
+        let layout = BoxBuilder::new(multi_line)
+            .with_fixed_width(25)
+            .with_wrapping(true)
+            .build();
+
+        let rendered = layout.render();
+
+        // Both paragraphs should be present
+        assert!(rendered.contains("First"));
+        assert!(rendered.contains("Second"));
+
+        // Should handle newlines properly
+        let lines: Vec<&str> = rendered.lines().collect();
+        assert!(lines.len() > 4); // More than just borders
+    }
+
+    #[test]
+    fn test_wrapping_respects_padding() {
+        let text = "This is text that needs wrapping and should respect horizontal padding";
+
+        let layout = BoxBuilder::new(text)
+            .with_fixed_width(40)
+            .with_padding(5)  // Large padding
+            .with_wrapping(true)
+            .build();
+
+        let rendered = layout.render();
+
+        // With large padding, available width is reduced, so more wrapping occurs
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have wrapped content due to reduced available width
+        assert!(lines.len() > 3);
+
+        // Check that padding is visible (spaces after border)
+        for line in &lines[1..lines.len()-1] {
+            if !line.trim().is_empty() {
+                // Content lines should have padding spaces (skip Unicode border char)
+                let chars: Vec<char> = line.chars().collect();
+                if chars.len() > 6 {
+                    // Check that chars 1-5 are spaces (after first border char)
+                    assert_eq!(chars[1], ' ');
+                    assert_eq!(chars[2], ' ');
+                    assert_eq!(chars[3], ' ');
+                    assert_eq!(chars[4], ' ');
+                    assert_eq!(chars[5], ' ');
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_height_constraint_basic() {
+        let many_lines = "Line\n".repeat(50);
+
+        let layout = BoxBuilder::new(&many_lines)
+            .with_fixed_width(30)
+            .with_fixed_height(10)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        assert!(lines.len() <= 10);
+        assert!(rendered.contains("more lines"));
+    }
+
+    #[test]
+    fn test_height_constraint_with_ellipsis() {
+        let content = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8";
+
+        let layout = BoxBuilder::new(content)
+            .with_fixed_width(20)
+            .with_fixed_height(6)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        assert_eq!(lines.len(), 6);
+        assert!(rendered.contains("more lines"));
+        assert!(rendered.contains("Line 1"));
+    }
+
+    #[test]
+    fn test_height_constraint_respects_components() {
+        let content = "Line\n".repeat(20);
+
+        let layout = BoxBuilder::new(&content)
+            .with_header(HeaderBuilder::new("Header"))
+            .with_footer(FooterBuilder::new("Footer"))
+            .with_fixed_width(30)
+            .with_fixed_height(10)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        assert!(lines.len() <= 10);
+        assert!(rendered.contains("Header"));
+        assert!(rendered.contains("Footer"));
+        assert!(rendered.contains("more lines"));
+    }
+
+    #[test]
+    fn test_height_no_constraint() {
+        let many_lines = "Line\n".repeat(50);
+
+        let layout = BoxBuilder::new(&many_lines)
+            .with_fixed_width(30)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        assert!(lines.len() > 50);
+        assert!(!rendered.contains("more lines"));
     }
 }

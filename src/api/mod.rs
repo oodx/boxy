@@ -23,9 +23,9 @@
 //!
 //! // Box with header and footer
 //! let complete = BoxBuilder::new("Main content")
-//!     .with_header("Title")
-//!     .with_footer("Status: OK")
-//!     .with_width(50)
+//!     .with_header(HeaderBuilder::new("Title"))
+//!     .with_footer(FooterBuilder::new("Status: OK"))
+//!     .with_fixed_width(50)
 //!     .build();
 //! println!("{}", complete.render());
 //! ```
@@ -40,11 +40,13 @@
 //! assert_eq!(width, 19); // Handles emoji and CJK width
 //!
 //! // Calculate box dimensions
+//! use boxy::visual::ROUNDED;
 //! let dims = geometry::calculate_box_dimensions(
 //!     "Content",
-//!     "rounded", // box style
+//!     ROUNDED,  // box style
 //!     2,        // h_padding
-//!     1         // v_padding
+//!     1,        // v_padding
+//!     None      // fixed_width
 //! );
 //! ```
 //!

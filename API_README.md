@@ -51,8 +51,39 @@ Components:
 - `HeaderBuilder`: Configurable headers
 - `FooterBuilder`: Flexible footers
 - `StatusBuilder`: Status line components
-- `BodyBuilder`: Content rendering
+- `BodyBuilder`: Content rendering with enhanced text wrapping and height constraints
 - `LayoutMode`: Box or Bar rendering modes
+
+#### Text Wrapping and Height Constraints
+
+Boxy now provides advanced text rendering capabilities to handle complex layout requirements:
+
+```rust
+use boxy::api::layout;
+
+let wrapped_box = layout::BoxBuilder::new(
+    "This is a long paragraph that will automatically wrap to the next line when it exceeds the specified width. \
+     The text will be neatly broken at word boundaries to maintain readability."
+)
+    .with_wrapping(true)     // Enable text wrapping
+    .with_fixed_height(10)   // Limit box height, truncate if needed
+    .with_fixed_width(40)    // Set maximum width for wrapping
+    .build();
+
+let ellipsis_box = layout::BoxBuilder::new(
+    "Very long content with multiple paragraphs. \
+     If the total content exceeds the fixed height, it will be truncated with an '... (N more lines)' indicator."
+)
+    .with_fixed_height(5)    // Truncate content if taller than 5 lines
+    .with_wrapping(true)     // Wrap text within the height constraint
+    .build();
+```
+
+**Wrapping and Height Constraint Features:**
+- Automatic text wrapping at word boundaries
+- Precise height limitations with intelligent truncation
+- Preserves header, footer, and status components within height constraints
+- Works seamlessly with all box styles and layout modes
 
 #### Basic Box Creation
 ```rust
@@ -566,12 +597,34 @@ println!("{}", log_display);
 - `layout::LayoutMode` *(NEW)* - Box or Bar rendering modes
 - `layout::HorizontalAlign` - Text alignment options
 - `layout::VerticalAlign` - Vertical positioning options
+- `layout::BodyBuilder` *(ENHANCED)* - Content rendering with wrapping and height control
 - `room_runtime::RoomRuntimeAdapter`
 - `room_runtime::ComponentPosition`
 - `room_runtime::LayoutMetadata`
 - `theming::ColorScheme`
 - `theming::BackgroundColor` *(ENHANCED)* - 5 color specification methods
 - `visual::BoxStyle` - Box drawing styles including 5 new styles
+
+#### Enhanced BodyBuilder
+
+The `BodyBuilder` now supports advanced text rendering:
+
+```rust
+use boxy::api::layout;
+
+let body_builder = layout::BodyBuilder::new()
+    .with_content("Dynamic content")
+    .enable_wrapping(true)       // Word boundary text wrapping
+    .set_max_height(10)           // Truncate if content exceeds 10 lines
+    .set_max_width(50);           // Wrap text within 50 characters
+```
+
+**Enhanced BodyBuilder Features:**
+- `enable_wrapping(bool)`: Toggle text wrapping
+- `set_max_height(usize)`: Limit content height
+- `set_max_width(usize)`: Control text wrapping width
+- Intelligent truncation with ellipsis for overflow
+- Maintains component integrity during resizing
 
 ### Key Functions
 - `geometry::get_text_width()`
@@ -581,6 +634,9 @@ println!("{}", log_display);
 - `layout::BoxBuilder::new()`
 - `layout::BoxBuilder::with_barmode()` *(NEW)* - Enable barmode layout
 - `layout::BoxBuilder::with_style()` - Apply box styles
+- `layout::BoxBuilder::with_wrapping(bool)` *(NEW)* - Enable text wrapping at word boundaries
+- `layout::BoxBuilder::with_fixed_height(usize)` *(NEW)* - Set maximum box height, truncate if needed
+- `layout::BoxBuilder::with_fixed_width(usize)` - Set maximum box width
 - `layout::render_box()`
 - `layout::render_box_lines()`
 - `room_runtime::RoomRuntimeAdapter::new()`

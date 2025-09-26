@@ -1,7 +1,7 @@
 // Basic box drawing example using the Boxy library API
 // This example shows how to create simple boxes with the library
 
-use boxy::api::layout::BoxBuilder;
+use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
 
 fn main() {
     // Example 1: Simple box with default settings
@@ -30,8 +30,8 @@ fn main() {
     println!("======================================\n");
 
     let full_box = BoxBuilder::new("Main content goes here\nMultiple lines are supported")
-        .with_header("Title")
-        .with_footer("Status: Ready")
+        .with_header(HeaderBuilder::new("Title"))
+        .with_footer(FooterBuilder::new("Status: Ready"))
         .with_fixed_width(50)
         .build();
 
