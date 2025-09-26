@@ -428,7 +428,7 @@ impl BodyBuilder {
             lines: content.lines().map(|s| s.to_string()).collect(),
             h_padding: 2,
             v_padding: 0,
-            enable_wrapping: false,
+            enable_wrapping: true,
         }
     }
 
@@ -437,7 +437,7 @@ impl BodyBuilder {
             lines,
             h_padding: 2,
             v_padding: 0,
-            enable_wrapping: false,
+            enable_wrapping: true,
         }
     }
 
@@ -1463,8 +1463,8 @@ mod tests {
     }
 
     #[test]
-    fn test_wrapping_disabled_by_default() {
-        let long_text = "This is a very long line that exceeds the box width and should be truncated";
+    fn test_wrapping_enabled_by_default() {
+        let long_text = "This is a very long line that exceeds the box width and should wrap";
 
         let layout = BoxBuilder::new(long_text)
             .with_fixed_width(30)
@@ -1473,12 +1473,12 @@ mod tests {
         let rendered = layout.render();
         let lines: Vec<&str> = rendered.lines().collect();
 
-        // Should have only 3 lines (top border, content, bottom border)
-        // Without wrapping, long text is truncated to one line
-        assert_eq!(lines.len(), 3);
+        // Should have more than 3 lines (top border + multiple content lines + bottom border)
+        // With wrapping enabled by default, long text wraps to multiple lines
+        assert!(lines.len() > 3);
 
-        // Content line should contain ellipsis
-        assert!(lines[1].contains("…"));
+        // Content should NOT contain ellipsis since text is wrapped
+        assert!(!rendered.contains("…"));
     }
 
     #[test]
@@ -1504,6 +1504,26 @@ mod tests {
         assert!(rendered.contains("long"));
         assert!(rendered.contains("wrap"));
         assert!(rendered.contains("lines"));
+    }
+
+    #[test]
+    fn test_wrapping_can_be_disabled() {
+        let long_text = "This is a very long line that exceeds the box width and should be truncated";
+
+        let layout = BoxBuilder::new(long_text)
+            .with_fixed_width(30)
+            .with_wrapping(false)
+            .build();
+
+        let rendered = layout.render();
+        let lines: Vec<&str> = rendered.lines().collect();
+
+        // Should have only 3 lines (top border, content, bottom border)
+        // With wrapping disabled, long text is truncated to one line
+        assert_eq!(lines.len(), 3);
+
+        // Content line should contain ellipsis
+        assert!(lines[1].contains("…"));
     }
 
     #[test]

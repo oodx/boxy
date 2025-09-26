@@ -149,6 +149,7 @@ mod api_tests {
         let text = "This is a long text with emoji 🚀 that needs truncation";
         let layout = layout::BoxBuilder::new(text)
             .with_fixed_width(20)  // Force truncation
+            .with_wrapping(false)  // Disable wrapping to test truncation
             .build();
 
         let rendered = layout.render();
