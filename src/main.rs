@@ -37,6 +37,189 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
+/// Convert BoxyConfig colors to ColorScheme for theming
+fn config_colors_to_color_scheme(config: &BoxyConfig) -> ColorScheme {
+    ColorScheme {
+        border_color: config.colors.box_color.clone(),
+        text_color: config.colors.text_color.clone(),
+        background_color: BackgroundColor::None, // BoxyConfig doesn't have background color yet
+        header_color: config.colors.header_color.clone(),
+        footer_color: config.colors.footer_color.clone(),
+        status_color: config.colors.status_color.clone(),
+    }
+}
+
+/// Resolve text color based on theme and explicit settings
+fn resolve_text_color(config: &BoxyConfig, box_color_code: &str, is_themed: bool) -> String {
+    // (1) If explicit text color is set and not "none", use it
+    if config.colors.text_color != "none" && config.colors.text_color != "auto" {
+        return get_color_code(&config.colors.text_color).to_string();
+    }
+
+    // (2) If text_color is explicitly "none", use default (no color)
+    if config.colors.text_color == "none" {
+        return "".to_string();
+    }
+
+    // (3) If theme is applied, inherit border color (whether "auto" or missing text_color)
+    if is_themed {
+        return box_color_code.to_string();
+    }
+
+    // (4) No theme, no explicit color - use default (no color)
+    "".to_string()
+}
+
+/// Apply proper component-specific colors to rendered box output
+fn apply_proper_colors(layout: &BoxLayout, config: &BoxyConfig, is_themed: bool) -> String {
+    use colors::{get_color_code, RESET};
+
+    // Create ColorScheme from config
+    let scheme = ColorScheme {
+        border_color: config.colors.box_color.clone(),
+        text_color: config.colors.text_color.clone(),
+        background_color: BackgroundColor::None,
+        header_color: config.colors.header_color.clone(),
+        footer_color: config.colors.footer_color.clone(),
+        status_color: config.colors.status_color.clone(),
+    };
+
+    // Get the plain rendered output
+    let rendered_output = layout.render();
+    let lines: Vec<&str> = rendered_output.lines().collect();
+
+    if lines.is_empty() {
+        return rendered_output;
+    }
+
+    let box_color_code = get_color_code(&scheme.border_color);
+    let text_color_code = resolve_text_color(config, box_color_code, is_themed);
+
+    let mut result = Vec::new();
+
+    for line in lines {
+        if line.trim().is_empty() {
+            // Empty lines stay empty
+            result.push(line.to_string());
+            continue;
+        }
+
+        // Check if this is a border line with embedded text (header/footer)
+        let has_header_footer_text = (line.starts_with('┌') || line.starts_with('└') ||
+                                     line.starts_with('╭') || line.starts_with('╰') ||
+                                     line.starts_with('┏') || line.starts_with('┗')) &&
+                                    line.chars().any(|c| c.is_alphabetic() || c.is_numeric());
+
+        if has_header_footer_text {
+            // Header/Footer line - separate border chars from text
+            let chars: Vec<char> = line.chars().collect();
+            let mut colored_line = String::new();
+
+            for (i, ch) in chars.iter().enumerate() {
+                if BOX_CHARS.contains(*ch) {
+                    // Border character - use border color ONLY
+                    if !box_color_code.is_empty() && scheme.border_color != "none" {
+                        colored_line.push_str(&format!("{}{}{}", box_color_code, ch, RESET));
+                    } else {
+                        colored_line.push(*ch);
+                    }
+                } else {
+                    // Text character - determine if header or footer
+                    let is_header_line = line.starts_with('┌') || line.starts_with('╭') || line.starts_with('┏');
+                    let is_footer_line = line.starts_with('└') || line.starts_with('╰') || line.starts_with('┗');
+
+                    let text_color = if is_header_line {
+                        if let Some(header_color) = &scheme.header_color {
+                            if header_color == "none" {
+                                ""
+                            } else {
+                                get_color_code(header_color)
+                            }
+                        } else if !text_color_code.is_empty() {
+                            &text_color_code
+                        } else {
+                            ""
+                        }
+                    } else if is_footer_line {
+                        if let Some(footer_color) = &scheme.footer_color {
+                            if footer_color == "none" {
+                                ""
+                            } else {
+                                get_color_code(footer_color)
+                            }
+                        } else if !text_color_code.is_empty() {
+                            &text_color_code
+                        } else {
+                            ""
+                        }
+                    } else if !text_color_code.is_empty() {
+                        &text_color_code
+                    } else {
+                        ""
+                    };
+
+                    if !text_color.is_empty() {
+                        colored_line.push_str(&format!("{}{}{}", text_color, ch, RESET));
+                    } else {
+                        colored_line.push(*ch);
+                    }
+                }
+            }
+            result.push(colored_line);
+        } else if line.chars().all(|c| BOX_CHARS.contains(c) || c == ' ') {
+            // Pure border line - apply border color to entire line
+            if !box_color_code.is_empty() && scheme.border_color != "none" {
+                result.push(format!("{}{}{}", box_color_code, line, RESET));
+            } else {
+                result.push(line.to_string());
+            }
+        } else {
+            // Content line with side borders - apply colors differently
+            if line.chars().any(|c| BOX_CHARS.contains(c)) {
+                // Split the line into side borders and content
+                let chars: Vec<char> = line.chars().collect();
+                if chars.len() >= 2 {
+                    let left_border = chars[0];
+                    let right_border = chars[chars.len() - 1];
+                    let content: String = chars[1..chars.len()-1].iter().collect();
+
+                    // Apply border color to side borders, text color to content
+                    let colored_left = if !box_color_code.is_empty() && scheme.border_color != "none" {
+                        format!("{}{}{}", box_color_code, left_border, RESET)
+                    } else {
+                        left_border.to_string()
+                    };
+
+                    let colored_content = if !text_color_code.is_empty() {
+                        format!("{}{}{}", &text_color_code, content, RESET)
+                    } else {
+                        content
+                    };
+
+                    let colored_right = if !box_color_code.is_empty() && scheme.border_color != "none" {
+                        format!("{}{}{}", box_color_code, right_border, RESET)
+                    } else {
+                        right_border.to_string()
+                    };
+
+                    result.push(format!("{}{}{}", colored_left, colored_content, colored_right));
+                } else {
+                    result.push(line.to_string());
+                }
+            } else {
+                // No side borders, just content - apply text color
+                if !text_color_code.is_empty() {
+                    result.push(format!("{}{}{}", &text_color_code, line, RESET));
+                } else {
+                    result.push(line.to_string());
+                }
+            }
+        }
+    }
+
+    result.join("\n")
+}
+
 // API module is now used by CLI for the new adapter pattern
 mod api;
 mod colors;
@@ -55,13 +238,16 @@ use regex::Regex;
 use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
-use api::layout::BoxLayout;
 use colors::*;
 use core::*;
 use height_plugin::*;
 use plugins::*;
 use visual::*;
 use width_plugin::*;
+
+// Import API components for color theming
+use api::layout::BoxLayout;
+use api::theming::{ColorScheme, apply_component_colors, BackgroundColor};
 
 // RSB (Rebel String-Based) framework imports
 // Note: RSB param! macro removed in favor of std::env::var for BOXY_THEME environment variable
@@ -619,8 +805,17 @@ fn run_boxy_application() -> Result<(), AppError> {
                     if color == "none" {
                         color = Box::leak(boxy_theme.color.clone().into_boxed_str());
                     }
+                    // Apply theme text color logic:
+                    // - If theme explicitly sets text_color to "none", respect that
+                    // - If theme sets text_color to a specific color, use that
+                    // - If theme has no text_color or "auto", inherit border color (handled in resolve_text_color)
                     if text_color == "none" {
-                        text_color = Box::leak(boxy_theme.text_color.clone().into_boxed_str());
+                        if boxy_theme.text_color != "none" {
+                            // Theme has explicit color, use it
+                            text_color = Box::leak(boxy_theme.text_color.clone().into_boxed_str());
+                        } else {
+                            // Theme explicitly wants "none" or theme inheritance will be handled by resolve_text_color
+                        }
                     }
                     // Apply theme icon directly to text using safe pattern (no icon variable)
                     if icon.is_none() {
@@ -783,7 +978,16 @@ fn run_boxy_application() -> Result<(), AppError> {
         );
         // CHINA-05A Phase 3: CLI switchover to new API
         let layout = BoxLayout::from(&config);
-        println!("{}", layout.render());
+
+        // Apply colors using the new API, unless --no-color was specified
+        let output = if no_color_requested {
+            layout.render()
+        } else {
+            use api::theming::ColorScheme;
+            let color_scheme = ColorScheme::from_config(&config);
+            layout.render_with_colors(&color_scheme)
+        };
+        println!("{}", output);
     }
 
     Ok(())

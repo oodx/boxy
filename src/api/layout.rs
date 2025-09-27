@@ -1147,6 +1147,12 @@ impl BoxLayout {
         self.render_lines().join("\n")
     }
 
+    /// Render the complete box with colors applied using ColorScheme
+    pub fn render_with_colors(&self, scheme: &crate::api::theming::ColorScheme) -> String {
+        let rendered = self.render();
+        crate::api::theming::apply_colors_to_rendered_box(&rendered, scheme)
+    }
+
     /// QOL: Render as individual lines for layout engines
     /// Returns Vec<String> for easier positioning in Room Runtime
     pub fn render_lines(&self) -> Vec<String> {

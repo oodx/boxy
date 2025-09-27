@@ -79,6 +79,18 @@ impl ColorScheme {
         self.background_color = bg_color;
         self
     }
+
+    /// Create a ColorScheme from BoxyConfig
+    pub fn from_config(config: &crate::core::BoxyConfig) -> Self {
+        Self {
+            border_color: config.colors.box_color.clone(),
+            text_color: config.colors.text_color.clone(),
+            background_color: BackgroundColor::None,
+            header_color: config.colors.title_color.clone(),
+            footer_color: None, // BoxyConfig doesn't have footer_color
+            status_color: None, // BoxyConfig doesn't have status_color
+        }
+    }
 }
 
 /// Apply background color to text content (line-by-line to prevent bleeding)
@@ -178,6 +190,87 @@ pub fn apply_colors(content: &str, scheme: &ColorScheme) -> String {
     }
 
     result
+}
+
+/// Apply colors to rendered box output (borders and content)
+pub fn apply_colors_to_rendered_box(rendered: &str, scheme: &ColorScheme) -> String {
+    use crate::{RESET, get_color_code, visual::BOX_CHARS};
+
+    let lines: Vec<&str> = rendered.lines().collect();
+    if lines.is_empty() {
+        return rendered.to_string();
+    }
+
+    let border_color_code = get_color_code(&scheme.border_color);
+    let text_color_code = if scheme.text_color == "auto" {
+        border_color_code
+    } else if scheme.text_color == "none" {
+        ""
+    } else {
+        get_color_code(&scheme.text_color)
+    };
+
+    let mut result = Vec::new();
+
+    for line in lines {
+        if line.trim().is_empty() {
+            result.push(line.to_string());
+            continue;
+        }
+
+        let chars: Vec<char> = line.chars().collect();
+        let mut colored_line = String::new();
+        let mut in_border = false;
+        let mut in_text_color = false;
+
+        for ch in chars.iter() {
+            // Check if this character is a box drawing character
+            if BOX_CHARS.contains(*ch) {
+                // Close text color if we were in one
+                if in_text_color {
+                    colored_line.push_str(RESET);
+                    in_text_color = false;
+                }
+                // Start border color if not already
+                if !in_border {
+                    colored_line.push_str(border_color_code);
+                    in_border = true;
+                }
+                colored_line.push(*ch);
+            } else {
+                // Close border color if we were in one
+                if in_border {
+                    colored_line.push_str(RESET);
+                    in_border = false;
+                }
+
+                // Apply text color to non-space content
+                if !text_color_code.is_empty() && *ch != ' ' {
+                    if !in_text_color {
+                        colored_line.push_str(text_color_code);
+                        in_text_color = true;
+                    }
+                    colored_line.push(*ch);
+                } else {
+                    // Close text color for spaces
+                    if in_text_color {
+                        colored_line.push_str(RESET);
+                        in_text_color = false;
+                    }
+                    colored_line.push(*ch);
+                }
+            }
+        }
+
+        // Close any open colors
+        if in_border || in_text_color {
+            colored_line.push_str(RESET);
+        }
+
+        result.push(colored_line);
+    }
+
+    result.join("\n")
 }
 
 /// Apply colors to individual box components (OPTIONAL - Room Runtime can skip this)

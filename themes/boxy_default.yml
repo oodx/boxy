@@ -46,7 +46,6 @@ themes:
   success:
     inherits: "base_rounded"
     color: "emerald"
-    text_color: "auto"
     text_style: "bold"
     title: "✅ Success"
 
@@ -63,6 +62,12 @@ themes:
     text_color: "auto"
     text_style: "normal"
     title: "ℹ️ Info"
+
+  test_none:
+    inherits: "base"
+    color: "green"
+    text_color: "none"
+    title: "🧪 Test None"
 
   critical:
     inherits: "base_double"
