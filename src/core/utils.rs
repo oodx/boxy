@@ -588,22 +588,40 @@ pub fn render_title_or_footer(
     )
 }
 
-// =============== HELP FUNCTIONS (CLI-only) ===============
+// =============== LOGO & HELP FUNCTIONS (CLI-only) ===============
+
+#[cfg(feature = "cli")]
+/// Display the boxy logo with version and copyright information
+pub fn show_logo() {
+    const LOGO: &str = include_str!("../../logo.txt");
+    print!("{}", LOGO);
+    println!("Version: {} | License: AGPL-3.0", VERSION);
+    println!("Copyright © 2025 Qodeninja/Oxidex");
+    println!();
+}
 
 #[cfg(feature = "cli")]
 /// Show comprehensive CLI help with examples and usage patterns
 pub fn show_comprehensive_help(jynx: &JynxPlugin) {
-    // Generate help content - if jynx is available, we'll enhance it
-    let help_header = format!("{} {} - {}", NAME, VERSION, DESCRIPTION);
+    show_comprehensive_help_with_header(jynx, true);
+}
 
-    if jynx.is_active() {
-        // Use jynx to enhance help output
-        jynx_println(&help_header, "help", jynx);
-        println!();
-    } else {
-        // Standard output without jynx
-        println!("{}", help_header);
-        println!();
+#[cfg(feature = "cli")]
+/// Show comprehensive CLI help with optional header
+pub fn show_comprehensive_help_with_header(jynx: &JynxPlugin, show_header: bool) {
+    if show_header {
+        // Generate help content - if jynx is available, we'll enhance it
+        let help_header = format!("{} {} - {}", NAME, VERSION, DESCRIPTION);
+
+        if jynx.is_active() {
+            // Use jynx to enhance help output
+            jynx_println(&help_header, "help", jynx);
+            println!();
+        } else {
+            // Standard output without jynx
+            println!("{}", help_header);
+            println!();
+        }
     }
 
     // =============== OVERVIEW ===============

@@ -24,7 +24,7 @@ pub use utils::{
 };
 
 #[cfg(feature = "cli")]
-pub use utils::{show_comprehensive_help, show_usage_examples};
+pub use utils::{show_comprehensive_help, show_comprehensive_help_with_header, show_logo, show_usage_examples};
 
 // Test module access to helpers
 #[cfg(test)]

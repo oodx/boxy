@@ -218,11 +218,13 @@ fn run_boxy_application() -> Result<(), AppError> {
 
         match arg.as_str() {
             "--help" | "-h" => {
-                show_comprehensive_help(&jynx);
+                show_logo();
+                show_comprehensive_help_with_header(&jynx, false);
                 return Ok(());
             }
             "--version" | "-v" | "-V" => {
-                println!("{} {} ({})", NAME, VERSION, jynx.get_version_string());
+                show_logo();
+                println!("Build info: {}", jynx.get_version_string());
                 return Ok(());
             }
             "--colors" => {

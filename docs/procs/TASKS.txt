@@ -548,6 +548,11 @@ Strategic Preparation (LOW Priority):
   - Breaks existing CLI behaviour where titles appear as the first body line (`Body::compose_content_lines`)
   - Restore parity by keeping titles in body content until API builders expose a dedicated title slot
 
+[BUG-02] CLI color output regression after API switchover (CRITICAL) - High
+  - Current CLI prints `BoxLayout::render()` directly, which emits plain, uncolored text
+  - All color/theming flags now yield monochrome boxes (lost legacy color support)
+  - Fix options: reapply theming via `apply_component_colors` using `BoxyConfig` colors, or temporarily call `visual::render_to_string` until per-component theming is wired
+
 Phase 1: Testing Infrastructure (HIGH Priority):
 ------------------------------------------------
 [TEST-01] Benchmark Integration into test.sh workflow (MEDIUM) - High
