@@ -15,7 +15,10 @@
 //! - Pure calculation functions
 //! - Curated re-exports from existing boxy internals
 
-use crate::{get_display_width, visual::{BoxStyle, NORMAL, ROUNDED, DOUBLE, HEAVY, ASCII, THICKSII, COLON, DOT, STAR, DASHED}};
+use crate::{
+    get_display_width,
+    visual::{ASCII, BoxStyle, COLON, DASHED, DOT, DOUBLE, HEAVY, NORMAL, ROUNDED, STAR, THICKSII},
+};
 
 /// Text width and display metrics
 #[derive(Debug, Clone, PartialEq)]
@@ -195,7 +198,7 @@ pub fn compare_ansi_sizes(plain_text: &str, colored_text: &str) -> AnsiSizeCompa
 /// when enhanced width handling is added.
 pub fn calculate_box_dimensions(
     content: &str,
-    _style: BoxStyle,  // Used for ANSI-aware width when styles contain color codes
+    _style: BoxStyle, // Used for ANSI-aware width when styles contain color codes
     h_padding: usize,
     v_padding: usize,
     fixed_width: Option<usize>,
@@ -204,10 +207,7 @@ pub fn calculate_box_dimensions(
     let content_width = if content.is_empty() {
         0
     } else {
-        content.lines()
-            .map(get_text_width)
-            .max()
-            .unwrap_or(0)
+        content.lines().map(get_text_width).max().unwrap_or(0)
     };
 
     let inner_width = match fixed_width {
@@ -275,7 +275,7 @@ mod tests {
     fn test_emoji_width_calculation() {
         let metrics = get_text_metrics("Hello 🌟 World");
         assert_eq!(metrics.display_width, 14); // "Hello " (6) + 🌟 (2) + " World" (6) = 14
-        assert_eq!(metrics.char_count, 13);    // 13 characters including emoji as 1
+        assert_eq!(metrics.char_count, 13); // 13 characters including emoji as 1
         assert!(metrics.has_wide_chars);
     }
 
@@ -283,7 +283,7 @@ mod tests {
     fn test_cjk_width_calculation() {
         let metrics = get_text_metrics("Hello 中文 World");
         assert_eq!(metrics.display_width, 16); // 中文 = 4 columns
-        assert_eq!(metrics.char_count, 14);    // But only 2 characters
+        assert_eq!(metrics.char_count, 14); // But only 2 characters
         assert!(metrics.has_wide_chars);
     }
 
@@ -335,10 +335,10 @@ mod tests {
     fn test_box_dimension_calculation() {
         let dims = calculate_box_dimensions("Hello World", NORMAL, 2, 1, None);
 
-        assert_eq!(dims.inner_width, 15);  // 11 + 2*2 padding
-        assert_eq!(dims.total_width, 17);  // 15 + 2 borders
-        assert_eq!(dims.inner_height, 3);  // 1 line + 2*1 padding
-        assert_eq!(dims.total_height, 5);  // 3 + 2 borders
+        assert_eq!(dims.inner_width, 15); // 11 + 2*2 padding
+        assert_eq!(dims.total_width, 17); // 15 + 2 borders
+        assert_eq!(dims.inner_height, 3); // 1 line + 2*1 padding
+        assert_eq!(dims.total_height, 5); // 3 + 2 borders
     }
 
     #[test]

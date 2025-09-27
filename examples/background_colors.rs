@@ -3,7 +3,7 @@
 //! Demonstrates the comprehensive background color support in Boxy.
 //! Shows all 5 background color types: None, ANSI, RGB, Named, and Hex.
 
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+use boxy::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder};
 use boxy::api::theming::{BackgroundColor, ColorScheme, apply_background_color};
 
 fn main() {
@@ -75,9 +75,17 @@ fn main() {
     println!("--------------------------");
 
     let named_colors = [
-        "red", "green", "blue", "yellow",
-        "magenta", "cyan", "black", "white",
-        "bright_red", "bright_green", "bright_blue"
+        "red",
+        "green",
+        "blue",
+        "yellow",
+        "magenta",
+        "cyan",
+        "black",
+        "white",
+        "bright_red",
+        "bright_green",
+        "bright_blue",
     ];
 
     for name in named_colors {

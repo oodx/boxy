@@ -4,8 +4,7 @@ use boxy::api::layout::{BoxBuilder, HeaderBuilder};
 fn main() {
     println!("=== Debug Barmode Component Processing ===\n");
 
-    let header = HeaderBuilder::new("Test Header")
-        .build_for_width(38);
+    let header = HeaderBuilder::new("Test Header").build_for_width(38);
 
     println!("Header component content:");
     for (i, line) in header.content.lines().enumerate() {

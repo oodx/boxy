@@ -26,38 +26,24 @@
 pub mod api;
 pub mod colors;
 pub mod core;
+pub mod height_plugin;
 pub mod visual;
 pub mod width_plugin;
-pub mod height_plugin;
 
 #[cfg(feature = "cli")]
 pub mod plugins;
 
 // Import colors module public API
 pub use colors::{
-    RESET, generate_color_help, get_color_categories, get_color_code, validate_color,
-    strip_ansi_codes,
+    RESET, generate_color_help, get_color_categories, get_color_code, strip_ansi_codes,
+    validate_color,
 };
 
 pub use core::{
-    AlignmentConfig,
-    BodyAlignment,
-    BoxColors,
-    BoxyConfig,
-    DividerConfig,
-    PaddingConfig,
-    ParsedContent,
-    WidthConfig,
-    expand_variables,
-    parse_content_stream,
-    render_title_or_footer,
-    resolve_box_config,
-    truncate_with_ellipsis,
-    unescape_stream_value,
+    AlignmentConfig, BodyAlignment, BoxColors, BoxyConfig, DESCRIPTION, DividerConfig, NAME,
+    PaddingConfig, ParsedContent, VERSION, WidthConfig, expand_variables, parse_content_stream,
+    render_title_or_footer, resolve_box_config, truncate_with_ellipsis, unescape_stream_value,
     wrap_text_at_word_boundaries,
-    DESCRIPTION,
-    NAME,
-    VERSION,
 };
 
 #[cfg(feature = "cli")]

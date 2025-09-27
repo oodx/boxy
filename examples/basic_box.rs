@@ -1,15 +1,14 @@
 // Basic box drawing example using the Boxy library API
 // This example shows how to create simple boxes with the library
 
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+use boxy::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder};
 
 fn main() {
     // Example 1: Simple box with default settings
     println!("Example 1: Simple box");
     println!("=====================\n");
 
-    let simple_box = BoxBuilder::new("Hello, Boxy!")
-        .build();
+    let simple_box = BoxBuilder::new("Hello, Boxy!").build();
 
     println!("{}", simple_box.render());
     println!();

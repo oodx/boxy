@@ -4,7 +4,7 @@
 // These utilities are kept for external library consumers and future CLI enhancements
 #![allow(dead_code)]
 
-use super::error::{ThemeError, ThemeResult, ExitCode};
+use super::error::{ExitCode, ThemeError, ThemeResult};
 
 /// Handle theme error in CLI context
 ///

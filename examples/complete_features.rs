@@ -1,7 +1,7 @@
 // Complete feature demonstration for Boxy v0.21.0 API
 // Shows all builder features: headers, footers, status, padding, wrapping, height
 
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder, StatusBuilder};
+use boxy::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder, StatusBuilder};
 
 fn main() {
     println!("Boxy v0.21.0 Complete Feature Showcase");
@@ -124,9 +124,7 @@ fn main() {
     let long_text = "This is a very long line of text that will demonstrate the wrapping feature at word boundaries for better readability.";
 
     println!("Without wrapping (truncated):");
-    let no_wrap = BoxBuilder::new(long_text)
-        .with_fixed_width(40)
-        .build();
+    let no_wrap = BoxBuilder::new(long_text).with_fixed_width(40).build();
     println!("{}", no_wrap.render());
     println!();
 
@@ -142,12 +140,11 @@ fn main() {
     println!("6. Height Constraints");
     println!("---------------------\n");
 
-    let many_lines = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10";
+    let many_lines =
+        "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10";
 
     println!("Without height constraint:");
-    let no_height = BoxBuilder::new(many_lines)
-        .with_fixed_width(30)
-        .build();
+    let no_height = BoxBuilder::new(many_lines).with_fixed_width(30).build();
     println!("{}", no_height.render());
     println!();
 

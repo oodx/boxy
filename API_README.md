@@ -147,6 +147,79 @@ let professional_doc = BoxBuilder::new("Executive summary content")
 - **Style Compatibility**: Works with all box styles (NORMAL, DASHED, HEAVY, etc.)
 - **Flexible Layout**: Header and footer still fully customizable
 
+#### Title and Icon Support (NEW)
+
+Add titles and icons to your boxes with proper CLI parity:
+
+```rust
+use boxy::api::layout::BoxBuilder;
+
+// Title renders inside body (first content line)
+let titled_box = BoxBuilder::new("Body content here")
+    .with_title("Configuration Settings")
+    .with_fixed_width(40)
+    .build();
+
+// Icon prepends to first line (with smart emoji detection)
+let icon_box = BoxBuilder::new("Important message")
+    .with_icon("⚠️")
+    .with_fixed_width(40)
+    .build();
+
+// Combine title and icon
+let full_box = BoxBuilder::new("Status: All systems operational")
+    .with_title("System Health")
+    .with_icon("✅")
+    .with_fixed_width(45)
+    .build();
+```
+
+**Title and Icon Features:**
+- **CLI Parity**: Titles render inside body, not as headers (matches legacy CLI behavior)
+- **Smart Icon Detection**: Prevents double-icons when content starts with emoji
+- **Unicode Aware**: Proper width calculations for emoji and CJK characters
+- **Optional**: Both features are completely opt-in via builder methods
+
+#### Dividers and Vertical Padding (NEW)
+
+Add visual separation with horizontal dividers and vertical spacing:
+
+```rust
+use boxy::api::layout::BoxBuilder;
+
+// Add divider after title
+let section_box = BoxBuilder::new("Configuration details...")
+    .with_title("Settings")
+    .with_title_divider(true)  // Adds horizontal line after title
+    .with_fixed_width(40)
+    .build();
+
+// Add divider before status with padding
+let status_box = BoxBuilder::new("Process running...")
+    .with_status(StatusBuilder::new("Ready"))
+    .with_status_divider(true)  // Adds horizontal line before status
+    .with_fixed_width(40)
+    .build();
+
+// Combine dividers and padding
+let complex_box = BoxBuilder::new("Main content area")
+    .with_title("Report")
+    .with_title_divider(true)        // Divider after title
+    .with_title_padding(true, true)   // Blank lines before/after title
+    .with_status(StatusBuilder::new("Page 1 of 5"))
+    .with_status_divider(true)        // Divider before status
+    .with_status_padding(true, false) // Blank line before status only
+    .with_fixed_width(50)
+    .build();
+```
+
+**Divider and Padding Features:**
+- **Title Dividers**: Horizontal separator after title line
+- **Status Dividers**: Horizontal separator before status line
+- **Vertical Padding**: Add blank lines before/after title or status
+- **Flexible Control**: Enable padding independently for before/after positions
+- **Style Aware**: Dividers use box style (tee_left, horizontal, tee_right)
+
 ### Box Styles Module (Expanded with 10 Total Styles)
 
 Five new box styles for enhanced visual variety and document integration.

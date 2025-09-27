@@ -1,7 +1,9 @@
 // Example demonstrating barmode layout system
 // Shows horizontal-only bars for document integration
 
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder, StatusBuilder, render_box, BoxOptions, LayoutMode};
+use boxy::api::layout::{
+    BoxBuilder, BoxOptions, FooterBuilder, HeaderBuilder, LayoutMode, StatusBuilder, render_box,
+};
 use boxy::visual::ROUNDED;
 
 fn main() {
@@ -51,25 +53,30 @@ fn main() {
     // Example 3: Status reporting with barmode
     println!("Example 3: Status Reporting with Barmode");
 
-    let status_report = BoxBuilder::new("System Status: All services are operational\nLatency: 45ms\nUptime: 99.9%")
-        .with_header(HeaderBuilder::new("⚡ System Monitor"))
-        .with_status(StatusBuilder::new("Last updated: 2024-01-15 10:30:45"))
-        .with_barmode()
-        .with_fixed_width(45)
-        .build();
+    let status_report = BoxBuilder::new(
+        "System Status: All services are operational\nLatency: 45ms\nUptime: 99.9%",
+    )
+    .with_header(HeaderBuilder::new("⚡ System Monitor"))
+    .with_status(StatusBuilder::new("Last updated: 2024-01-15 10:30:45"))
+    .with_barmode()
+    .with_fixed_width(45)
+    .build();
 
     println!("{}\n", status_report.render());
 
     // Example 4: Convenience API with barmode
     println!("Example 4: Convenience API with Barmode");
 
-    let convenient_bar = render_box("Quick barmode using convenience API", BoxOptions {
-        header: Some("🚀 Quick Setup".to_string()),
-        footer: Some("v2.0".to_string()),
-        width: Some(40),
-        layout_mode: Some(LayoutMode::Bar),
-        ..Default::default()
-    });
+    let convenient_bar = render_box(
+        "Quick barmode using convenience API",
+        BoxOptions {
+            header: Some("🚀 Quick Setup".to_string()),
+            footer: Some("v2.0".to_string()),
+            width: Some(40),
+            layout_mode: Some(LayoutMode::Bar),
+            ..Default::default()
+        },
+    );
 
     println!("{}\n", convenient_bar);
 

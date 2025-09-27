@@ -36,8 +36,8 @@ fn demo_geometry() {
     let dims = geometry::calculate_box_dimensions(
         text,
         geometry::get_box_styles().first().unwrap().1,
-        2, // h_padding
-        1, // v_padding
+        2,    // h_padding
+        1,    // v_padding
         None, // fixed_width
     );
 
@@ -54,23 +54,22 @@ fn demo_layout() {
     let content = "Hello 🌟 World\nThis is line 2\nAnd line 3 with 中文";
 
     let layout = layout::BoxBuilder::new(content)
-        .with_header(
-            layout::HeaderBuilder::new("📦 Room Runtime Demo")
-                .align_center()
-        )
-        .with_footer(
-            layout::FooterBuilder::new("Footer Text")
-                .align_right()
-        )
-        .with_status(
-            layout::StatusBuilder::new("Status: Ready")
-                .align_center()
-        )
+        .with_header(layout::HeaderBuilder::new("📦 Room Runtime Demo").align_center())
+        .with_footer(layout::FooterBuilder::new("Footer Text").align_right())
+        .with_status(layout::StatusBuilder::new("Status: Ready").align_center())
         .build();
 
-    println!("Layout created with {} components:", layout.components().len());
+    println!(
+        "Layout created with {} components:",
+        layout.components().len()
+    );
     for (i, component) in layout.components().iter().enumerate() {
-        println!("  Component {}: {}×{}", i + 1, component.width, component.height);
+        println!(
+            "  Component {}: {}×{}",
+            i + 1,
+            component.width,
+            component.height
+        );
     }
 
     println!("\nRendered Layout (Pure Unicode, No Colors):");
@@ -108,10 +107,16 @@ fn demo_background_colors() {
     // Different background color types
     let colors = vec![
         ("None", theming::BackgroundColor::None),
-        ("Red (Named)", theming::BackgroundColor::Named("red".to_string())),
+        (
+            "Red (Named)",
+            theming::BackgroundColor::Named("red".to_string()),
+        ),
         ("ANSI 196", theming::BackgroundColor::Ansi(196)),
         ("RGB Red", theming::BackgroundColor::Rgb(255, 0, 0)),
-        ("Hex Blue", theming::BackgroundColor::Hex("#0000FF".to_string())),
+        (
+            "Hex Blue",
+            theming::BackgroundColor::Hex("#0000FF".to_string()),
+        ),
     ];
 
     for (name, bg_color) in colors {

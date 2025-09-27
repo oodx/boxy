@@ -2,7 +2,7 @@
 // Shows how Room Runtime can use Boxy's pure geometry API without colors
 
 use boxy::api::geometry;
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+use boxy::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder};
 use boxy::visual::ROUNDED;
 
 fn main() {
@@ -22,11 +22,10 @@ fn main() {
 
     // Calculate box dimensions with padding
     let box_dims = geometry::calculate_box_dimensions(
-        content,
-        ROUNDED,   // box style
-        2,         // horizontal padding
-        1,         // vertical padding
-        None       // no fixed width
+        content, ROUNDED, // box style
+        2,       // horizontal padding
+        1,       // vertical padding
+        None,    // no fixed width
     );
 
     println!("Box dimensions:");

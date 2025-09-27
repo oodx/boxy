@@ -42,7 +42,10 @@ fn main() {
     println!("  Plain size: {} bytes", comparison.plain_bytes);
     println!("  Colored size: {} bytes", comparison.colored_bytes);
     println!("  Color overhead: {} bytes", comparison.color_overhead);
-    println!("  Overhead percentage: {:.1}%\n", comparison.overhead_percentage);
+    println!(
+        "  Overhead percentage: {:.1}%\n",
+        comparison.overhead_percentage
+    );
 
     // Example 4: Heavy formatting
     let heavy = "\x1b[1;4;31;47mIMPORTANT\x1b[0m \x1b[33mWarning:\x1b[0m \x1b[1mSystem\x1b[0m \x1b[4mCritical\x1b[0m";
@@ -53,20 +56,27 @@ fn main() {
     println!("  Total bytes: {}", total);
     println!("  Display bytes: {}", display);
     println!("  ANSI overhead: {} bytes", overhead);
-    println!("  Storage efficiency: {:.1}%\n", (display as f64 / total as f64) * 100.0);
+    println!(
+        "  Storage efficiency: {:.1}%\n",
+        (display as f64 / total as f64) * 100.0
+    );
 
     // Example 5: Practical implications
     println!("=== Practical Implications ===\n");
 
     let log_line = "[2024-01-15 10:30:45] INFO: Request processed successfully";
-    let colored_log_line = "\x1b[90m[2024-01-15 10:30:45]\x1b[0m \x1b[36mINFO\x1b[0m: Request processed successfully";
+    let colored_log_line =
+        "\x1b[90m[2024-01-15 10:30:45]\x1b[0m \x1b[36mINFO\x1b[0m: Request processed successfully";
 
     let comparison = compare_ansi_sizes(log_line, colored_log_line);
 
     println!("For a typical log line:");
     println!("  Plain: {} bytes", comparison.plain_bytes);
     println!("  Colored: {} bytes", comparison.colored_bytes);
-    println!("  Overhead: {} bytes ({:.1}%)", comparison.color_overhead, comparison.overhead_percentage);
+    println!(
+        "  Overhead: {} bytes ({:.1}%)",
+        comparison.color_overhead, comparison.overhead_percentage
+    );
 
     // Calculate impact at scale
     let logs_per_day = 100_000;
@@ -89,10 +99,14 @@ fn main() {
     println!("JSON response:");
     println!("  Without ANSI: {} bytes", comparison.plain_bytes);
     println!("  With ANSI: {} bytes", comparison.colored_bytes);
-    println!("  Overhead: {} bytes ({:.1}%)", comparison.color_overhead, comparison.overhead_percentage);
+    println!(
+        "  Overhead: {} bytes ({:.1}%)",
+        comparison.color_overhead, comparison.overhead_percentage
+    );
 
     let requests_per_second = 1000;
-    let bandwidth_overhead_mbps = (comparison.color_overhead * requests_per_second * 8) as f64 / (1024.0 * 1024.0);
+    let bandwidth_overhead_mbps =
+        (comparison.color_overhead * requests_per_second * 8) as f64 / (1024.0 * 1024.0);
 
     println!("\nAt {} requests/second:", requests_per_second);
     println!("  Extra bandwidth: {:.3} Mbps", bandwidth_overhead_mbps);

@@ -7,8 +7,7 @@ mod api_tests {
 
     #[test]
     fn test_basic_box_creation() {
-        let box_layout = layout::BoxBuilder::new("Test content")
-            .build();
+        let box_layout = layout::BoxBuilder::new("Test content").build();
 
         let rendered = box_layout.render();
         assert!(rendered.contains("Test content"));
@@ -60,11 +59,9 @@ mod api_tests {
     fn test_box_dimensions() {
         use boxy::visual::NORMAL;
         let dims = geometry::calculate_box_dimensions(
-            "Test",
-            NORMAL,
-            1, // h_padding
-            1, // v_padding
-            None // fixed_width
+            "Test", NORMAL, 1,    // h_padding
+            1,    // v_padding
+            None, // fixed_width
         );
 
         // "Test" = 4 chars + 2 padding + 2 borders = 8
@@ -148,8 +145,8 @@ mod api_tests {
     fn test_unicode_truncation() {
         let text = "This is a long text with emoji 🚀 that needs truncation";
         let layout = layout::BoxBuilder::new(text)
-            .with_fixed_width(20)  // Force truncation
-            .with_wrapping(false)  // Disable wrapping to test truncation
+            .with_fixed_width(20) // Force truncation
+            .with_wrapping(false) // Disable wrapping to test truncation
             .build();
 
         let rendered = layout.render();
@@ -182,14 +179,17 @@ mod api_tests {
 
     #[test]
     fn test_convenience_renderer() {
-        use layout::{render_box, BoxOptions};
+        use layout::{BoxOptions, render_box};
 
-        let output = render_box("Test Content", BoxOptions {
-            header: Some("Title".to_string()),
-            footer: Some("Footer".to_string()),
-            width: Some(40),
-            ..Default::default()
-        });
+        let output = render_box(
+            "Test Content",
+            BoxOptions {
+                header: Some("Title".to_string()),
+                footer: Some("Footer".to_string()),
+                width: Some(40),
+                ..Default::default()
+            },
+        );
 
         assert!(output.contains("Test Content"));
         assert!(output.contains("Title"));
@@ -222,7 +222,7 @@ mod api_tests {
 
     #[test]
     fn test_room_runtime_adapter() {
-        use boxy::api::room_runtime::{RoomRuntimeAdapter, ComponentType};
+        use boxy::api::room_runtime::{ComponentType, RoomRuntimeAdapter};
 
         let layout = layout::BoxBuilder::new("Body")
             .with_header(layout::HeaderBuilder::new("Header"))

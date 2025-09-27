@@ -5,17 +5,16 @@ fn main() {
 
     // Test 1: Min width constraint
     println!("1. Min Width (min=40, content only needs 15):");
-    let min_width_box = BoxBuilder::new("Short")
-        .with_min_width(40)
-        .build();
+    let min_width_box = BoxBuilder::new("Short").with_min_width(40).build();
     println!("{}\n", min_width_box.render());
 
     // Test 2: Max width constraint
     println!("2. Max Width (max=25, content needs more):");
-    let max_width_box = BoxBuilder::new("This is a very long line that will be constrained by max width")
-        .with_max_width(25)
-        .with_wrapping(false)  // Show truncation
-        .build();
+    let max_width_box =
+        BoxBuilder::new("This is a very long line that will be constrained by max width")
+            .with_max_width(25)
+            .with_wrapping(false) // Show truncation
+            .build();
     println!("{}\n", max_width_box.render());
 
     // Test 3: Min height constraint

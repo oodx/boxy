@@ -17,7 +17,7 @@ fn main() {
     let no_wrap = BoxBuilder::new(long_text)
         .with_header(HeaderBuilder::new("Truncated"))
         .with_fixed_width(50)
-        .with_wrapping(false)  // Explicitly disable (default)
+        .with_wrapping(false) // Explicitly disable (default)
         .build();
 
     println!("{}", no_wrap.render());
@@ -30,7 +30,7 @@ fn main() {
     let with_wrap = BoxBuilder::new(long_text)
         .with_header(HeaderBuilder::new("Wrapped"))
         .with_fixed_width(50)
-        .with_wrapping(true)   // Enable wrapping!
+        .with_wrapping(true) // Enable wrapping!
         .build();
 
     println!("{}", with_wrap.render());
@@ -59,7 +59,10 @@ fn main() {
     let box_width = (term_width - 10).max(40); // Leave margin, minimum 40
 
     let responsive_box = BoxBuilder::new(long_text)
-        .with_header(HeaderBuilder::new(&format!("Terminal Width: {} → Box: {}", term_width, box_width)))
+        .with_header(HeaderBuilder::new(&format!(
+            "Terminal Width: {} → Box: {}",
+            term_width, box_width
+        )))
         .with_fixed_width(box_width)
         .with_wrapping(true)
         .build();
@@ -86,7 +89,8 @@ fn main() {
     println!("6. Side-by-Side Comparison");
     println!("--------------------------\n");
 
-    let sample_text = "The quick brown fox jumps over the lazy dog. This text demonstrates wrapping behavior.";
+    let sample_text =
+        "The quick brown fox jumps over the lazy dog. This text demonstrates wrapping behavior.";
 
     let truncated = BoxBuilder::new(sample_text)
         .with_header(HeaderBuilder::new("Truncated"))

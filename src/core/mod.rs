@@ -17,23 +17,9 @@ pub mod utils;
 
 #[allow(unused_imports)]
 pub use utils::{
-    AlignmentConfig,
-    BodyAlignment,
-    BoxColors,
-    BoxyConfig,
-    DESCRIPTION,
-    DividerConfig,
-    NAME,
-    PaddingConfig,
-    ParsedContent,
-    VERSION,
-    WidthConfig,
-    expand_variables,
-    parse_content_stream,
-    render_title_or_footer,
-    resolve_box_config,
-    truncate_with_ellipsis,
-    unescape_stream_value,
+    AlignmentConfig, BodyAlignment, BoxColors, BoxyConfig, DESCRIPTION, DividerConfig, NAME,
+    PaddingConfig, ParsedContent, VERSION, WidthConfig, expand_variables, parse_content_stream,
+    render_title_or_footer, resolve_box_config, truncate_with_ellipsis, unescape_stream_value,
     wrap_text_at_word_boundaries,
 };
 

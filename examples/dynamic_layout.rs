@@ -76,8 +76,7 @@ fn main() {
         let layout = layout::BoxBuilder::new("Task in progress...")
             .with_header(layout::HeaderBuilder::new("Process Monitor"))
             .with_footer(
-                layout::FooterBuilder::new(&format!("{} - {}", status, progress))
-                    .align_center()
+                layout::FooterBuilder::new(&format!("{} - {}", status, progress)).align_center(),
             )
             .with_fixed_width(40)
             .build();
@@ -95,10 +94,11 @@ fn main() {
         .with_fixed_width(20)
         .build();
 
-    let outer_box = layout::BoxBuilder::new(&format!("Outer box containing:\n{}", inner_box.render()))
-        .with_header(layout::HeaderBuilder::new("Container"))
-        .with_fixed_width(40)
-        .build();
+    let outer_box =
+        layout::BoxBuilder::new(&format!("Outer box containing:\n{}", inner_box.render()))
+            .with_header(layout::HeaderBuilder::new("Container"))
+            .with_fixed_width(40)
+            .build();
 
     println!("{}", outer_box.render());
     println!();

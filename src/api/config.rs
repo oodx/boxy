@@ -29,12 +29,10 @@
 //! use boxy::api::config::BoxyConfig;
 //! use boxy::api::layout::BoxLayout;
 //!
-//! let config = BoxyConfig {
-//!     content: "content".to_string(),
-//!     title: Some("Title".to_string()),
-//!     width: Some(40),
-//!     ..Default::default()
-//! };
+//! let mut config = BoxyConfig::default();
+//! config.text = "content".to_string();
+//! config.title = Some("Title".to_string());
+//! config.width.fixed_width = Some(40);
 //!
 //! let layout = BoxLayout::from(&config);
 //! println!("{}", layout.render());
@@ -48,7 +46,7 @@
 // Re-export BoxyConfig as public API for library users
 pub use crate::core::BoxyConfig;
 
-use crate::api::layout::{BoxBuilder, BoxLayout, HeaderBuilder, FooterBuilder, StatusBuilder};
+use crate::api::layout::{BoxBuilder, BoxLayout, FooterBuilder, HeaderBuilder, StatusBuilder};
 
 /// Convert BoxyConfig to BoxLayout (CLI → API adapter)
 ///
@@ -62,12 +60,10 @@ use crate::api::layout::{BoxBuilder, BoxLayout, HeaderBuilder, FooterBuilder, St
 /// use boxy::api::config::BoxyConfig;
 /// use boxy::api::layout::BoxLayout;
 ///
-/// let config = BoxyConfig {
-///     content: "Hello World".to_string(),
-///     title: Some("Greeting".to_string()),
-///     width: Some(30),
-///     ..Default::default()
-/// };
+/// let mut config = BoxyConfig::default();
+/// config.text = "Hello World".to_string();
+/// config.title = Some("Greeting".to_string());
+/// config.width.fixed_width = Some(30);
 ///
 /// let layout = BoxLayout::from(&config);
 /// assert!(layout.render().contains("Hello World"));
@@ -79,14 +75,17 @@ impl From<&BoxyConfig> for BoxLayout {
         // Legacy CLI: Body::compose_content_lines() adds title as first body line
         // Do NOT use with_header() for titles - that would break CLI parity
 
-        let content = if let Some(title) = &config.title {
-            // Prepend title to body content (matching legacy CLI behavior)
-            format!("{}\n{}", title, config.text)
-        } else {
-            config.text.clone()
-        };
+        let mut builder = BoxBuilder::new(&config.text);
 
-        let mut builder = BoxBuilder::new(&content);
+        // Apply title if provided (renders inside body, not as header)
+        if let Some(title) = &config.title {
+            builder = builder.with_title(title);
+        }
+
+        // Apply icon if provided
+        if let Some(icon) = &config.icon {
+            builder = builder.with_icon(icon);
+        }
 
         // Only use header builder for explicit header field (not title)
         if let Some(header) = &config.header {
@@ -142,6 +141,28 @@ impl From<&BoxyConfig> for BoxLayout {
         // Apply wrapping mode
         builder = builder.with_wrapping(config.width.enable_wrapping);
 
+        // Apply dividers
+        if config.dividers.divider_after_title {
+            builder = builder.with_title_divider(config.dividers.pad_after_title_divider);
+        }
+        if config.dividers.divider_before_status {
+            builder = builder.with_status_divider(config.dividers.pad_before_status_divider);
+        }
+
+        // Apply vertical padding
+        if config.padding.pad_before_title || config.padding.pad_after_title {
+            builder = builder.with_title_padding(
+                config.padding.pad_before_title,
+                config.padding.pad_after_title,
+            );
+        }
+        if config.padding.pad_before_status || config.padding.pad_after_status {
+            builder = builder.with_status_padding(
+                config.padding.pad_before_status,
+                config.padding.pad_after_status,
+            );
+        }
+
         // Build the layout (NO colors applied - that's optional Layer 2)
         builder.build()
     }
@@ -150,7 +171,9 @@ impl From<&BoxyConfig> for BoxLayout {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{WidthConfig, AlignmentConfig, PaddingConfig, DividerConfig, BoxColors, BodyAlignment};
+    use crate::core::{
+        AlignmentConfig, BodyAlignment, BoxColors, DividerConfig, PaddingConfig, WidthConfig,
+    };
 
     #[test]
     fn test_basic_config_to_layout() {
@@ -207,18 +230,17 @@ mod tests {
 
     #[test]
     fn test_config_preserves_unicode() {
-        let config = BoxyConfig {
-            text: "Hello 🌟 世界".to_string(),
-            title: Some("Unicode Test 中文".to_string()),
-            ..Default::default()
-        };
+        let mut config = BoxyConfig::default();
+        config.text = "Hello 🌟 世界".to_string();
+        config.title = Some("Unicode Test 中文".to_string());
+        config.width.fixed_width = Some(30); // Ensure enough width for unicode
 
         let layout = BoxLayout::from(&config);
         let output = layout.render();
 
-        assert!(output.contains("🌟"));
-        assert!(output.contains("世界"));
-        assert!(output.contains("中文"));
+        assert!(output.contains("🌟"), "Output should contain 🌟");
+        assert!(output.contains("世界"), "Output should contain 世界");
+        assert!(output.contains("中文"), "Output should contain 中文");
     }
 
     #[test]

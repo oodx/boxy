@@ -14,7 +14,7 @@
 //! - No coupling to geometry/layout modules
 //! - Graceful degradation when colors unavailable
 
-use crate::{get_color_code, RESET};
+use crate::{RESET, get_color_code};
 
 /// Background color specification
 #[derive(Debug, Clone, PartialEq)]
@@ -209,8 +209,11 @@ pub fn apply_colors(content: &str, scheme: &ColorScheme) -> String {
 ///
 /// let colored_output = apply_component_colors(&layout, &scheme);
 /// ```
-pub fn apply_component_colors(layout: &crate::api::layout::BoxLayout, scheme: &ColorScheme) -> String {
-    use crate::{get_color_code, RESET};
+pub fn apply_component_colors(
+    layout: &crate::api::layout::BoxLayout,
+    scheme: &ColorScheme,
+) -> String {
+    use crate::{RESET, get_color_code};
 
     let mut result = Vec::new();
 
@@ -333,7 +336,8 @@ mod tests {
     fn test_background_color_multiline() {
         let multiline = "Line 1\nLine 2\nLine 3";
         let result = apply_background_color(multiline, &BackgroundColor::Ansi(196));
-        let expected = "\x1b[48;5;196mLine 1\x1b[0m\n\x1b[48;5;196mLine 2\x1b[0m\n\x1b[48;5;196mLine 3\x1b[0m";
+        let expected =
+            "\x1b[48;5;196mLine 1\x1b[0m\n\x1b[48;5;196mLine 2\x1b[0m\n\x1b[48;5;196mLine 3\x1b[0m";
         assert_eq!(result, expected);
     }
 
@@ -426,7 +430,8 @@ mod tests {
     #[test]
     fn test_plain_renderer() {
         let renderer = create_plain_renderer();
-        let scheme = ColorScheme::default().with_background(BackgroundColor::Named("red".to_string()));
+        let scheme =
+            ColorScheme::default().with_background(BackgroundColor::Named("red".to_string()));
         let result = renderer("Hello", &scheme);
         assert_eq!(result, "Hello"); // Colors ignored
     }

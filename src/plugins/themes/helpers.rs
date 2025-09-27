@@ -4,11 +4,11 @@
 //! Functions here are not part of the public API.
 
 use crate::core::{NAME, VERSION};
-use crate::plugins::theme_engine::ThemeEngine;
 use crate::plugins::jynx::*;
-use std::{fs, io};
+use crate::plugins::theme_engine::ThemeEngine;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{fs, io};
 
 /// Handle `boxy theme create <name>` command
 pub fn handle_theme_create(name: &str, jynx: &JynxPlugin) {

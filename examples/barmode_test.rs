@@ -1,6 +1,6 @@
 // Simple test to verify barmode behavior
 use boxy::api::layout::{BoxBuilder, HeaderBuilder};
-use boxy::visual::{NORMAL, HEAVY, ROUNDED};
+use boxy::visual::{HEAVY, NORMAL, ROUNDED};
 
 fn main() {
     println!("=== Barmode Style Testing ===\n");

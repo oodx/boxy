@@ -1,6 +1,6 @@
 // Test the new box styles: THICKSII, COLON, DOT, and STAR
-use boxy::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
-use boxy::visual::{THICKSII, COLON, DOT, STAR, ASCII, DASHED};
+use boxy::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder};
+use boxy::visual::{ASCII, COLON, DASHED, DOT, STAR, THICKSII};
 
 fn main() {
     println!("=== New Box Styles Demonstration ===\n");

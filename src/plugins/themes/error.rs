@@ -71,7 +71,9 @@ pub enum ExitCode {
 impl From<&ThemeError> for ExitCode {
     fn from(err: &ThemeError) -> Self {
         match err {
-            ThemeError::InvalidName(_) | ThemeError::InvalidCommand(_) | ThemeError::MissingArgument(_) => ExitCode::InvalidArgument,
+            ThemeError::InvalidName(_)
+            | ThemeError::InvalidCommand(_)
+            | ThemeError::MissingArgument(_) => ExitCode::InvalidArgument,
             ThemeError::NotFound(_) => ExitCode::NotFound,
             ThemeError::AlreadyExists(_) => ExitCode::AlreadyExists,
             ThemeError::Io(_) => ExitCode::IoError,

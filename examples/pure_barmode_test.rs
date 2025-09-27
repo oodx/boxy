@@ -1,6 +1,6 @@
 // Test pure barmode without header/footer
 use boxy::api::layout::BoxBuilder;
-use boxy::visual::{NORMAL, HEAVY};
+use boxy::visual::{HEAVY, NORMAL};
 
 fn main() {
     println!("=== Pure Barmode Testing ===\n");

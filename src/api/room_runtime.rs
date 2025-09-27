@@ -9,8 +9,8 @@
 //! - Geometry metadata extraction
 //! - Zero-copy where possible
 
-use crate::api::layout::BoxLayout;
 use crate::api::geometry::BoxDimensions;
+use crate::api::layout::BoxLayout;
 
 /// Position information for a component in the layout
 #[derive(Debug, Clone)]
@@ -54,9 +54,7 @@ impl RoomRuntimeAdapter {
     /// Create a new adapter from a BoxLayout
     pub fn new(layout: BoxLayout) -> Self {
         let positions = Self::calculate_positions(&layout);
-        let total_height = positions.iter()
-            .map(|p| p.height)
-            .sum();
+        let total_height = positions.iter().map(|p| p.height).sum();
 
         Self {
             layout,
@@ -72,7 +70,8 @@ impl RoomRuntimeAdapter {
 
     /// Get component at a specific line
     pub fn component_at_line(&self, line: usize) -> Option<(&ComponentPosition, ComponentType)> {
-        self.positions.iter()
+        self.positions
+            .iter()
             .find(|pos| line >= pos.start_line && line < pos.end_line)
             .map(|pos| (pos, pos.component_type))
     }
@@ -84,7 +83,9 @@ impl RoomRuntimeAdapter {
 
     /// Get lines for a specific component
     pub fn component_lines(&self, component_type: ComponentType) -> Option<Vec<String>> {
-        let position = self.positions.iter()
+        let position = self
+            .positions
+            .iter()
             .find(|p| p.component_type == component_type)?;
 
         let all_lines = self.lines();
@@ -193,8 +194,8 @@ impl LayoutMetadata {
     /// Get content area bounds (excluding borders)
     pub fn content_bounds(&self) -> (usize, usize, usize, usize) {
         (
-            1,  // start_col (after left border)
-            1,  // start_row (after top border)
+            1, // start_col (after left border)
+            1, // start_row (after top border)
             self.dimensions.inner_width,
             self.dimensions.inner_height,
         )
@@ -204,7 +205,7 @@ impl LayoutMetadata {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::layout::{BoxBuilder, HeaderBuilder, FooterBuilder};
+    use crate::api::layout::{BoxBuilder, FooterBuilder, HeaderBuilder};
 
     #[test]
     fn test_adapter_positions() {

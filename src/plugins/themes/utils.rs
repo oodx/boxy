@@ -3,8 +3,10 @@
 //! This module contains the public API for theme operations that users may
 //! explicitly use. Functions here are the main interface for theme functionality.
 
-use crate::plugins::theme_engine::{BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings};
 use crate::plugins::jynx::*;
+use crate::plugins::theme_engine::{
+    BoxyTheme, ThemeEngine, ThemeFile, ThemeMetadata, ThemeSettings,
+};
 use crate::{HashMap, core::*, visual::*};
 use crate::{validate_color, validate_width};
 use std::fs;
@@ -165,7 +167,9 @@ pub fn handle_theme_command(args: &[String], jynx: &JynxPlugin, opt_dev_level: O
             "Theme command requires an action. Usage: {} theme <action>",
             NAME
         );
-        eprintln!("Available actions: list, browse, preview <theme>, show <theme>, hierarchy, dryrun <theme>, init, help");
+        eprintln!(
+            "Available actions: list, browse, preview <theme>, show <theme>, hierarchy, dryrun <theme>, init, help"
+        );
         std::process::exit(1);
     }
 
@@ -1003,7 +1007,10 @@ pub fn print_theme_help() {
         "    {} theme dryrun warning       # Test warning theme samples",
         NAME
     );
-    println!("    {} theme create my_style      # Create new custom theme", NAME);
+    println!(
+        "    {} theme create my_style      # Create new custom theme",
+        NAME
+    );
     println!();
     println!(
         "💡 TIP: Use `{} engine --help` for config file management",
@@ -1093,11 +1100,16 @@ pub fn handle_enhanced_theme_list(opt_dev_level: Option<u8>, jynx: &JynxPlugin) 
                 let theme_data = theme_engine.get_theme(&name);
 
                 // Check if it's a semantic theme (error, success, warning, info)
-                if matches!(name.as_str(), "error" | "success" | "warning" | "info" | "critical" | "fatal" | "debug") {
+                if matches!(
+                    name.as_str(),
+                    "error" | "success" | "warning" | "info" | "critical" | "fatal" | "debug"
+                ) {
                     semantic_themes.push((name, description, theme_data));
                 }
                 // Check if it's a utility theme (base variants, blueprint, etc.)
-                else if name.starts_with("base") || matches!(name.as_str(), "blueprint" | "default" | "trace") {
+                else if name.starts_with("base")
+                    || matches!(name.as_str(), "blueprint" | "default" | "trace")
+                {
                     utility_themes.push((name, description, theme_data));
                 }
                 // Check if it's a built-in theme by description
@@ -1157,9 +1169,18 @@ pub fn handle_enhanced_theme_list(opt_dev_level: Option<u8>, jynx: &JynxPlugin) 
 
             println!("💡 Usage:");
             println!("  {} --theme <name> \"Your text\"     # Apply theme", NAME);
-            println!("  {} theme preview <name>         # Preview theme with samples", NAME);
-            println!("  {} theme browse                 # Interactive theme browser", NAME);
-            println!("  {} engine list                  # Detailed visual catalog", NAME);
+            println!(
+                "  {} theme preview <name>         # Preview theme with samples",
+                NAME
+            );
+            println!(
+                "  {} theme browse                 # Interactive theme browser",
+                NAME
+            );
+            println!(
+                "  {} engine list                  # Detailed visual catalog",
+                NAME
+            );
 
             // Use jynx for enhanced display if active
             if jynx.is_active() {
@@ -1236,8 +1257,10 @@ pub fn handle_theme_browse(opt_dev_level: Option<u8>, jynx: &JynxPlugin) {
 
                 if let Some(theme) = theme_engine.get_theme(name) {
                     // Show compact theme info
-                    println!("│ Style: {} │ Color: {} │ Text: {}",
-                           theme.style, theme.color, theme.text_color);
+                    println!(
+                        "│ Style: {} │ Color: {} │ Text: {}",
+                        theme.style, theme.color, theme.text_color
+                    );
 
                     // Show live preview with sample text
                     println!("│ Preview:");
@@ -1257,8 +1280,14 @@ pub fn handle_theme_browse(opt_dev_level: Option<u8>, jynx: &JynxPlugin) {
             }
 
             println!("🔍 Detailed Commands:");
-            println!("  {} theme preview <name>     # Full preview with multiple samples", NAME);
-            println!("  {} --theme <name> \"text\"     # Apply theme to your text", NAME);
+            println!(
+                "  {} theme preview <name>     # Full preview with multiple samples",
+                NAME
+            );
+            println!(
+                "  {} --theme <name> \"text\"     # Apply theme to your text",
+                NAME
+            );
 
             if jynx.is_active() {
                 println!("  Interactive selection available via jynx integration");
@@ -1284,7 +1313,11 @@ pub fn handle_theme_preview(theme_name: &str) {
                 println!("📋 Theme Properties:");
                 println!("├─ Color: {}", theme.color);
                 println!("├─ Text Color: {}", theme.text_color);
-                println!("├─ Style: {} {}", theme.style, create_style_preview(&theme.style));
+                println!(
+                    "├─ Style: {} {}",
+                    theme.style,
+                    create_style_preview(&theme.style)
+                );
                 println!("├─ Text Style: {}", theme.text_style);
 
                 if let Some(title) = &theme.title {
@@ -1313,21 +1346,31 @@ pub fn handle_theme_preview(theme_name: &str) {
                 ];
 
                 for (i, sample) in sample_texts.iter().enumerate() {
-                    println!("\n{}. Sample {}:", i + 1, match i {
-                        0 => "Short Text",
-                        1 => "Medium Text",
-                        2 => "List Content",
-                        3 => "Status Message",
-                        4 => "Code Content",
-                        5 => "Multi-line Text",
-                        _ => "Other",
-                    });
+                    println!(
+                        "\n{}. Sample {}:",
+                        i + 1,
+                        match i {
+                            0 => "Short Text",
+                            1 => "Medium Text",
+                            2 => "List Content",
+                            3 => "Status Message",
+                            4 => "Code Content",
+                            5 => "Multi-line Text",
+                            _ => "Other",
+                        }
+                    );
                     render_theme_sample(theme_name, sample, &theme);
                 }
 
                 println!();
-                println!("💡 Usage: echo \"Your text\" | {} --theme {}", NAME, theme_name);
-                println!("🔧 Edit: {} theme edit {} (if in custom theme file)", NAME, theme_name);
+                println!(
+                    "💡 Usage: echo \"Your text\" | {} --theme {}",
+                    NAME, theme_name
+                );
+                println!(
+                    "🔧 Edit: {} theme edit {} (if in custom theme file)",
+                    NAME, theme_name
+                );
             } else {
                 eprintln!("Error: Theme '{}' not found", theme_name);
                 eprintln!("Use '{} theme list' to see available themes", NAME);
@@ -1358,7 +1401,12 @@ fn render_theme_sample(_theme_name: &str, text: &str, theme: &BoxyTheme) {
 
     // Simple box preview
     let lines: Vec<&str> = text.lines().collect();
-    let max_width = lines.iter().map(|line| line.len()).max().unwrap_or(0).min(50);
+    let max_width = lines
+        .iter()
+        .map(|line| line.len())
+        .max()
+        .unwrap_or(0)
+        .min(50);
     let box_width = (max_width + 2).max(10);
 
     // Top border
@@ -1380,10 +1428,18 @@ fn render_theme_sample(_theme_name: &str, text: &str, theme: &BoxyTheme) {
             _ => "│",
         };
 
-        println!("{}{}{} {}{}{} {}{}{}",
-                color_code, border_char, "\x1B[0m",
-                text_color_code, line, "\x1B[0m",
-                color_code, border_char, "\x1B[0m");
+        println!(
+            "{}{}{} {}{}{} {}{}{}",
+            color_code,
+            border_char,
+            "\x1B[0m",
+            text_color_code,
+            line,
+            "\x1B[0m",
+            color_code,
+            border_char,
+            "\x1B[0m"
+        );
     }
 
     // Bottom border

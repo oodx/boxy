@@ -453,12 +453,10 @@ pub fn strip_box(text: &str, strict: bool) -> String {
             // PERF-01: Use lazy static regex to avoid recompilation on every line
             // For normal mode, clean up leading/trailing ANSI codes that might be left over
             // after box character removal
-            static LEADING_ANSI_REGEX: Lazy<Regex> = Lazy::new(|| {
-                Regex::new(r"^\x1b\[[0-9;]*m").unwrap()
-            });
-            static TRAILING_ANSI_REGEX: Lazy<Regex> = Lazy::new(|| {
-                Regex::new(r"\x1b\[[0-9;]*m$").unwrap()
-            });
+            static LEADING_ANSI_REGEX: Lazy<Regex> =
+                Lazy::new(|| Regex::new(r"^\x1b\[[0-9;]*m").unwrap());
+            static TRAILING_ANSI_REGEX: Lazy<Regex> =
+                Lazy::new(|| Regex::new(r"\x1b\[[0-9;]*m$").unwrap());
 
             content = LEADING_ANSI_REGEX.replace(&content, "").to_string();
             content = TRAILING_ANSI_REGEX.replace(&content, "").to_string();

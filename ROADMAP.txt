@@ -1,0 +1,7 @@
+Pre-M3 Technical Debt:
+- CHINA-05A Phase 2: ACTIVELY IN PROGRESS
+  * Comprehensive implementation plan created in CHINA-05A-PHASE2-PLAN.md
+  * 6 sub-tickets developed (9 total story points)
+  * Focus: Extending API builders with title/icon/divider/padding support
+  * Current Status: Implementation kickoff
+  * Next Task: CHINA-05A-P2-01 (Extend BodyBuilder)

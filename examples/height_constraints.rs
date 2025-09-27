@@ -51,7 +51,10 @@ fn main() {
     let box_height = (term_height - 5).max(10);
 
     let responsive = BoxBuilder::new(many_lines)
-        .with_header(HeaderBuilder::new(&format!("Terminal: {} → Box: {}", term_height, box_height)))
+        .with_header(HeaderBuilder::new(&format!(
+            "Terminal: {} → Box: {}",
+            term_height, box_height
+        )))
         .with_fixed_width(40)
         .with_fixed_height(box_height)
         .build();

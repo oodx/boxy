@@ -1,6 +1,6 @@
 // Test all available bar styles to show differences
 use boxy::api::layout::{BoxBuilder, HeaderBuilder};
-use boxy::visual::{NORMAL, ROUNDED, DOUBLE, HEAVY, ASCII, THICKSII, COLON, DOT, STAR, DASHED};
+use boxy::visual::{ASCII, COLON, DASHED, DOT, DOUBLE, HEAVY, NORMAL, ROUNDED, STAR, THICKSII};
 
 fn main() {
     println!("=== All Bar Styles Demonstration ===\n");
@@ -52,5 +52,7 @@ fn main() {
 
     println!("Note: NORMAL and ROUNDED use the same horizontal character ('─')");
     println!("DOUBLE uses '═', HEAVY uses '━', ASCII uses '-'");
-    println!("THICKSII uses '=', COLON uses ':', DOT uses '•' for all characters, STAR uses '*', DASHED uses '┄' horizontally and '┆' vertically");
+    println!(
+        "THICKSII uses '=', COLON uses ':', DOT uses '•' for all characters, STAR uses '*', DASHED uses '┄' horizontally and '┆' vertically"
+    );
 }

@@ -27,7 +27,7 @@ fn main() {
     println!("-------------------------------\n");
 
     // Apply background color to rendered text
-    let bg_color = theming::BackgroundColor::Rgb(40, 44, 52);  // Dark background
+    let bg_color = theming::BackgroundColor::Rgb(40, 44, 52); // Dark background
     let with_bg = theming::apply_background_color(&plain_output, &bg_color);
     println!("{}", with_bg);
     println!();
@@ -52,12 +52,18 @@ fn main() {
     println!();
 
     println!("Hex color (#1e1e2e):");
-    let hex_bg = theming::apply_background_color(&content, &theming::BackgroundColor::Hex("#1e1e2e".to_string()));
+    let hex_bg = theming::apply_background_color(
+        &content,
+        &theming::BackgroundColor::Hex("#1e1e2e".to_string()),
+    );
     println!("{}", hex_bg);
     println!();
 
     println!("Named color (dark_blue):");
-    let named_bg = theming::apply_background_color(&content, &theming::BackgroundColor::Named("dark_blue".to_string()));
+    let named_bg = theming::apply_background_color(
+        &content,
+        &theming::BackgroundColor::Named("dark_blue".to_string()),
+    );
     println!("{}", named_bg);
     println!();
 
@@ -89,11 +95,13 @@ fn main() {
     println!("5. Real-World Pattern");
     println!("---------------------\n");
 
-    let data_box = layout::BoxBuilder::new("Production Data:\n- Users: 1,234\n- Active Sessions: 56\n- Requests/sec: 789")
-        .with_header(layout::HeaderBuilder::new("Dashboard"))
-        .with_status(layout::StatusBuilder::new("Last Updated: 2s ago"))
-        .with_fixed_width(50)
-        .build();
+    let data_box = layout::BoxBuilder::new(
+        "Production Data:\n- Users: 1,234\n- Active Sessions: 56\n- Requests/sec: 789",
+    )
+    .with_header(layout::HeaderBuilder::new("Dashboard"))
+    .with_status(layout::StatusBuilder::new("Last Updated: 2s ago"))
+    .with_fixed_width(50)
+    .build();
 
     let rendered = data_box.render();
 
