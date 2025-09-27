@@ -25,9 +25,12 @@ CHINA-05A Phase 2: API Surface Parity has been fully completed. All 6 sub-ticket
 ## Features Implemented
 - Title support inside body
 - Icon support with emoji detection
-- Title and status dividers
-- Vertical padding around components
-- Comprehensive config adapter mapping
+- Comprehensive config adapter for title/icon
+- Auto-width calculation fix
+
+## Features Removed/Deferred
+- Title and status dividers (non-functional, removed)
+- Vertical padding around components (non-functional, removed)
 
 ## Test Coverage
 - 129 tests now passing
