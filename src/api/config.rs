@@ -75,24 +75,21 @@ use crate::api::layout::{BoxBuilder, BoxLayout, HeaderBuilder, FooterBuilder, St
 /// ```
 impl From<&BoxyConfig> for BoxLayout {
     fn from(config: &BoxyConfig) -> Self {
-        // Start with basic content (text field in BoxyConfig)
-        let mut builder = BoxBuilder::new(&config.text);
+        // CRITICAL: Preserve CLI title behavior - titles render INSIDE body, not as headers
+        // Legacy CLI: Body::compose_content_lines() adds title as first body line
+        // Do NOT use with_header() for titles - that would break CLI parity
 
-        // Apply header/title if provided
-        if let Some(title) = &config.title {
-            let mut header_builder = HeaderBuilder::new(title);
+        let content = if let Some(title) = &config.title {
+            // Prepend title to body content (matching legacy CLI behavior)
+            format!("{}\n{}", title, config.text)
+        } else {
+            config.text.clone()
+        };
 
-            // Apply header alignment from config
-            match config.alignment.header_align.as_str() {
-                "left" => header_builder = header_builder.align_left(),
-                "center" => header_builder = header_builder.align_center(),
-                "right" => header_builder = header_builder.align_right(),
-                _ => {} // Default center
-            }
+        let mut builder = BoxBuilder::new(&content);
 
-            builder = builder.with_header(header_builder);
-        } else if let Some(header) = &config.header {
-            // Support both title and header fields
+        // Only use header builder for explicit header field (not title)
+        if let Some(header) = &config.header {
             let mut header_builder = HeaderBuilder::new(header);
             match config.alignment.header_align.as_str() {
                 "left" => header_builder = header_builder.align_left(),

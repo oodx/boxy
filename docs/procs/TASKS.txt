@@ -499,6 +499,14 @@ Strategic Preparation (LOW Priority):
   - Introduce ergonomic wrappers (e.g., `PlainBox::new("text").width(40).render()`) that compose geometry + layout
   - Keep builders accessible for advanced scenarios; document trade-offs in `API_README.md`
 
+🐞 BUG TRACKER
+==============
+
+[BUG-01] Title handling regression in CLI→API adapter (CRITICAL) - High
+  - `BoxLayout::from(&BoxyConfig)` maps `title` into the header builder, which renders outside the body
+  - Breaks existing CLI behaviour where titles appear as the first body line (`Body::compose_content_lines`)
+  - Restore parity by keeping titles in body content until API builders expose a dedicated title slot
+
 Phase 1: Testing Infrastructure (HIGH Priority):
 ------------------------------------------------
 [TEST-01] Benchmark Integration into test.sh workflow (MEDIUM) - High
