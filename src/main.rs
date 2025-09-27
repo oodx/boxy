@@ -38,6 +38,7 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
 }
 
 /// Convert BoxyConfig colors to ColorScheme for theming
+#[allow(dead_code)]
 fn config_colors_to_color_scheme(config: &BoxyConfig) -> ColorScheme {
     ColorScheme {
         border_color: config.colors.box_color.clone(),
@@ -50,6 +51,7 @@ fn config_colors_to_color_scheme(config: &BoxyConfig) -> ColorScheme {
 }
 
 /// Resolve text color based on theme and explicit settings
+#[allow(dead_code)]
 fn resolve_text_color(config: &BoxyConfig, box_color_code: &str, is_themed: bool) -> String {
     // (1) If explicit text color is set and not "none", use it
     if config.colors.text_color != "none" && config.colors.text_color != "auto" {
@@ -71,6 +73,7 @@ fn resolve_text_color(config: &BoxyConfig, box_color_code: &str, is_themed: bool
 }
 
 /// Apply proper component-specific colors to rendered box output
+#[allow(dead_code)]
 fn apply_proper_colors(layout: &BoxLayout, config: &BoxyConfig, is_themed: bool) -> String {
     use colors::{get_color_code, RESET};
 
@@ -115,7 +118,7 @@ fn apply_proper_colors(layout: &BoxLayout, config: &BoxyConfig, is_themed: bool)
             let chars: Vec<char> = line.chars().collect();
             let mut colored_line = String::new();
 
-            for (i, ch) in chars.iter().enumerate() {
+            for (_i, ch) in chars.iter().enumerate() {
                 if BOX_CHARS.contains(*ch) {
                     // Border character - use border color ONLY
                     if !box_color_code.is_empty() && scheme.border_color != "none" {
@@ -247,7 +250,9 @@ use width_plugin::*;
 
 // Import API components for color theming
 use api::layout::BoxLayout;
-use api::theming::{ColorScheme, apply_component_colors, BackgroundColor};
+use api::theming::{ColorScheme, BackgroundColor};
+#[allow(unused_imports)]
+use api::theming::apply_component_colors;
 
 // RSB (Rebel String-Based) framework imports
 // Note: RSB param! macro removed in favor of std::env::var for BOXY_THEME environment variable

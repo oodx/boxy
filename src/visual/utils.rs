@@ -18,6 +18,7 @@ use crate::{
 };
 use once_cell::sync::Lazy;
 use regex::Regex;
+#[allow(unused_imports)]
 use std::io;
 
 // ============================================================================
@@ -249,6 +250,7 @@ pub fn calculate_box_width(
 //
 // This completes CHINA-05A Phase 5: Legacy Retirement
 
+#[allow(dead_code)]
 fn estimate_capacity(final_width: usize, config: &BoxyConfig) -> usize {
     let line_hint = config
         .fixed_height
@@ -256,6 +258,7 @@ fn estimate_capacity(final_width: usize, config: &BoxyConfig) -> usize {
     final_width.saturating_mul(line_hint + 2)
 }
 
+#[allow(dead_code)]
 fn render_box_with_width<'a>(
     config: &BoxyConfig,
     final_width: usize,

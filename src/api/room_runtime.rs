@@ -9,6 +9,8 @@
 //! - Geometry metadata extraction
 //! - Zero-copy where possible
 
+#![allow(dead_code)]  // Keep unused code until cleanup decisions are made
+
 use crate::api::geometry::BoxDimensions;
 use crate::api::layout::BoxLayout;
 

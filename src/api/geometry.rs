@@ -8,6 +8,8 @@
 //! - Emoji width calculation (🌟 = 2 columns)
 //! - CJK character handling (中 = 2 columns)
 //! - Grapheme cluster awareness
+
+#![allow(dead_code)]  // Keep unused code until cleanup decisions are made
 //! - ANSI code stripping before calculation
 //!
 //! # RSB MODULE_SPEC Compliance
@@ -22,6 +24,7 @@ use crate::{
 
 /// Text width and display metrics
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub struct TextMetrics {
     /// Display width in terminal columns (handles emoji/CJK)
     pub display_width: usize,
@@ -35,6 +38,7 @@ pub struct TextMetrics {
 
 /// Box dimensions and layout constraints
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub struct BoxDimensions {
     /// Total box width including borders
     pub total_width: usize,
@@ -52,6 +56,7 @@ pub struct BoxDimensions {
 
 /// Calculate comprehensive text metrics
 /// Handles emoji, CJK, grapheme clusters, ANSI stripping
+#[allow(dead_code)]
 pub fn get_text_metrics(text: &str) -> TextMetrics {
     let display_width = get_display_width(text);
     let char_count = text.chars().count();

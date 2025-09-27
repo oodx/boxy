@@ -6,6 +6,8 @@
 //!
 //! # Background Color Support (NEW FEATURE)
 //! - Terminal background colors
+
+#![allow(dead_code)]  // Keep unused code until cleanup decisions are made
 //! - Text background highlighting
 //! - Gradient background support (future)
 //!
@@ -94,6 +96,7 @@ impl ColorScheme {
 }
 
 /// Apply background color to text content (line-by-line to prevent bleeding)
+#[allow(dead_code)]
 pub fn apply_background_color(text: &str, bg_color: &BackgroundColor) -> String {
     match bg_color {
         BackgroundColor::None => text.to_string(),

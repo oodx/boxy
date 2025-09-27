@@ -157,6 +157,7 @@ impl From<&BoxyConfig> for BoxLayout {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)]
     use crate::core::{
         AlignmentConfig, BodyAlignment, BoxColors, DividerConfig, PaddingConfig, WidthConfig,
     };

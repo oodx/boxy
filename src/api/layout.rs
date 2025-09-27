@@ -1374,6 +1374,7 @@ impl BoxLayout {
     }
 
     /// Get individual component layouts for Room Runtime positioning
+    #[allow(dead_code)]
     pub fn components(&self) -> Vec<&BoxyLayout> {
         let mut components = Vec::new();
 
@@ -1401,6 +1402,7 @@ impl BoxLayout {
 
 /// Options for the convenience renderer
 #[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
 pub struct BoxOptions {
     /// Optional header text
     pub header: Option<String>,
@@ -1434,6 +1436,7 @@ pub struct BoxOptions {
 ///     ..Default::default()
 /// });
 /// ```
+#[allow(dead_code)]
 pub fn render_box(content: &str, options: BoxOptions) -> String {
     let mut builder = BoxBuilder::new(content);
 
@@ -1465,6 +1468,7 @@ pub fn render_box(content: &str, options: BoxOptions) -> String {
 }
 
 /// QOL: Render box and return lines for positioning
+#[allow(dead_code)]
 pub fn render_box_lines(content: &str, options: BoxOptions) -> Vec<String> {
     let mut builder = BoxBuilder::new(content);
 

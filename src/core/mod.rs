@@ -24,10 +24,12 @@ pub use utils::{
 };
 
 #[cfg(feature = "cli")]
+#[allow(unused_imports)]
 pub use utils::{show_comprehensive_help, show_comprehensive_help_with_header, show_logo, show_usage_examples};
 
 // Test module access to helpers
 #[cfg(test)]
+#[allow(unused_imports)]
 pub use helpers::*;
 
 #[cfg(test)]

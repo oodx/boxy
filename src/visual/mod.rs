@@ -58,6 +58,7 @@ pub use utils::{
 
 // Test module access
 #[cfg(test)]
+#[allow(unused_imports)]
 pub use helpers::*;
 
 #[cfg(test)]
