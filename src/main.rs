@@ -781,7 +781,7 @@ fn run_boxy_application() -> Result<(), AppError> {
         );
         // CHINA-05A Phase 3: CLI switchover to new API
         let layout = BoxLayout::from(&config);
-        print!("{}", layout.render());
+        println!("{}", layout.render());
     }
 
     Ok(())
