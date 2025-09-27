@@ -141,27 +141,10 @@ impl From<&BoxyConfig> for BoxLayout {
         // Apply wrapping mode
         builder = builder.with_wrapping(config.width.enable_wrapping);
 
-        // Apply dividers
-        if config.dividers.divider_after_title {
-            builder = builder.with_title_divider(config.dividers.pad_after_title_divider);
-        }
-        if config.dividers.divider_before_status {
-            builder = builder.with_status_divider(config.dividers.pad_before_status_divider);
-        }
-
-        // Apply vertical padding
-        if config.padding.pad_before_title || config.padding.pad_after_title {
-            builder = builder.with_title_padding(
-                config.padding.pad_before_title,
-                config.padding.pad_after_title,
-            );
-        }
-        if config.padding.pad_before_status || config.padding.pad_after_status {
-            builder = builder.with_status_padding(
-                config.padding.pad_before_status,
-                config.padding.pad_after_status,
-            );
-        }
+        // TODO: Dividers and vertical padding not yet implemented in API
+        // These features exist in CLI via config.dividers and config.padding
+        // but require BoxLayout rendering changes to support properly.
+        // Tracked in CHINA-05A Phase 3 or later.
 
         // Build the layout (NO colors applied - that's optional Layer 2)
         builder.build()

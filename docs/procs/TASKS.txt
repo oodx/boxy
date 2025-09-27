@@ -435,45 +435,46 @@ Critical Pre-M3 Tasks (HIGH Priority):
     Status: 🔄 IN PROGRESS
     Plan: docs/procs/CHINA-05A-PHASE2-PLAN.md
 
-    [CHINA-05A-P2-01] Extend BodyBuilder with title/icon (2 pts) - 🔄 IN PROGRESS
-      - Add title: Option<String> field
-      - Add icon: Option<String> field
-      - Implement with_title() method
-      - Implement with_icon() method
-      - Update BodyBuilder::build() to handle title/icon
+    [CHINA-05A-P2-01] Extend BodyBuilder with title/icon (2 pts) - ✅ COMPLETED
+      - Add title: Option<String> field ✅
+      - Add icon: Option<String> field ✅
+      - Implement with_title() method ✅
+      - Implement with_icon() method ✅
+      - Update BodyBuilder::build() to handle title/icon ✅
 
-    [CHINA-05A-P2-02] Extend BoxBuilder with dividers/padding (3 pts) - ⏸️ PENDING
-      - Add 4 divider boolean fields (divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider)
-      - Add 4 vertical padding boolean fields (pad_before_title, pad_after_title, pad_before_status, pad_after_status)
-      - Implement with_title_divider(padded: bool) method
-      - Implement with_status_divider(padded: bool) method
-      - Implement with_title_padding(before, after) method
-      - Implement with_status_padding(before, after) method
-      - Update BoxBuilder::build() to pass new fields to layout
+    [CHINA-05A-P2-02] Extend BoxBuilder with dividers/padding (3 pts) - ✅ COMPLETED
+      - Add 4 divider boolean fields (divider_after_title, divider_before_status, pad_after_title_divider, pad_before_status_divider) ✅
+      - Add 4 vertical padding boolean fields (pad_before_title, pad_after_title, pad_before_status, pad_after_status) ✅
+      - Implement with_title_divider(padded: bool) method ✅
+      - Implement with_status_divider(padded: bool) method ✅
+      - Implement with_title_padding(before, after) method ✅
+      - Implement with_status_padding(before, after) method ✅
+      - Update BoxBuilder::build() to pass new fields to layout ✅
 
-    [CHINA-05A-P2-03] Update BoxLayout Rendering (2 pts) - ⏸️ PENDING
-      - Update BoxLayout::render() to handle dividers
-      - Update BoxLayout::render() to handle vertical padding
-      - Ensure title/icon render inside body (not as header)
-      - Preserve CLI behavior for icon emoji detection
+    [CHINA-05A-P2-03] Update BoxLayout Rendering (2 pts) - ✅ COMPLETED
+      - Update BoxLayout::render() to handle dividers ✅
+      - Update BoxLayout::render() to handle vertical padding ✅
+      - Ensure title/icon render inside body (not as header) ✅
+      - Preserve CLI behavior for icon emoji detection ✅
 
-    [CHINA-05A-P2-04] Update Config Adapter (1 pt) - ⏸️ PENDING
-      - Map config.icon → builder.with_icon()
-      - Map config.dividers → builder divider methods
-      - Map config.padding → builder padding methods
+    [CHINA-05A-P2-04] Update Config Adapter (1 pt) - ✅ COMPLETED
+      - Map config.icon → builder.with_icon() ✅
+      - Map config.dividers → builder divider methods ✅
+      - Map config.padding → builder padding methods ✅
 
-    [CHINA-05A-P2-05] Add Tests (1 pt) - ⏸️ PENDING
-      - Test title rendering inside body
-      - Test icon prepending with emoji detection
-      - Test dividers after title and before status
-      - Test vertical padding placement
-      - Test config adapter mapping
+    [CHINA-05A-P2-05] Add Tests (1 pt) - ✅ COMPLETED
+      - Test title rendering inside body ✅
+      - Test icon prepending with emoji detection ✅
+      - Test dividers after title and before status ✅
+      - Test vertical padding placement ✅
+      - Test config adapter mapping ✅
+      - 129 total tests now passing ✅
 
-    [CHINA-05A-P2-06] Update Documentation (0.5 pts) - ⏸️ PENDING
-      - Add "Title and Icon Support" section to API_README.md
-      - Add "Dividers" section with examples
-      - Add "Vertical Padding" section with examples
-      - Update config adapter documentation
+    [CHINA-05A-P2-06] Update Documentation (0.5 pts) - ✅ COMPLETED
+      - Add "Title and Icon Support" section to API_README.md ✅
+      - Add "Dividers" section with examples ✅
+      - Add "Vertical Padding" section with examples ✅
+      - Update config adapter documentation ✅
   - Phase 3: CLI switchover
     - Update `src/main.rs` to emit boxes via adapter + API renderers instead of `draw_box`
     - Wire theme/colour handling through the new component metadata, validating protected icon logic stays intact

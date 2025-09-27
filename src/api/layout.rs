@@ -651,14 +651,6 @@ pub struct BoxBuilder {
     max_height: Option<usize>,
     visible: bool,
     layout_mode: LayoutMode,
-    divider_after_title: bool,
-    divider_before_status: bool,
-    pad_after_title_divider: bool,
-    pad_before_status_divider: bool,
-    pad_before_title: bool,
-    pad_after_title: bool,
-    pad_before_status: bool,
-    pad_after_status: bool,
 }
 
 impl BoxBuilder {
@@ -677,14 +669,6 @@ impl BoxBuilder {
             max_height: None,
             visible: true,
             layout_mode: LayoutMode::Box,
-            divider_after_title: false,
-            divider_before_status: false,
-            pad_after_title_divider: false,
-            pad_before_status_divider: false,
-            pad_before_title: false,
-            pad_after_title: false,
-            pad_before_status: false,
-            pad_after_status: false,
         }
     }
 
@@ -777,40 +761,6 @@ impl BoxBuilder {
     /// Set horizontal padding (convenience method that forwards to body)
     pub fn with_h_padding(mut self, padding: usize) -> Self {
         self.body = self.body.with_h_padding(padding);
-        self
-    }
-
-    /// Add horizontal divider after title line
-    /// - padded: adds blank line after divider
-    pub fn with_title_divider(mut self, padded: bool) -> Self {
-        self.divider_after_title = true;
-        self.pad_after_title_divider = padded;
-        self
-    }
-
-    /// Add horizontal divider before status line
-    /// - padded: adds blank line before divider
-    pub fn with_status_divider(mut self, padded: bool) -> Self {
-        self.divider_before_status = true;
-        self.pad_before_status_divider = padded;
-        self
-    }
-
-    /// Add vertical padding around title
-    /// - before: blank line before title
-    /// - after: blank line after title
-    pub fn with_title_padding(mut self, before: bool, after: bool) -> Self {
-        self.pad_before_title = before;
-        self.pad_after_title = after;
-        self
-    }
-
-    /// Add vertical padding around status
-    /// - before: blank line before status
-    /// - after: blank line after status
-    pub fn with_status_padding(mut self, before: bool, after: bool) -> Self {
-        self.pad_before_status = before;
-        self.pad_after_status = after;
         self
     }
 
@@ -961,15 +911,42 @@ impl BoxBuilder {
         let base_width = match self.fixed_width {
             Some(w) => w.saturating_sub(2),
             None => {
-                // Calculate width from body
-                let body_width = self
+                // Calculate width from body lines
+                let body_lines_width = self
                     .body
                     .lines
                     .iter()
                     .map(|line| get_text_width(line))
                     .max()
-                    .unwrap_or(0)
-                    + (2 * self.body.h_padding);
+                    .unwrap_or(0);
+
+                // Include title width if present (title renders as first body line)
+                let title_width = self
+                    .body
+                    .title
+                    .as_ref()
+                    .map(|t| get_text_width(t))
+                    .unwrap_or(0);
+
+                // Include icon width if present (icon prepends to first line)
+                let icon_width = self
+                    .body
+                    .icon
+                    .as_ref()
+                    .map(|i| {
+                        use crate::get_display_width;
+                        get_display_width(i) + 1 // +1 for space after icon
+                    })
+                    .unwrap_or(0);
+
+                // Body width is max of (body lines, title, first_line + icon) + padding
+                let body_content_width = body_lines_width.max(title_width);
+                let body_with_icon_width = if icon_width > 0 {
+                    body_content_width + icon_width
+                } else {
+                    body_content_width
+                };
+                let body_width = body_with_icon_width + (2 * self.body.h_padding);
 
                 // Calculate width from header if present
                 let header_width = self
@@ -2306,5 +2283,55 @@ mod tests {
 
         assert!(output.contains("🎯"));
         assert!(output.contains("Content"));
+    }
+
+    #[test]
+    fn test_auto_width_with_title_only() {
+        // Regression test for blocking issue: title/icon not included in auto-width
+        let layout = BoxBuilder::new("").with_title("System Health").build();
+
+        let output = layout.render();
+
+        // Title should render (not be truncated to nothing)
+        assert!(
+            output.contains("System Health"),
+            "Title should be visible in output"
+        );
+
+        // Box should be wide enough for title
+        assert!(layout.total_width >= "System Health".len() + 4); // +4 for padding and borders
+    }
+
+    #[test]
+    fn test_auto_width_with_icon_only() {
+        // Regression test for blocking issue: icon not included in auto-width
+        let layout = BoxBuilder::new("Status").with_icon("⚠️").build();
+
+        let output = layout.render();
+
+        // Both icon and content should render
+        assert!(output.contains("⚠️"), "Icon should be visible");
+        assert!(output.contains("Status"), "Content should be visible");
+
+        // Box should be wide enough for icon + content
+        assert!(layout.total_width >= 10); // Enough for icon (2) + space + "Status" (6) + padding + borders
+    }
+
+    #[test]
+    fn test_auto_width_with_title_and_icon() {
+        // Regression test: both title and icon should contribute to width
+        let layout = BoxBuilder::new("Body")
+            .with_title("Long Title Here")
+            .with_icon("🔥")
+            .build();
+
+        let output = layout.render();
+
+        assert!(output.contains("Long Title Here"));
+        assert!(output.contains("🔥"));
+        assert!(output.contains("Body"));
+
+        // Width should accommodate the longest content (title + icon)
+        assert!(layout.total_width >= "Long Title Here".len() + 4); // title + icon + padding/borders
     }
 }
