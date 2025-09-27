@@ -52,7 +52,7 @@ echo "Content" | boxy --header "Header" --footer "✅ Done"
 
 # With icon decoration and text colors
 echo "Important message" | boxy --icon "⚠️" --color yellow --text red
-echo "Success!" | boxy --icon "✅" --color green  # Text automatically inherits green color
+echo "Success!" | boxy --icon "✅" --color green  # D83cDf08 Text AUTOMATICALLY inherits green color - NO extra configuration needed!
 
 # Fixed height and multiplex padding
 echo "Dashboard panel" | boxy --height 12 --title "📊 Metrics" --status "sr:Updated"
@@ -112,7 +112,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 **Visual Styling:**
 - `-s, --style <STYLE>` - Border style: normal, rounded, double, heavy, ascii
 - `-c, --color <COLOR>` - Border color from 90+ palette
-- `--text <COLOR>` - Text color: Automatically inherits border color by default, use 'none' to prevent inheritance
+- `--text <COLOR>` - Text color: D83cDf08 **Now AUTOMATICALLY matches theme or border color by default!** Use 'none' to prevent inheritance
 - `-w, --width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
 - `--height <N|max|auto>` - Fixed height (pad/truncate/auto). `max` uses safe terminal height
 - `--wrap` - Enable hint-aware wrapping for fixed widths
