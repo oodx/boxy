@@ -52,7 +52,7 @@ echo "Content" | boxy --header "Header" --footer "✅ Done"
 
 # With icon decoration and text colors
 echo "Important message" | boxy --icon "⚠️" --color yellow --text red
-echo "Success!" | boxy --icon "✅" --color green --text auto  # Text matches box color
+echo "Success!" | boxy --icon "✅" --color green  # Text automatically inherits green color
 
 # Fixed height and multiplex padding
 echo "Dashboard panel" | boxy --height 12 --title "📊 Metrics" --status "sr:Updated"
@@ -60,7 +60,7 @@ echo "Content" | boxy --params "h=10; tl='Server'; st='sc:OK';" --width 32
 
 # Using themes (includes icon, color, and styling)
 echo "Something went wrong" | boxy --theme error
-echo "Build successful" | boxy --theme success --text auto
+echo "Build successful" | boxy --theme success  # Text automatically inherits theme color
 
 # Text wrapping and width control
 echo "This is a long message that will be wrapped intelligently" | boxy --width 20 --wrap
@@ -112,7 +112,7 @@ echo "Body" | boxy --title "Title" --status Status --title-color crimson --statu
 **Visual Styling:**
 - `-s, --style <STYLE>` - Border style: normal, rounded, double, heavy, ascii
 - `-c, --color <COLOR>` - Border color from 90+ palette
-- `--text <COLOR>` - Text color: 'auto' matches border, 'none' default
+- `--text <COLOR>` - Text color: Automatically inherits border color by default, use 'none' to prevent inheritance
 - `-w, --width <N|max|auto>` - Set width: number, 'max' (terminal), or 'auto'
 - `--height <N|max|auto>` - Fixed height (pad/truncate/auto). `max` uses safe terminal height
 - `--wrap` - Enable hint-aware wrapping for fixed widths
@@ -371,7 +371,7 @@ boxy --colors  # Shows complete color palette with visual preview
 
 ### Text Colors (`--text`)
 - Use any color from the list above: `--text red`, `--text blue2`
-- Use `auto` to match box color: `--text auto`
+- Text color now automatically matches theme or border color (no 'auto' flag needed)
 - Omit flag for default terminal text color
 
 ## Jynx Integration
@@ -563,13 +563,13 @@ echo "User: $USER" | boxy
 echo -e "🦀 Rust powered\n⚡ Lightning fast\n🔒 Memory safe" | boxy --title "📦 boxy v0.16.1" -s rounded -c blue
 
 # Error alert with themed styling and auto text color
-echo "File not found: config.json" | boxy --theme error --text auto --title "🚨 Error"
+echo "File not found: config.json" | boxy --theme error  # Text automatically inherits error theme color
 
 # Status dashboard with custom text colors
 echo -e "✅ Tests passing\n🔧 Build complete\n📦 Ready to deploy" | boxy --title "🎯 CI/CD Status" --footer "✅ All systems go" -c green --text white
 
 # Mixed styling approach
-echo "Deploy to production?" | boxy --theme warning --text auto --width 25
+echo "Deploy to production?" | boxy --theme warning --width 25  # Text automatically inherits warning theme color
 
 # Interactive menu with controlled line breaks
 echo "1. Deploy to staging#NL#2. Deploy to production#NL#3. Rollback#NL#4. Exit" | boxy --title "🚀 Deployment Menu" -s rounded
@@ -597,8 +597,8 @@ box() {
 }
 
 # Usage examples
-box "Hello World" -s rounded -c blue --text auto
-box "Deploy complete" --theme success --text auto
+box "Hello World" -s rounded -c blue  # Text automatically inherits blue color
+box "Deploy complete" --theme success  # Text automatically inherits theme color
 box "Error occurred" --theme error --width 30
 box "Long message with#W#intelligent wrapping" --width 20 --wrap
 ```

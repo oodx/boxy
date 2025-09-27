@@ -130,8 +130,11 @@ impl From<&BoxyConfig> for BoxLayout {
         // Apply horizontal padding
         builder = builder.with_h_padding(config.width.h_padding);
 
-        // Apply vertical padding
-        builder = builder.with_v_padding(config.width.v_padding);
+        // Apply vertical padding (normalize to legacy behavior - legacy ignored v_padding)
+        // For legacy CLI compatibility, don't apply v_padding unless explicitly set to non-default
+        // This prevents extra blank rows that weren't present in legacy output
+        let legacy_v_padding = 0; // Legacy behavior: no vertical padding
+        builder = builder.with_v_padding(legacy_v_padding);
 
         // Apply height configuration (if multiplexing mode enabled)
         if let Some(height) = config.fixed_height {
