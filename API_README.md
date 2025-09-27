@@ -231,14 +231,22 @@ let dashed_bar = BoxBuilder::new("Document section")
 
 ### Theming Module
 
-Optional color application with flexible rendering strategies and comprehensive background color support.
+Advanced color application with API-driven color inheritance, flexible rendering strategies, and comprehensive background color support.
 
 Features:
 - Multiple color application modes
+- **API-driven color inheritance with seamless theme integration**
 - **Enhanced background color support with 5 specification methods**
 - Plain and themed renderers
 - Line-by-line color application to prevent bleeding
-- ColorScheme integration
+- Automatic border color inheritance
+- ColorScheme with advanced configuration options
+
+### Color Inheritance Behavior
+- Themes automatically inherit border color for text
+- Only `text_color: "none"` prevents inheritance
+- Moved color logic from CLI hacks into BoxLayout API
+- Implemented `ColorScheme::from_config()` for flexible configuration
 
 #### Background Color Specification (ENHANCED)
 

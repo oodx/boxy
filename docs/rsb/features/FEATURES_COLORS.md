@@ -6,6 +6,12 @@ Purpose
 - Provide an optional, runtime‑configurable color system with minimal compile‑time surface.
 - Keep visuals opt‑in and out of the prelude to preserve core build lean‑ness.
 - Expose a curated, string‑first API aligned with MODULE_SPEC and HOWTO_TEST.
+- Enable intelligent color inheritance with API-driven theme configuration.
+
+### Color Inheritance Features
+- Automatic border and text color propagation
+- Flexible theme configuration with smart fallback
+- BOX_CHARS usage for consistent color application
 
 Module State (SPEC Alignment)
 - MODERN: Colors live under `rsb::colors` with focused subpackages and a registry.
@@ -17,6 +23,7 @@ Module State (SPEC Alignment)
 
 Feature Flags (Cargo.toml)
 - Base: `colors-core` — shared runtime registry; required by all color packages.
+  * Includes color inheritance runtime logic
 - Packages:
   - `colors-simple` — 8/16 color set and control codes; depends on `colors-core`.
   - `colors-status` — status palette (magic/trace/note/silly, success/warn/error…); depends on `colors-core`.
@@ -45,6 +52,10 @@ Runtime Model
 - Enable sets:
   - `color_enable()` — uses context/env: `opt_colors` or `RSB_COLORS`.
   - `color_enable_with("simple,status,named[,bg][,glyphs]")` — explicit.
+- Color Inheritance Strategies:
+  - Automatic border color propagation
+  - Text color inheritance with intelligent fallback
+  - `text_color: "none"` disables inheritance
 - Backgrounds: add `bg` (or `background`, `backgrounds`, `on`) to enable background codes.
 - Glyphs: add `glyphs` (only effective when compiled with the `glyphs` feature).
 - Inline tags: `colored("{red}{bg:amber} ok {reset}")` supports `{g:key}` when `glyphs` compiled.

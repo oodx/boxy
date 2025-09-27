@@ -2,7 +2,7 @@
 
 ## Overview
 
-Transform boxy from a simple box drawing tool into a **rich semantic formatting system** with predefined themes, extended color palette, and advanced text styling. **Inherits complete theme architecture from jynx's proven XDG+ system.**
+Transform boxy from a simple box drawing tool into a **rich semantic formatting system** with predefined themes, extended color palette, advanced text styling, and intelligent color inheritance. **Inherits complete theme architecture from jynx's proven XDG+ system and enhances it with API-driven color propagation.**
 
 > **Note**: jynx now has COMPLETE theme specifications with XDG+ management, color templating, and 90+ semantic colors. Boxy should inherit this proven architecture.
 
@@ -12,6 +12,7 @@ Transform boxy from a simple box drawing tool into a **rich semantic formatting 
 - ✅ **XDG+ directories**: `~/.local/etc/rsb/jynx/themes/`
 - ✅ **Smart resolution**: `--theme=rebel` → `theme_rebel.yml`
 - ✅ **Theme management**: import/export/create/edit commands
+- ✅ **Color Inheritance**: Automatic border and text color propagation with BOX_CHARS
 - ✅ **Color templating**: `%c:colorname(text)` declarative system
 - ✅ **90+ semantic colors**: crimson, emerald, azure, amber, etc.
 - ✅ **Dual mode**: Dynamic YAML + compiled binary optimization
@@ -523,6 +524,18 @@ boxy theme benchmark  # Test rendering performance
 
 The theme system introduced in v0.6 is the current, stable approach in v0.8.
 Use the documented options and semantic themes; legacy migration helpers have been removed.
+
+### Color Inheritance Architecture
+
+- Border colors automatically propagate across components
+- Text colors inherit with intelligent fallback
+- `text_color: "none"` prevents inheritance
+- Uses BOX_CHARS for consistent rendering
+
+**Key Benefits**:
+- Simplified theme configuration
+- Consistent visual hierarchy
+- Flexible color propagation rules
 
 ---
 
