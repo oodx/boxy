@@ -72,8 +72,8 @@ let wrapped_box = layout::BoxBuilder::new(
     "This is a long paragraph that will automatically wrap to the next line when it exceeds the specified width. \
      The text will be neatly broken at word boundaries to maintain readability."
 )
-    .with_fixed_height(10)   // Exact height: pads if shorter, truncates if taller
-    .with_fixed_width(40)    // Set maximum width for wrapping (wrapping enabled by default)
+    .with_fixed_height(10)   // Exact height: precisely pads or truncates to 10 lines
+    .with_fixed_width(40)    // Set width for wrapping (wrapping now enabled by default)
     .build();
 
 let ellipsis_box = layout::BoxBuilder::new(
@@ -621,16 +621,21 @@ println!("{}", log_display);
 
 #### Enhanced BoxBuilder Features
 
-The `BoxBuilder` now supports advanced text rendering through convenience methods:
+The `BoxBuilder` now supports advanced text rendering through enhanced convenience methods:
 
 ```rust
 use boxy::api::layout::BoxBuilder;
 
 let box_layout = BoxBuilder::new("Dynamic content")
-    .with_fixed_height(10)       // Exact height: pads or truncates to 10 lines
-    .with_fixed_width(50)        // Wrap text within 50 characters (wrapping enabled by default)
+    .with_fixed_height(10)       // Exact height: precisely pads or truncates to 10 lines
+    .with_fixed_width(50)        // Set width for wrapping (wrapping enabled by default)
     .with_h_padding(3)           // Horizontal padding
     .with_v_padding(1)           // Vertical padding
+    .with_min_width(40)          // Minimum width guarantee
+    .with_max_width(60)          // Maximum width constraint
+    .with_min_height(5)          // Minimum height guarantee
+    .with_max_height(15)         // Maximum height cap
+    .with_visibility(true)       // Control box visibility
     .build();
 
 // Optionally disable wrapping for truncation behavior
@@ -641,8 +646,8 @@ let truncated = BoxBuilder::new("Long text")
 ```
 
 **Enhanced BoxBuilder Features:**
-- `with_wrapping(bool)`: Control text wrapping (enabled by default, set to `false` to truncate with ellipsis)
-- `with_fixed_height(usize)`: Set exact box height (pads shorter content, truncates taller content)
+- `with_wrapping(bool)`: Control text wrapping (now enabled by default)
+- `with_fixed_height(usize)`: Set exact box height (precisely pads or truncates)
 - `with_fixed_width(usize)`: Set box width for wrapping
 - `with_h_padding(usize)`: Control horizontal padding
 - `with_v_padding(usize)`: Control vertical padding
@@ -651,6 +656,7 @@ let truncated = BoxBuilder::new("Long text")
 - `with_min_height(usize)`: Minimum height guarantee (pads if needed)
 - `with_max_height(usize)`: Maximum height cap (truncates if needed)
 - `with_visibility(bool)`: Control box visibility (hide when `false`)
+- Chrome overflow protection: panics if header/footer/status exceed fixed height
 - Intelligent truncation with "… (N more lines)" ellipsis for overflow
 - Maintains component integrity during resizing
 
@@ -664,8 +670,8 @@ Note: `BodyBuilder` is used internally but `BoxBuilder` provides the main API.
 - `layout::BoxBuilder::new()`
 - `layout::BoxBuilder::with_barmode()` *(NEW)* - Enable barmode layout
 - `layout::BoxBuilder::with_style()` - Apply box styles
-- `layout::BoxBuilder::with_wrapping(bool)` *(NEW)* - Control text wrapping (enabled by default)
-- `layout::BoxBuilder::with_fixed_height(usize)` *(NEW)* - Set exact box height (pads/truncates to target)
+- `layout::BoxBuilder::with_wrapping(bool)` *(NEW)* - Control text wrapping (now enabled by default)
+- `layout::BoxBuilder::with_fixed_height(usize)` *(UPDATED)* - Set exact box height (precisely pads/truncates to target)
 - `layout::BoxBuilder::with_fixed_width(usize)` - Set exact box width
 - `layout::BoxBuilder::with_min_width(usize)` *(NEW)* - Minimum width guarantee
 - `layout::BoxBuilder::with_max_width(usize)` *(NEW)* - Maximum width cap
@@ -679,6 +685,8 @@ Note: `BodyBuilder` is used internally but `BoxBuilder` provides the main API.
 - `theming::apply_background_color()` *(ENHANCED)* - Line-by-line color application
 - `theming::create_plain_renderer()` - Color-free rendering
 - `theming::create_themed_renderer()` - Full theme application
+
+**Note:** Chrome overflow protection added: functions will panic if header/footer/status exceed fixed height
 
 ### Box Styles - Complete Set (10 Total)
 
