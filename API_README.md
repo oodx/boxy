@@ -33,6 +33,7 @@ Key Features:
 - Emoji and CJK character width handling
 - Flexible box dimension calculations
 - Metrics for text display
+- Style-aware width calculations for future ANSI-colored borders
 
 ```rust
 use boxy::api::geometry;
@@ -40,14 +41,23 @@ use boxy::visual::NORMAL;
 
 let text = "Hello 🌟 World 中文";
 let metrics = geometry::get_text_metrics(text);
+
+// Calculate dimensions with style parameter
+// Style is used for ANSI-aware width when borders contain color codes
 let dims = geometry::calculate_box_dimensions(
     text,
-    NORMAL,      // BoxStyle
+    NORMAL,      // BoxStyle (for future ANSI-colored border support)
     2,           // h_padding
     1,           // v_padding
     None         // fixed_width: Option<usize>
 );
 ```
+
+**Style Parameter Notes:**
+The `BoxStyle` parameter in `calculate_box_dimensions` is reserved for future enhancements where box styles may inject ANSI color codes into border characters. Current implementation assumes all borders are single-column width (standard Unicode box-drawing characters), but the parameter ensures API compatibility when enhanced width handling is added for:
+- Colored border characters with ANSI escape sequences
+- Multi-byte border sequences requiring width normalization
+- Custom border styles with varying display widths
 
 ### Layout Module
 
@@ -606,7 +616,7 @@ println!("{}", log_display);
 - `geometry::BoxDimensions`
 - `geometry::TextMetrics`
 - `geometry::AnsiSizeComparison`
-- `layout::ComponentLayout`
+- `layout::BoxyLayout`
 - `layout::BoxOptions`
 - `layout::LayoutMode` *(NEW)* - Box or Bar rendering modes
 - `layout::HorizontalAlign` - Text alignment options
@@ -746,7 +756,7 @@ Note: `BodyBuilder` is used internally but `BoxBuilder` provides the main API.
 
 ## Limitations & Considerations
 
-- Requires Rust 1.70+ for full Unicode support
+- Requires Rust 1.90+ (Rust 2024 edition)
 - Performance may vary with complex Unicode strings
 - Background color support is optional
 

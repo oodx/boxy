@@ -73,6 +73,7 @@ pub mod geometry;
 pub mod layout;
 pub mod theming;
 pub mod room_runtime;
+pub mod config;
 
 // Re-export curated public API (RSB MODULE_SPEC pattern)
 // Core geometry functions - always available

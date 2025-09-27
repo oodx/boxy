@@ -424,6 +424,28 @@ Critical Pre-M3 Tasks (HIGH Priority):
   - Design and implement ergonomic BoxBuilder pattern for M2
   - Create fluent interface with sensible defaults
   - Maintain backward compatibility with CLI patterns
+  - See [CHINA-05A] for migration execution plan
+
+[CHINA-05A] Legacy CLI → API Migration Roadmap (MEDIUM) - High
+  - Phase 1: Compatibility adapter
+    - Implement `From<&BoxyConfig> for BoxLayout` bridging struct
+    - Ensure adapter copies title/icon/divider configuration and preserves width/height semantics
+    - Add parity tests that render identical outputs through legacy `draw_box` and new adapter
+  - Phase 2: API surface parity
+    - Extend `api::layout` builders with title/icon/divider/padding support and expose component metadata helpers
+    - Teach `api::theming` to style individual sections (header/title/status/body/footer) to match CLI colouring
+    - Document new API capabilities in `API_README.md`
+  - Phase 3: CLI switchover
+    - Update `src/main.rs` to emit boxes via adapter + API renderers instead of `draw_box`
+    - Wire theme/colour handling through the new component metadata, validating protected icon logic stays intact
+    - Add regression tests covering CLI flags that previously depended on legacy behaviour
+  - Phase 4: Ecosystem updates
+    - Migrate benches, demos (e.g. `boxy_dashboard.rs`) and snapshot fixtures to use API builders/adapter
+    - Run golden-output diff to confirm no behavioural drift
+  - Phase 5: Legacy retirement
+    - Collapse `draw_box`/`render_to_string` onto the API pipeline and remove redundant code paths
+    - Delete `BoxyConfig` once no caller constructs it; update documentation and changelog with migration guidance
+    - Final verification: run full test matrix, benchmarks, and protected width/icon validation scripts
 
 [CHINA-08] Comprehensive Integration Documentation (MEDIUM) - High
   - Create integration cookbook with TUI framework examples
@@ -446,6 +468,36 @@ Strategic Preparation (LOW Priority):
 
 🔴 TINA TESTING DEBT (18 tickets, organized in 4 phases)
 =====================================================
+
+🪄 QOL POLISH BACKLOG (NEW)
+==========================
+
+[QOL-01] Geometry/style width documentation (SMALL) - Medium ✅ COMPLETED
+  - Document how style-provided ANSI attributes influence width math in `calculate_box_dimensions`
+  - Add regression tests covering styles that inject ANSI sequences to ensure width stays accurate
+  - Clarify usage expectations in `API_README.md` and source comment (`src/api/geometry.rs:145`)
+
+[QOL-02] Per-component theming hooks (MEDIUM) - High
+  - Extend `api::theming` to style header/body/status/footer independently without string reparse
+  - Introduce callbacks/renderer trait that accepts `ComponentLayout` metadata
+  - Add regression tests covering section-specific coloring
+
+[QOL-03] High-level preset templates (MEDIUM) - Medium
+  - Provide `BoxTemplate`/`PresetTheme` constructors for common layouts (status panel, notification, banner)
+  - Integrate with `BoxBuilder::preset("...")` style API and document usage
+
+[QOL-04] Typed error surface exposure (MEDIUM) - Medium
+  - Surface planned Milestone 4 error enums through the public API (`Result<T, BoxyError>`)
+  - Replace panic paths in layout/geometry/theming modules with typed errors where appropriate
+  - Update API docs with new error semantics
+
+[QOL-05] Background/foreground composition helpers (SMALL) - Medium
+  - Add helpers on `ComponentLayout` or renderer options to apply background colors per line safely
+  - Ensure coexistence with foreground theming without manual ANSI handling
+
+[QOL-06] One-shot layout wrappers (MEDIUM) - Low
+  - Introduce ergonomic wrappers (e.g., `PlainBox::new("text").width(40).render()`) that compose geometry + layout
+  - Keep builders accessible for advanced scenarios; document trade-offs in `API_README.md`
 
 Phase 1: Testing Infrastructure (HIGH Priority):
 ------------------------------------------------

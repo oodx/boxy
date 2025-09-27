@@ -180,6 +180,111 @@ pub fn apply_colors(content: &str, scheme: &ColorScheme) -> String {
     result
 }
 
+/// Apply colors to individual box components (OPTIONAL - Room Runtime can skip this)
+///
+/// This function applies per-component theming, allowing different colors for
+/// header, body, footer, and status sections. This is the progressive enhancement
+/// Layer 2 - pure API users can ignore this entirely.
+///
+/// # Progressive Enhancement
+///
+/// - **Layer 0 (Pure API)**: `layout.render()` - no colors
+/// - **Layer 1 (Config)**: `BoxLayout::from(&config)` - structure only
+/// - **Layer 2 (Theming)**: `apply_component_colors(&layout, &scheme)` - OPT-IN
+///
+/// # Examples
+///
+/// ```rust
+/// use boxy::api::layout::{BoxBuilder, HeaderBuilder};
+/// use boxy::api::theming::{ColorScheme, apply_component_colors};
+///
+/// let layout = BoxBuilder::new("Body text")
+///     .with_header(HeaderBuilder::new("Title"))
+///     .build();
+///
+/// // Optional: apply component-specific colors
+/// let mut scheme = ColorScheme::default();
+/// scheme.header_color = Some("bright_yellow".to_string());
+/// scheme.text_color = "white".to_string();
+///
+/// let colored_output = apply_component_colors(&layout, &scheme);
+/// ```
+pub fn apply_component_colors(layout: &crate::api::layout::BoxLayout, scheme: &ColorScheme) -> String {
+    use crate::{get_color_code, RESET};
+
+    let mut result = Vec::new();
+
+    // Apply header color if present
+    if let Some(header) = &layout.header {
+        let header_text = if let Some(ref color) = scheme.header_color {
+            let color_code = get_color_code(color);
+            if !color_code.is_empty() && color != "none" {
+                format!("{}{}{}", color_code, header.content, RESET)
+            } else {
+                header.content.clone()
+            }
+        } else {
+            header.content.clone()
+        };
+
+        // Apply background color if specified
+        let final_header = apply_background_color(&header_text, &scheme.background_color);
+        result.push(final_header);
+    }
+
+    // Apply body text color
+    let body_text = if scheme.text_color != "none" && scheme.text_color != "auto" {
+        let color_code = get_color_code(&scheme.text_color);
+        if !color_code.is_empty() {
+            format!("{}{}{}", color_code, layout.body.content, RESET)
+        } else {
+            layout.body.content.clone()
+        }
+    } else {
+        layout.body.content.clone()
+    };
+
+    // Apply background color to body
+    let final_body = apply_background_color(&body_text, &scheme.background_color);
+    result.push(final_body);
+
+    // Apply status color if present
+    if let Some(status) = &layout.status {
+        let status_text = if let Some(ref color) = scheme.status_color {
+            let color_code = get_color_code(color);
+            if !color_code.is_empty() && color != "none" {
+                format!("{}{}{}", color_code, status.content, RESET)
+            } else {
+                status.content.clone()
+            }
+        } else {
+            status.content.clone()
+        };
+
+        let final_status = apply_background_color(&status_text, &scheme.background_color);
+        result.push(final_status);
+    }
+
+    // Apply footer color if present
+    if let Some(footer) = &layout.footer {
+        let footer_text = if let Some(ref color) = scheme.footer_color {
+            let color_code = get_color_code(color);
+            if !color_code.is_empty() && color != "none" {
+                format!("{}{}{}", color_code, footer.content, RESET)
+            } else {
+                footer.content.clone()
+            }
+        } else {
+            footer.content.clone()
+        };
+
+        let final_footer = apply_background_color(&footer_text, &scheme.background_color);
+        result.push(final_footer);
+    }
+
+    result.join("\n")
+}
+
 /// Create a renderer that ignores colors (for Room Runtime)
 pub fn create_plain_renderer() -> impl Fn(&str, &ColorScheme) -> String {
     |content: &str, _scheme: &ColorScheme| content.to_string()
@@ -238,6 +343,76 @@ mod tests {
         let result = apply_background_color(text_with_empty, &BackgroundColor::Rgb(255, 0, 0));
         let expected = "\x1b[48;2;255;0;0mLine 1\x1b[0m\n\x1b[0m\n\x1b[48;2;255;0;0mLine 3\x1b[0m";
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_apply_component_colors_basic() {
+        use crate::api::layout::{BoxBuilder, HeaderBuilder};
+
+        let layout = BoxBuilder::new("Body content")
+            .with_header(HeaderBuilder::new("Title"))
+            .build();
+
+        let mut scheme = ColorScheme::default();
+        scheme.text_color = "white".to_string();
+
+        let output = apply_component_colors(&layout, &scheme);
+
+        // Should contain both header and body
+        assert!(output.contains("Title"));
+        assert!(output.contains("Body content"));
+    }
+
+    #[test]
+    fn test_apply_component_colors_with_header_color() {
+        use crate::api::layout::{BoxBuilder, HeaderBuilder};
+
+        let layout = BoxBuilder::new("Body")
+            .with_header(HeaderBuilder::new("Title"))
+            .build();
+
+        let mut scheme = ColorScheme::default();
+        scheme.header_color = Some("bright_yellow".to_string());
+        scheme.text_color = "white".to_string();
+
+        let output = apply_component_colors(&layout, &scheme);
+
+        // Header should have color codes (check for ANSI escape sequences)
+        assert!(output.contains("\x1b["));
+    }
+
+    #[test]
+    fn test_apply_component_colors_with_footer() {
+        use crate::api::layout::{BoxBuilder, FooterBuilder};
+
+        let layout = BoxBuilder::new("Content")
+            .with_footer(FooterBuilder::new("Footer"))
+            .build();
+
+        let mut scheme = ColorScheme::default();
+        scheme.footer_color = Some("green".to_string());
+        scheme.text_color = "auto".to_string();
+
+        let output = apply_component_colors(&layout, &scheme);
+
+        assert!(output.contains("Footer"));
+    }
+
+    #[test]
+    fn test_apply_component_colors_plain_scheme() {
+        use crate::api::layout::{BoxBuilder, HeaderBuilder};
+
+        let layout = BoxBuilder::new("Content")
+            .with_header(HeaderBuilder::new("Header"))
+            .build();
+
+        let scheme = ColorScheme::plain();
+
+        let output = apply_component_colors(&layout, &scheme);
+
+        // Plain scheme should not add color codes
+        assert!(output.contains("Header"));
+        assert!(output.contains("Content"));
     }
 
     #[test]

@@ -22,7 +22,7 @@ use crate::truncate_with_ellipsis;
 
 /// Layout information for a positioned component
 #[derive(Debug, Clone)]
-pub struct ComponentLayout {
+pub struct BoxyLayout {
     /// Component content (no ANSI codes)
     pub content: String,
     /// Display width in terminal columns
@@ -105,7 +105,7 @@ impl HeaderBuilder {
         self
     }
 
-    pub fn build_for_width(self, inner_width: usize) -> ComponentLayout {
+    pub fn build_for_width(self, inner_width: usize) -> BoxyLayout {
         let content = match &self.content {
             Some(text) => format!(
                 "{}{}{}{}",
@@ -122,7 +122,7 @@ impl HeaderBuilder {
             ),
         };
 
-        ComponentLayout {
+        BoxyLayout {
             width: get_text_width(&content),
             height: 1,
             content,
@@ -227,7 +227,7 @@ impl FooterBuilder {
         self
     }
 
-    pub fn build_for_width(self, inner_width: usize) -> ComponentLayout {
+    pub fn build_for_width(self, inner_width: usize) -> BoxyLayout {
         let content = match &self.content {
             Some(text) => format!(
                 "{}{}{}",
@@ -243,7 +243,7 @@ impl FooterBuilder {
             ),
         };
 
-        ComponentLayout {
+        BoxyLayout {
             width: get_text_width(&content),
             height: 1,
             content,
@@ -307,7 +307,7 @@ impl StatusBuilder {
         self
     }
 
-    pub fn build_for_width(self, inner_width: usize, style: BoxStyle) -> ComponentLayout {
+    pub fn build_for_width(self, inner_width: usize, style: BoxStyle) -> BoxyLayout {
         let mut lines = Vec::new();
 
         // Add divider if requested
@@ -349,7 +349,7 @@ impl StatusBuilder {
 
         let content = lines.join("\n");
 
-        ComponentLayout {
+        BoxyLayout {
             width: inner_width + 2, // Include borders
             height: lines.len(),
             content,
@@ -457,7 +457,7 @@ impl BodyBuilder {
         self
     }
 
-    pub fn build_for_width(self, inner_width: usize, style: BoxStyle) -> ComponentLayout {
+    pub fn build_for_width(self, inner_width: usize, style: BoxStyle) -> BoxyLayout {
         let mut result_lines = Vec::new();
 
         // Add top padding
@@ -497,7 +497,7 @@ impl BodyBuilder {
 
         let content = result_lines.join("\n");
 
-        ComponentLayout {
+        BoxyLayout {
             width: inner_width + 2,
             height: result_lines.len(),
             content,
@@ -845,14 +845,14 @@ impl BoxBuilder {
 
     /// Truncate body content to fit within a maximum height
     fn truncate_body_to_height(
-        body: ComponentLayout,
+        body: BoxyLayout,
         max_height: usize,
         inner_width: usize,
         style: BoxStyle,
-    ) -> ComponentLayout {
+    ) -> BoxyLayout {
         if max_height == 0 {
             // Return empty body
-            return ComponentLayout {
+            return BoxyLayout {
                 width: inner_width + 2,
                 height: 0,
                 content: String::new(),
@@ -871,7 +871,7 @@ impl BoxBuilder {
                 format!("  … ({} more lines)", lines.len()).pad_to_width(inner_width),
                 style.vertical
             );
-            return ComponentLayout {
+            return BoxyLayout {
                 width: inner_width + 2,
                 height: 1,
                 content: ellipsis_line,
@@ -896,7 +896,7 @@ impl BoxBuilder {
         );
         result_lines.push(ellipsis_line);
 
-        ComponentLayout {
+        BoxyLayout {
             width: inner_width + 2,
             height: result_lines.len(),
             content: result_lines.join("\n"),
@@ -907,12 +907,12 @@ impl BoxBuilder {
 
     /// Pad body content to fill a target height
     fn pad_body_to_height(
-        body: ComponentLayout,
+        body: BoxyLayout,
         target_height: usize,
         inner_width: usize,
         style: BoxStyle,
         layout_mode: LayoutMode,
-    ) -> ComponentLayout {
+    ) -> BoxyLayout {
         let current_lines: Vec<&str> = body.content.lines().collect();
         let current_height = current_lines.len();
 
@@ -944,7 +944,7 @@ impl BoxBuilder {
             result_lines.push(empty_line.clone());
         }
 
-        ComponentLayout {
+        BoxyLayout {
             width: inner_width + 2,
             height: target_height,
             content: result_lines.join("\n"),
@@ -974,10 +974,10 @@ impl PadToWidth for String {
 /// Complete box layout result
 #[derive(Debug, Clone)]
 pub struct BoxLayout {
-    pub header: Option<ComponentLayout>,
-    pub footer: Option<ComponentLayout>,
-    pub status: Option<ComponentLayout>,
-    pub body: ComponentLayout,
+    pub header: Option<BoxyLayout>,
+    pub footer: Option<BoxyLayout>,
+    pub status: Option<BoxyLayout>,
+    pub body: BoxyLayout,
     pub total_width: usize,
     pub style: BoxStyle,
     pub layout_mode: LayoutMode,
@@ -1202,7 +1202,7 @@ impl BoxLayout {
     }
 
     /// Get individual component layouts for Room Runtime positioning
-    pub fn components(&self) -> Vec<&ComponentLayout> {
+    pub fn components(&self) -> Vec<&BoxyLayout> {
         let mut components = Vec::new();
 
         if let Some(header) = &self.header {

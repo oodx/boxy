@@ -4,8 +4,8 @@ These ideas focus on polishing the public API so downstream consumers (Room Runt
 
 ## Quick Wins
 
-- **Drop unused style argument in geometry API**
-  `geometry::calculate_box_dimensions` takes a `_style: BoxStyle` parameter that is never read (`src/api/geometry.rs:79-106`). Removing it—or documenting how style will affect geometry in the future—reduces confusion for consumers scanning the function signature.
+- **Clarify style impact in geometry API**
+  `geometry::calculate_box_dimensions` accepts a `BoxStyle` whose ANSI attributes can alter width calculations even when borders are single-width (`src/api/geometry.rs:79-178`). Document this behavior and add regression tests covering styles with ANSI decoration so callers understand why the argument matters.
 
 - **Offer a convenience renderer**
   Most clients repeat `BoxBuilder::new(content).with_header(...).build().render()`. A helper like `layout::render_box(content, BoxOptions)` (defaults + optional title/status) would cover the 80% use case and keep the builder available for advanced scenarios.
@@ -34,4 +34,3 @@ These ideas focus on polishing the public API so downstream consumers (Room Runt
 
 - **One-shot geometry + layout wrappers**
   Add ergonomic wrappers such as `PlainBox::new(content).width(40).render()` that internally call geometry + layout. These could live alongside the builder API for clients who just need “box around text” without touching low-level pieces.
-

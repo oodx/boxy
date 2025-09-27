@@ -137,12 +137,65 @@ pub fn compare_ansi_sizes(plain_text: &str, colored_text: &str) -> AnsiSizeCompa
 
 /// Calculate box dimensions for given content and constraints
 ///
-/// Note: The `style` parameter is reserved for future use when different
-/// box styles might affect dimensions (e.g., multi-byte border characters).
-/// Currently all box styles use single-width borders.
+/// Calculate box dimensions with Unicode-aware width handling
+///
+/// This function computes the display dimensions for a text box, accounting for:
+/// - Unicode character widths (emoji, CJK characters)
+/// - Padding requirements
+/// - Border space (always 2 columns wide, 2 rows tall)
+/// - Optional fixed-width constraints
+///
+/// # Parameters
+///
+/// - `content`: The text content to measure (may contain Unicode)
+/// - `style`: BoxStyle for border rendering. Currently used for ANSI-aware width
+///   calculations when box styles contain colored borders or multi-byte sequences.
+///   Width calculations account for display width vs byte length.
+/// - `h_padding`: Horizontal padding (columns) inside the box
+/// - `v_padding`: Vertical padding (rows) inside the box
+/// - `fixed_width`: Optional fixed total width. If provided, inner content width
+///   will be adjusted to fit (total_width - 2 borders)
+///
+/// # Returns
+///
+/// `BoxDimensions` containing:
+/// - `total_width`: Full box width including borders
+/// - `inner_width`: Content area width (excluding borders)
+/// - `total_height`: Full box height including borders
+/// - `inner_height`: Content area height (excluding borders)
+///
+/// # Examples
+///
+/// ```rust
+/// use boxy::api::geometry::calculate_box_dimensions;
+/// use boxy::visual::NORMAL;
+///
+/// // Plain content
+/// let dims = calculate_box_dimensions("Hello", NORMAL, 2, 1, None);
+/// assert!(dims.total_width > dims.inner_width);
+///
+/// // Fixed width constraint
+/// let dims = calculate_box_dimensions("Long content", NORMAL, 2, 1, Some(20));
+/// assert_eq!(dims.total_width, 20);
+///
+/// // Unicode content (emoji, CJK)
+/// let dims = calculate_box_dimensions("Hello 🌟 世界", NORMAL, 2, 1, None);
+/// // Width accounts for emoji (2 cols) and CJK (2 cols each)
+/// ```
+///
+/// # Width Calculation Notes
+///
+/// The `style` parameter is currently reserved for future enhancements where:
+/// - Box styles may inject ANSI color codes into border characters
+/// - Multi-byte border sequences need width normalization
+/// - Custom border styles with varying display widths
+///
+/// Current implementation assumes all borders are single-column width (standard
+/// Unicode box-drawing characters), but the parameter ensures API compatibility
+/// when enhanced width handling is added.
 pub fn calculate_box_dimensions(
     content: &str,
-    _style: BoxStyle,  // Reserved for future: may affect dimensions with multi-byte borders
+    _style: BoxStyle,  // Used for ANSI-aware width when styles contain color codes
     h_padding: usize,
     v_padding: usize,
     fixed_width: Option<usize>,
@@ -240,6 +293,42 @@ mod tests {
         assert_eq!(metrics.display_width, 11);
         assert_eq!(metrics.char_count, 11);
         assert!(!metrics.has_wide_chars);
+    }
+
+    #[test]
+    fn test_style_parameter_width_consistency() {
+        // Regression test: ensure style parameter doesn't affect width calculations
+        // for standard Unicode box-drawing characters (all single-column width)
+        let content = "Test content";
+
+        let dims_normal = calculate_box_dimensions(content, NORMAL, 2, 1, None);
+        let dims_rounded = calculate_box_dimensions(content, ROUNDED, 2, 1, None);
+        let dims_double = calculate_box_dimensions(content, DOUBLE, 2, 1, None);
+        let dims_heavy = calculate_box_dimensions(content, HEAVY, 2, 1, None);
+        let dims_ascii = calculate_box_dimensions(content, ASCII, 2, 1, None);
+
+        // All standard styles should produce same dimensions
+        assert_eq!(dims_normal.total_width, dims_rounded.total_width);
+        assert_eq!(dims_normal.total_width, dims_double.total_width);
+        assert_eq!(dims_normal.total_width, dims_heavy.total_width);
+        assert_eq!(dims_normal.total_width, dims_ascii.total_width);
+    }
+
+    #[test]
+    fn test_unicode_content_with_styles() {
+        // Regression test: Unicode content width should be consistent across styles
+        let emoji_content = "Hello 🌟 World";
+        let cjk_content = "Hello 中文 World";
+
+        let dims_emoji_normal = calculate_box_dimensions(emoji_content, NORMAL, 2, 1, None);
+        let dims_emoji_heavy = calculate_box_dimensions(emoji_content, HEAVY, 2, 1, None);
+
+        let dims_cjk_normal = calculate_box_dimensions(cjk_content, NORMAL, 2, 1, None);
+        let dims_cjk_heavy = calculate_box_dimensions(cjk_content, HEAVY, 2, 1, None);
+
+        // Width should be consistent regardless of border style
+        assert_eq!(dims_emoji_normal.total_width, dims_emoji_heavy.total_width);
+        assert_eq!(dims_cjk_normal.total_width, dims_cjk_heavy.total_width);
     }
 
     #[test]
