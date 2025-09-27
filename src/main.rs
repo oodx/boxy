@@ -37,8 +37,7 @@ fn apply_theme_icon_to_text(text: &mut String, theme_icon: &str) {
     }
 }
 
-// API module is for external library consumers, not used by CLI binary
-#[allow(dead_code)]
+// API module is now used by CLI for the new adapter pattern
 mod api;
 mod colors;
 mod core;
@@ -56,6 +55,7 @@ use regex::Regex;
 use std::collections::HashMap;
 // use unicode_width::UnicodeWidthStr;  // No longer needed - using custom implementation
 
+use api::layout::BoxLayout;
 use colors::*;
 use core::*;
 use height_plugin::*;
@@ -733,7 +733,12 @@ fn run_boxy_application() -> Result<(), AppError> {
     // 🔥 MANUAL ICONS MUST USE SAME PATTERN AS THEMES - NO EXCEPTIONS! 🔥
     //
     // 🔒 PROTECTED ICON POSITIONING - DO NOT MODIFY MANUALLY! 🔒
-    apply_icon_to_text!(text, icon);
+    // Apply icon to title if title exists, otherwise apply to text
+    if let Some(ref mut title_str) = title {
+        apply_icon_to_text!(*title_str, icon);
+    } else {
+        apply_icon_to_text!(text, icon);
+    }
 
     if no_boxy {
         let stripped = strip_box(&text, strict_mode);
@@ -774,7 +779,9 @@ fn run_boxy_application() -> Result<(), AppError> {
             footer_color.as_deref(),
             enable_wrapping,
         );
-        draw_box(config);
+        // CHINA-05A Phase 3: CLI switchover to new API
+        let layout = BoxLayout::from(&config);
+        print!("{}", layout.render());
     }
 
     Ok(())

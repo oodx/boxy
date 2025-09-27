@@ -1,0 +1,40 @@
+= CHINA'S CLI SWITCHOVER DOCUMENTATION REVIEW EGG >Z
+===============================================
+
+## Executive Summary
+The CHINA-05A Phase 3 CLI Switchover requires a meticulous migration of the CLI system while maintaining 100% backward compatibility, with special focus on protected icon logic.
+
+## Critical Documentation for Review
+1. `/docs/procs/CHINA-05A-PHASE3-PLAN.md` - HIGHEST PRIORITY
+2. `/docs/rsb/features/FEATURES_CLI.md` - Secondary Priority
+3. `/src/main.rs` (Lines 717-736) - Protected Icon Logic Implementation
+4. `API_README.md` - API Integration Details
+
+## Icon Positioning Logic - Key Findings
+- CRITICAL REQUIREMENT: Icons must prepend to titles, NOT body content
+- Current protected icon logic is in `main.rs`, lines 717-736
+- Uses `apply_icon_to_text!` macro for icon positioning
+- RISK AREA: Icon spacing was previously described as a "NIGHTMARE to get right"
+
+## Knowledge Gaps to Address
+1. Exact implementation of `apply_icon_to_text!` macro behavior
+2. Precise rules for icon positioning with different input types
+3. Edge cases in icon/title handling
+4. Performance implications of icon positioning
+
+## Backward Compatibility Checklist
+ Preserve all existing CLI flag behaviors
+ Maintain identical output formatting
+ Keep icon spacing consistent
+ No performance regression >5%
+
+## Recommended Next Steps
+1. Review `main.rs` protected icon implementation
+2. Create comprehensive regression test cases
+3. Validate icon positioning in multiple scenarios
+4. Document current icon logic before migration
+
+## Disclaimer
+This egg represents a snapshot of documentation review. Additional investigation and validation are required to ensure complete migration success.
+
+BAWK! = Time to crack open these docs and dig deeper!
