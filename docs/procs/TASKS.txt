@@ -553,6 +553,16 @@ Strategic Preparation (LOW Priority):
   - All color/theming flags now yield monochrome boxes (lost legacy color support)
   - Fix options: reapply theming via `apply_component_colors` using `BoxyConfig` colors, or temporarily call `visual::render_to_string` until per-component theming is wired
 
+[TASK-RSB-01] Align CLI argument handling with RSB patterns (MEDIUM) - Medium
+  - Current CLI still uses manual loops over `env::args()`;
+  - Introduce `bootstrap!`, `options!`, `dispatch!` (or equivalent) per RSB guidelines
+  - Update docs once the CLI is truly RSB-compliant, or adjust claims if we defer the refactor
+
+[TASK-API-01] Surface theming in API render pipeline (MEDIUM) - Medium
+  - Provide a public API (e.g. `BoxLayout::render_with_colors(&ColorScheme)`) so library consumers get coloured output without CLI shims
+  - Refactor CLI to call the new API instead of post-processing strings
+  - Add regression tests covering theme/text colour behaviour through the API directly
+
 Phase 1: Testing Infrastructure (HIGH Priority):
 ------------------------------------------------
 [TEST-01] Benchmark Integration into test.sh workflow (MEDIUM) - High
