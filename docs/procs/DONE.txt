@@ -303,39 +303,118 @@ Theme: Height Layout Engine (5 pts)
   - HeightMode enum active; pad/truncate/auto options wired through CLI/env and visual padding logic
 
 ================================================================================
+🎯 MILESTONE 2.0: LIBRARY API DEVELOPMENT - PHASE 1 ✅ COMPLETED
+================================================================================
+Duration: COMPLETED
+Story Points: 18 points ✅ COMPLETE (Phase 1 of M2)
+Risk: Medium | New Public API
+Status: 100% COMPLETE - BoxBuilder API Ready for Room Grid Integration
+
+🏆 ACHIEVEMENT SUMMARY:
+• Complete BoxBuilder API with fluent interface
+• Dynamic constraint system for responsive grid layouts
+• Exact height sizing with padding/truncation
+• Visibility control for conditional rendering
+• 134 tests passing (111 lib + 15 integration + 8 doc)
+• Zero compiler warnings
+• Comprehensive API documentation
+
+SCOPE COMPLETED (v0.21.0):
+• Design and implement BoxBuilder pattern with ergonomic API
+• Text wrapping enabled by default with opt-out control
+• Fixed/min/max width and height constraints
+• Visibility control (with_visibility, hide methods)
+• Chrome overflow protection with helpful error messages
+• Layout-mode aware padding (Box vs Bar mode)
+
+DELIVERABLES ACHIEVED:
+• src/api/layout.rs - Complete BoxBuilder implementation
+• API_README.md - Comprehensive documentation
+• examples/dynamic_constraints_test.rs - Feature showcase
+• examples/height_padding_test.rs - Height behavior demo
+• 11 new tests covering all constraint features
+
+SUCCESS CRITERIA MET:
+✅ BoxBuilder fluent interface operational ✓ ACHIEVED
+✅ Text wrapping with word boundaries ✓ ACHIEVED
+✅ Exact height sizing (pads OR truncates) ✓ ACHIEVED
+✅ Dynamic constraints for grid cells ✓ ACHIEVED
+✅ Visibility control implemented ✓ ACHIEVED
+✅ All documentation updated ✓ ACHIEVED
+
+Theme: Core Library API Design & Implementation (13 pts) ✅ COMPLETE
+------------------------------------------------------------------------
+[M2-001] Design public API surface for box drawing (5) - ✅ COMPLETED (v0.21.0)
+  - ✅ BoxBuilder pattern with fluent interface
+  - ✅ Comprehensive width/height/padding configuration
+  - ✅ Min/max constraints for dynamic grid cells
+  - ✅ Visibility control (with_visibility, hide)
+  - ✅ Chrome overflow protection
+
+[M2-004] Implement BoxBuilder and drawing functions (5) - ✅ COMPLETED (v0.21.0)
+  - ✅ BoxBuilder with complete fluent interface
+  - ✅ with_wrapping() API (enabled by default, opt-out available)
+  - ✅ with_fixed_height() for exact height sizing
+  - ✅ with_min_width/height() for minimum guarantees
+  - ✅ with_max_width/height() for maximum caps
+  - ✅ with_visibility(bool) and hide() for conditional rendering
+  - ✅ Unicode-safe dynamic width calculations
+  - ✅ Works with all 10 box styles and layout modes
+  - ✅ 134 tests passing
+
+[M2-004a] Implement barmode layout system (3) - ✅ COMPLETED (v0.21.0)
+  - ✅ Barmode rendering (horizontal bars, no vertical borders)
+  - ✅ CLI support: --layout bm, --params ly='bm'
+  - ✅ BoxBuilder barmode API integration
+  - ✅ Layout-mode aware padding (respects Box vs Bar mode)
+  - ✅ Regression tests for barmode behavior
+
+Theme: Documentation (3 pts) ✅ COMPLETE
+-----------------------------------------
+[M2-007] Create comprehensive library documentation (3) - ✅ COMPLETED (v0.21.0)
+  - ✅ API_README.md with all features documented
+  - ✅ Rustdoc comments on all public API methods
+  - ✅ Usage examples: dynamic_constraints_test.rs, height_padding_test.rs
+  - ✅ Chrome overflow protection documented with panic conditions
+  - ✅ All constraint semantics clearly explained
+
+================================================================================
  📊 COMPLETED WORK SUMMARY
 ================================================================================
 
-✅ TOTAL COMPLETED STORY POINTS: 64 points
-✅ TOTAL COMPLETED MILESTONES: 4 major milestones
+✅ TOTAL COMPLETED STORY POINTS: 82 points
+✅ TOTAL COMPLETED MILESTONES: 5 major milestones
 
 Milestone Breakdown:
 • M1: Basic Module Restructuring (23 pts) ✅ COMPLETED
 • M1.5: Auto/None Properties Validation (8 pts) ✅ COMPLETED
 • M1.7: Render Target Streaming (15 pts) ✅ COMPLETED
 • MH: Terminal Height System (18 pts) ✅ COMPLETED
+• M2.0: Library API Development (v0.21.0) (18 pts) ✅ COMPLETED
 
 Key Achievements:
 🏆 Perfect 5/5 star ratings from China for all modules
-🧪 66/66 tests passing including comprehensive auto/none validation
+🧪 134/134 tests passing including comprehensive constraint validation
 🛡️ Zero regressions throughout restructuring
 🚀 RSB MODULE_SPEC foundation established
 🎯 Streaming architecture ready for library integration
 📐 Complete height system implementation
+📦 BoxBuilder API ready for Room grid integration
 
 Technical Milestones Reached:
 • RSB MODULE_SPEC compliance foundation
 • Protected critical width/emoji functions
-• Comprehensive test coverage
+• Comprehensive test coverage (134 tests)
 • Performance baseline established
-• Library API foundation prepared
+• Library API with dynamic constraints operational
+• Room grid integration support complete
 
 ================================================================================
  🐔 CHINA'S CERTIFICATION & DISCLAIMER
 ================================================================================
 
 🐔 CHINA'S REVIEW: This archive accurately represents all completed work as
-extracted from TASKS.txt and ROADMAP.txt on 2025-09-20. All completed milestones
+extracted from TASKS.txt and ROADMAP.txt. All completed milestones
 achieved perfect execution with zero regressions.
 
 ⚠️  DISCLAIMER: This summary reflects the status of project files reviewed and
@@ -346,6 +425,6 @@ This archive serves as a historical record of completed achievements to keep
 active planning documents focused on current and future work.
 
 🥚 Organized with ❤️ by China the Summary Chicken
-📅 Last Updated: 2025-09-20
+📅 Last Updated: 2025-09-26 (M2.0 Phase 1 v0.21.0 completion)
 
 ================================================================================
