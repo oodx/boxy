@@ -1,4 +1,5 @@
-use boxy::{BoxColors, BoxStyle, BoxyConfig, WidthConfig, render_to_string};
+use boxy::{BoxColors, BoxStyle, BoxyConfig, WidthConfig};
+use boxy::api::layout::BoxLayout;
 
 fn snapshot_config_basic() -> BoxyConfig {
     let mut config = BoxyConfig::default();
@@ -23,7 +24,7 @@ fn snapshot_config_basic() -> BoxyConfig {
 #[test]
 fn snapshot_basic_box() {
     let config = snapshot_config_basic();
-    let actual = render_to_string(&config);
+    let actual = BoxLayout::from(&config).render();
     let expected = include_str!("fixtures/render_basic.txt");
     assert_eq!(actual, expected);
 }

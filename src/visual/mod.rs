@@ -49,9 +49,8 @@ pub use utils::{
     THICKSII,
     // Drawing functions with PROTECTED width calculations
     calculate_box_width,
-    draw_box,
-    render_to_string,
     strip_box,
+    // LEGACY REMOVED: draw_box, render_to_string (replaced by BoxLayout API)
 
     // Box style system
     validate_box_style,

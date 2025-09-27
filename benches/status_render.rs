@@ -1,7 +1,8 @@
 use boxy::{
     AlignmentConfig, BoxColors, BoxStyle, BoxyConfig, DividerConfig, HEAVY, NORMAL, PaddingConfig,
-    ROUNDED, WidthConfig, render_to_string,
+    ROUNDED, WidthConfig,
 };
+use boxy::api::layout::BoxLayout;
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 
 fn build_config(template: &str, style: BoxStyle) -> BoxyConfig {
@@ -83,7 +84,7 @@ fn bench_group(c: &mut Criterion) {
         let config = build_config(template, style);
         group.bench_function(BenchmarkId::new("render", label), |b| {
             b.iter(|| {
-                let rendered = render_to_string(&config);
+                let rendered = BoxLayout::from(&config).render();
                 black_box(rendered);
             });
         });

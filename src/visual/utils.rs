@@ -242,39 +242,12 @@ pub fn calculate_box_width(
     box_width!(text, h_padding, fixed_width)
 }
 
-pub fn draw_box(config: BoxyConfig) {
-    let final_width = calculate_final_width(&config);
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
-    let mut target = RenderTarget::from_writer(&mut handle);
-    render_box_with_width(&config, final_width, &mut target);
-    target
-        .finish()
-        .expect("failed to flush render output to writer");
-}
-
-#[allow(dead_code)] // Public library API; benchmarks and downstream code consume this path.
-pub fn render_to_string(config: &BoxyConfig) -> String {
-    let final_width = calculate_final_width(config);
-    let mut target = RenderTarget::with_capacity(estimate_capacity(final_width, config));
-    render_box_with_width(config, final_width, &mut target);
-    target.into_string()
-}
-
-fn calculate_final_width(config: &BoxyConfig) -> usize {
-    let mut all_content = config.text.clone();
-    if let Some(title) = &config.title {
-        all_content.push('\n');
-        all_content.push_str(title);
-    }
-
-    calculate_box_width(
-        &all_content,
-        config.width.h_padding,
-        config.width.fixed_width,
-        config.width.enable_wrapping,
-    )
-}
+// LEGACY FUNCTIONS REMOVED:
+// - draw_box() - replaced by CLI using BoxLayout::from(&config).render()
+// - render_to_string() - replaced by same API for tests/benchmarks
+// - calculate_final_width() - helper only used by above functions
+//
+// This completes CHINA-05A Phase 5: Legacy Retirement
 
 fn estimate_capacity(final_width: usize, config: &BoxyConfig) -> usize {
     let line_hint = config

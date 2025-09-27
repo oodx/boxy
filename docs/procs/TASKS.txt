@@ -483,8 +483,9 @@ Critical Pre-M3 Tasks (HIGH Priority):
     - Migrate benches, demos (e.g. `boxy_dashboard.rs`) and snapshot fixtures to use API builders/adapter
     - Run golden-output diff to confirm no behavioural drift
   - Phase 5: Legacy retirement
-    - Collapse `draw_box`/`render_to_string` onto the API pipeline and remove redundant code paths
-    - Delete `BoxyConfig` once no caller constructs it; update documentation and changelog with migration guidance
+    - Remove legacy `draw_box()` function and redundant rendering code paths (visual/utils.rs)
+    - PRESERVE BoxyConfig - it's core to the progressive enhancement architecture (CLI + adapter pattern)
+    - Clean up unused legacy helper functions and consolidate rendering pipeline
     - Final verification: run full test matrix, benchmarks, and protected width/icon validation scripts
 
 [CHINA-08] Comprehensive Integration Documentation (MEDIUM) - High
