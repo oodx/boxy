@@ -12,8 +12,10 @@
 ## Latest Work
 - Library API module created (`src/api/`) with geometry, layout, and theming submodules
 - Background color feature added (ANSI, RGB, Named, Hex support)
+- Per-component theming hooks implemented (`apply_component_colors()`)
+- Title handling regression fixed in CLI→API adapter
 - China review: 4.5/5 stars on architecture
-- CODEX review: Found 3 critical regressions that need immediate fixes
+- CODEX review: Found 3 critical regressions that need immediate fixes (2 resolved)
 
 ## Latest Benchmarks
 - Rounded: ~1.21 ms (down from ~1.39 ms).

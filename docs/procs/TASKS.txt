@@ -477,7 +477,7 @@ Strategic Preparation (LOW Priority):
   - Add regression tests covering styles that inject ANSI sequences to ensure width stays accurate
   - Clarify usage expectations in `API_README.md` and source comment (`src/api/geometry.rs:145`)
 
-[QOL-02] Per-component theming hooks (MEDIUM) - High
+[QOL-02] Per-component theming hooks (MEDIUM) - High ✅ COMPLETED
   - Extend `api::theming` to style header/body/status/footer independently without string reparse
   - Introduce callbacks/renderer trait that accepts `ComponentLayout` metadata
   - Add regression tests covering section-specific coloring
@@ -502,7 +502,7 @@ Strategic Preparation (LOW Priority):
 🐞 BUG TRACKER
 ==============
 
-[BUG-01] Title handling regression in CLI→API adapter (CRITICAL) - High
+[BUG-01] Title handling regression in CLI→API adapter (CRITICAL) - High ✅ COMPLETED
   - `BoxLayout::from(&BoxyConfig)` maps `title` into the header builder, which renders outside the body
   - Breaks existing CLI behaviour where titles appear as the first body line (`Body::compose_content_lines`)
   - Restore parity by keeping titles in body content until API builders expose a dedicated title slot
